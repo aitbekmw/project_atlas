@@ -16,25 +16,17 @@ class CategoryRepository:
         return category
 
     async def get_all(self):
-        result = await self.db.execute(
-            select(Category)
-        )
+        result = await self.db.execute(select(Category))
         return result.scalars().all()
 
     async def get_by_id(self, category_id: int):
         result = await self.db.execute(
-            select(Category).where(
-                Category.id == category_id
-            )
+            select(Category).where(Category.id == category_id)
         )
         return result.scalar_one_or_none()
 
     async def get_by_name(self, name: str):
-        result = await self.db.execute(
-            select(Category).where(
-                Category.name == name
-            )
-        )
+        result = await self.db.execute(select(Category).where(Category.name == name))
         return result.scalar_one_or_none()
 
     async def update(self):

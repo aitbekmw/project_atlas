@@ -1,17 +1,11 @@
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.ext.asyncio import AsyncSession
+from fastapi.security import OAuth2PasswordRequestForm
 
-from app.db.session import get_db
+from app.core.exceptions import (EmailAlreadyExists, InvalidCredentials,
+                                 UsernameAlreadyExists)
+from app.dependencies.services import get_auth_service
 from app.schemas.user import UserCreate, UserLogin, UserResponse
 from app.services.auth import AuthService
-
-from fastapi.security import OAuth2PasswordRequestForm
-from app.core.exceptions import (
-    EmailAlreadyExists,
-    UsernameAlreadyExists,
-    InvalidCredentials,
-)
-
 
 router = APIRouter(
     prefix="/auth",
@@ -26,10 +20,8 @@ router = APIRouter(
 )
 async def register(
     data: UserCreate,
-    db: AsyncSession = Depends(get_db),
+    service: AuthService = Depends(get_auth_service),
 ):
-    service = AuthService(db)
-
     try:
         return await service.register(data)
 
@@ -49,10 +41,8 @@ async def register(
 @router.post("/login")
 async def login(
     data: UserLogin,
-    db: AsyncSession = Depends(get_db),
+    service: AuthService = Depends(get_auth_service),
 ):
-    service = AuthService(db)
-
     try:
         return await service.login(
             data.email,
@@ -65,13 +55,12 @@ async def login(
             detail="Invalid email or password",
         )
 
+
 @router.post("/token")
 async def token(
     form_data: OAuth2PasswordRequestForm = Depends(),
-    db: AsyncSession = Depends(get_db),
+    service: AuthService = Depends(get_auth_service),
 ):
-    service = AuthService(db)
-
     try:
         return await service.login_by_username(
             form_data.username,
@@ -81,5 +70,5 @@ async def token(
     except InvalidCredentials:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid email or password",
+            detail="Invalid username or password",
         )

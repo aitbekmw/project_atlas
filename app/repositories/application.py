@@ -17,15 +17,17 @@ class ApplicationRepository:
 
     async def get_by_id(self, application_id: int):
         result = await self.db.execute(
-            select(Application).where(
-                Application.id == application_id
-            )
+            select(Application).where(Application.id == application_id)
         )
         return result.scalar_one_or_none()
 
     async def get_all(self):
+        result = await self.db.execute(select(Application))
+        return result.scalars().all()
+
+    async def get_by_worker(self, worker_id: int):
         result = await self.db.execute(
-            select(Application)
+            select(Application).where(Application.worker_id == worker_id)
         )
         return result.scalars().all()
 
@@ -42,7 +44,19 @@ class ApplicationRepository:
         )
         return result.scalar_one_or_none()
 
+    async def get_by_job(
+        self,
+        job_id: int,
+    ):
+        result = await self.db.execute(
+            select(Application).where(Application.job_id == job_id)
+        )
+        return result.scalars().all()
+
     async def update(self):
+        await self.db.commit()
+
+    async def update_many(self):
         await self.db.commit()
 
     async def delete(self, application: Application):

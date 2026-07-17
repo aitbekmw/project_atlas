@@ -15,6 +15,4 @@ class ApplicationResponse(BaseModel):
     job_id: int
     status: str
 
-    model_config = ConfigDict(
-        from_attributes=True
-    )
+    model_config = ConfigDict(from_attributes=True)

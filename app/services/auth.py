@@ -1,21 +1,12 @@
 from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.core.exceptions import (EmailAlreadyExists, InvalidCredentials,
+                                 UsernameAlreadyExists)
+from app.core.security import (create_access_token, hash_password,
+                               verify_password)
 from app.models.user import User
 from app.repositories.user import UserRepository
 from app.schemas.user import UserCreate
-
-from app.core.security import (
-
-    create_access_token,
-    hash_password,
-    verify_password,
-)
-
-from app.core.exceptions import (
-    EmailAlreadyExists,
-    UsernameAlreadyExists,
-    InvalidCredentials,
-)
-
 
 
 class AuthService:
@@ -32,7 +23,6 @@ class AuthService:
 
         if await self.user_repo.get_by_username(data.username):
             raise UsernameAlreadyExists()
-
 
         user = User(
             username=data.username,
@@ -55,35 +45,37 @@ class AuthService:
         if not user:
             raise InvalidCredentials()
 
-        if not verify_password(password, user.hashed_password):
+        if not verify_password(
+            password,
+            user.hashed_password,
+        ):
             raise InvalidCredentials()
 
-        token = create_access_token(
-            {
-                "sub": str(user.id),
-                "email": user.email,
-            }
-        )
-
-        return {
-            "access_token": token,
-            "token_type": "bearer",
-        }
+        return self._create_token(user)
 
     async def login_by_username(
-            self,
-            username: str,
-            password: str,
+        self,
+        username: str,
+        password: str,
     ):
-        user = await self.user_repo.get_by_email(username)
+        user = await self.user_repo.get_by_username(username)
 
         if not user:
             raise InvalidCredentials()
 
-        if not verify_password(password, user.hashed_password):
+        if not verify_password(
+            password,
+            user.hashed_password,
+        ):
             raise InvalidCredentials()
 
-        token = create_access_token(
+        return self._create_token(user)
+
+    def _create_token(
+        self,
+        user: User,
+    ):
+        access_token = create_access_token(
             {
                 "sub": str(user.id),
                 "email": user.email,
@@ -91,6 +83,6 @@ class AuthService:
         )
 
         return {
-            "access_token": token,
+            "access_token": access_token,
             "token_type": "bearer",
         }

@@ -1,13 +1,7 @@
-from app.core.exceptions import (
-    CategoryAlreadyExists,
-    CategoryNotFound,
-)
+from app.core.exceptions import CategoryAlreadyExists, CategoryNotFound
 from app.models.category import Category
 from app.repositories.category import CategoryRepository
-from app.schemas.category import (
-    CategoryCreate,
-    CategoryUpdate,
-)
+from app.schemas.category import CategoryCreate, CategoryUpdate
 
 
 class CategoryService:
@@ -46,9 +40,7 @@ class CategoryService:
     ):
         category = await self.get_by_id(category_id)
 
-        for key, value in data.model_dump(
-            exclude_unset=True
-        ).items():
+        for key, value in data.model_dump(exclude_unset=True).items():
             setattr(category, key, value)
 
         await self.repo.update()

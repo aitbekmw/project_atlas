@@ -1,14 +1,7 @@
-from app.core.exceptions import JobNotFound
+from app.core.exceptions import JobNotFound, PermissionDenied
 from app.models.job import Job
 from app.repositories.job import JobRepository
-from app.schemas.job import (
-    JobCreate,
-    JobUpdate,
-)
-
-
-class PermissionDenied(Exception):
-    pass
+from app.schemas.job import JobCreate, JobUpdate
 
 
 class JobService:
@@ -33,8 +26,29 @@ class JobService:
 
         return await self.repo.create(job)
 
-    async def get_all(self):
-        return await self.repo.get_all()
+    async def get_all(
+        self,
+        page: int = 1,
+        size: int = 10,
+    ):
+        return await self.repo.get_all(
+            page,
+            size,
+        )
+
+    async def search(
+        self,
+        search: str | None = None,
+        city: str | None = None,
+        category_id: int | None = None,
+        min_salary: int | None = None,
+    ):
+        return await self.repo.search(
+            search=search,
+            city=city,
+            category_id=category_id,
+            min_salary=min_salary,
+        )
 
     async def get_by_id(self, job_id: int):
         job = await self.repo.get_by_id(job_id)
@@ -55,10 +69,24 @@ class JobService:
         if job.owner_id != owner_id:
             raise PermissionDenied()
 
-        for key, value in data.model_dump(
-            exclude_unset=True
-        ).items():
+        for key, value in data.model_dump(exclude_unset=True).items():
             setattr(job, key, value)
+
+        await self.repo.update()
+
+        return job
+
+    async def complete(
+        self,
+        job_id: int,
+        owner_id: int,
+    ):
+        job = await self.get_by_id(job_id)
+
+        if job.owner_id != owner_id:
+            raise PermissionDenied()
+
+        job.status = "CLOSED"
 
         await self.repo.update()
 

@@ -1,17 +1,11 @@
 from datetime import datetime
 
-from sqlalchemy import (
-    Boolean,
-    DateTime,
-    ForeignKey,
-    Integer,
-    String,
-    Text,
-    func,
-)
+from sqlalchemy import (Boolean, DateTime, ForeignKey, Integer, String,
+                        Text, func)
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
+from app.models.enum import JobStatus
 
 
 class Job(Base):
@@ -50,7 +44,8 @@ class Job(Base):
 
     status: Mapped[str] = mapped_column(
         String(20),
-        default="OPEN",
+        default=JobStatus.OPEN.value,
+        nullable=False,
     )
 
     category_id: Mapped[int] = mapped_column(
@@ -95,5 +90,12 @@ class Job(Base):
     applications = relationship(
         "Application",
         back_populates="job",
+        cascade="all, delete-orphan",
+    )
+
+    conversation = relationship(
+        "Conversation",
+        back_populates="job",
+        uselist=False,
         cascade="all, delete-orphan",
     )

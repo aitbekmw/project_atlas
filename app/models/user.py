@@ -1,20 +1,20 @@
 from datetime import datetime
-from sqlalchemy.orm import relationship
-from sqlalchemy import func
 
-from sqlalchemy import Enum
-
-
-from sqlalchemy import Boolean, DateTime, Integer, String
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy import Boolean, DateTime, Integer, String, func
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
+from app.models.enum import UserRole
 
 
 class User(Base):
     __tablename__ = "users"
 
-    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    id: Mapped[int] = mapped_column(
+        Integer,
+        primary_key=True,
+        index=True,
+    )
 
     username: Mapped[str] = mapped_column(
         String(50),
@@ -57,7 +57,8 @@ class User(Base):
 
     role: Mapped[str] = mapped_column(
         String(20),
-        default="worker",
+        default=UserRole.WORKER.value,
+        nullable=False,
     )
 
     is_active: Mapped[bool] = mapped_column(
@@ -68,6 +69,17 @@ class User(Base):
     is_verified: Mapped[bool] = mapped_column(
         Boolean,
         default=False,
+    )
+
+    is_online: Mapped[bool] = mapped_column(
+        Boolean,
+        default=False,
+        server_default="false",
+    )
+
+    last_seen: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True),
+        nullable=True,
     )
 
     created_at: Mapped[datetime] = mapped_column(
@@ -81,6 +93,10 @@ class User(Base):
         onupdate=func.now(),
     )
 
+    # ==========================
+    # Relationships
+    # ==========================
+
     jobs = relationship(
         "Job",
         back_populates="owner",
@@ -91,4 +107,39 @@ class User(Base):
         "Application",
         back_populates="worker",
         cascade="all, delete-orphan",
+    )
+
+    reviews_given = relationship(
+        "Review",
+        foreign_keys="Review.from_user_id",
+        back_populates="from_user",
+        cascade="all, delete-orphan",
+    )
+
+    reviews_received = relationship(
+        "Review",
+        foreign_keys="Review.to_user_id",
+        back_populates="to_user",
+        cascade="all, delete-orphan",
+    )
+
+    refresh_tokens = relationship(
+        "RefreshToken",
+        back_populates="user",
+        cascade="all, delete-orphan",
+    )
+
+    customer_conversations = relationship(
+        "Conversation",
+        foreign_keys="Conversation.customer_id",
+    )
+
+    worker_conversations = relationship(
+        "Conversation",
+        foreign_keys="Conversation.worker_id",
+    )
+
+    messages = relationship(
+        "Message",
+        back_populates="sender",
     )
