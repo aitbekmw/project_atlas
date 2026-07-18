@@ -36,7 +36,8 @@ class UserService:
         for key, value in data.model_dump(exclude_unset=True).items():
             setattr(user, key, value)
 
-        await self.repo.update()
+        # ИСПРАВЛЕНО
+        await self.repo.update(user)
 
         return user
 
@@ -81,7 +82,8 @@ class UserService:
 
         user.avatar = object_name
 
-        await self.repo.update()
+        # ИСПРАВЛЕНО
+        await self.repo.update(user)
 
         return user
 
@@ -96,7 +98,8 @@ class UserService:
 
         user.avatar = None
 
-        await self.repo.update()
+        # ИСПРАВЛЕНО
+        await self.repo.update(user)
 
         return user
 
