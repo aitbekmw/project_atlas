@@ -7,9 +7,11 @@ from app.models.user import User
 from app.repositories.conversation import ConversationRepository
 from app.repositories.job import JobRepository
 from app.schemas.conversation import ConversationResponse
-from app.services.conversation import (ConversationAlreadyExists,
-                                       ConversationNotFound,
-                                       ConversationService)
+from app.services.conversation import (
+    ConversationAlreadyExists,
+    ConversationNotFound,
+    ConversationService,
+)
 
 router = APIRouter(
     prefix="/conversations",

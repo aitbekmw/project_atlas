@@ -5,7 +5,6 @@ from app.models.review import Review
 
 
 class ReviewRepository:
-
     def __init__(self, db: AsyncSession):
         self.db = db
 

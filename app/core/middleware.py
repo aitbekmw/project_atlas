@@ -8,7 +8,6 @@ logger = logging.getLogger(__name__)
 
 
 class LoggingMiddleware(BaseHTTPMiddleware):
-
     async def dispatch(
         self,
         request: Request,

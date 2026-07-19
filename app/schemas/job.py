@@ -1,5 +1,7 @@
 from pydantic import BaseModel, ConfigDict
 
+from app.models.enum import JobStatus
+
 
 class JobBase(BaseModel):
     title: str
@@ -28,5 +30,6 @@ class JobResponse(JobBase):
     id: int
     owner_id: int
     is_active: bool
+    status: JobStatus
 
     model_config = ConfigDict(from_attributes=True)

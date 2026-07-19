@@ -1,11 +1,11 @@
 from app.core.exceptions import JobNotFound, PermissionDenied
+from app.models.enum import JobStatus
 from app.models.job import Job
 from app.repositories.job import JobRepository
 from app.schemas.job import JobCreate, JobUpdate
 
 
 class JobService:
-
     def __init__(self, repo: JobRepository):
         self.repo = repo
 
@@ -86,7 +86,7 @@ class JobService:
         if job.owner_id != owner_id:
             raise PermissionDenied()
 
-        job.status = "CLOSED"
+        job.status = JobStatus.COMPLETED.value
 
         await self.repo.update()
 

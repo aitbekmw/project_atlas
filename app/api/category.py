@@ -4,8 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.exceptions import CategoryAlreadyExists, CategoryNotFound
 from app.db.session import get_db
 from app.repositories.category import CategoryRepository
-from app.schemas.category import (CategoryCreate, CategoryResponse,
-                                  CategoryUpdate)
+from app.schemas.category import CategoryCreate, CategoryResponse, CategoryUpdate
 from app.services.category import CategoryService
 
 router = APIRouter(

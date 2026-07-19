@@ -13,7 +13,6 @@ class ConversationNotFound(Exception):
 
 
 class ConversationService:
-
     def __init__(
         self,
         repo: ConversationRepository,

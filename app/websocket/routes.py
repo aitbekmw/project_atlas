@@ -29,7 +29,6 @@ async def websocket_chat(
         )
 
         async with AsyncSessionLocal() as db:
-
             # ==========================
             # User
             # ==========================
@@ -80,7 +79,6 @@ async def websocket_chat(
             )
 
             while True:
-
                 data = await websocket.receive_json()
 
                 event = data.get("type")
@@ -89,7 +87,6 @@ async def websocket_chat(
                 # Typing
                 # ==========================
                 if event == "typing":
-
                     await manager.send_typing(
                         conversation_id,
                         user_id,
@@ -101,7 +98,6 @@ async def websocket_chat(
                 # Stop Typing
                 # ==========================
                 if event == "stop_typing":
-
                     await manager.send_stop_typing(
                         conversation_id,
                         user_id,
@@ -113,7 +109,6 @@ async def websocket_chat(
                 # Message
                 # ==========================
                 if event == "message":
-
                     text = data.get("text")
 
                     if not text:
@@ -155,7 +150,6 @@ async def websocket_chat(
         if user_id is not None:
             try:
                 async with AsyncSessionLocal() as db:
-
                     user_service = UserService(
                         UserRepository(db),
                     )

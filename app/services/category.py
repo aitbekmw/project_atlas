@@ -5,12 +5,10 @@ from app.schemas.category import CategoryCreate, CategoryUpdate
 
 
 class CategoryService:
-
     def __init__(self, repo: CategoryRepository):
         self.repo = repo
 
     async def create(self, data: CategoryCreate):
-
         if await self.repo.get_by_name(data.name):
             raise CategoryAlreadyExists()
 

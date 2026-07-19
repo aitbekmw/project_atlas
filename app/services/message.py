@@ -12,7 +12,6 @@ class ConversationNotFound(Exception):
 
 
 class MessageService:
-
     def __init__(
         self,
         repo: MessageRepository,

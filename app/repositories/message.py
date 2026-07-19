@@ -7,7 +7,6 @@ from app.models.message import Message
 
 
 class MessageRepository:
-
     def __init__(
         self,
         db: AsyncSession,
@@ -78,7 +77,7 @@ class MessageRepository:
             .where(
                 Message.conversation_id == conversation_id,
                 Message.sender_id != user_id,
-                Message.is_read.is_(False)
+                Message.is_read.is_(False),
             )
             .values(
                 is_read=True,

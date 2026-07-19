@@ -1,5 +1,4 @@
 import asyncio
-
 from datetime import datetime, timezone
 
 from sqlalchemy import select
@@ -9,10 +8,8 @@ from app.models.user import User
 
 
 class UserRepository:
-
     def __init__(self, db: AsyncSession):
         self.db = db
-
 
     async def get_by_email(self, email: str):
         print("=" * 60)
@@ -21,9 +18,7 @@ class UserRepository:
         print("Loop:", asyncio.get_running_loop())
         print("=" * 60)
 
-        result = await self.db.execute(
-            select(User).where(User.email == email)
-        )
+        result = await self.db.execute(select(User).where(User.email == email))
         return result.scalar_one_or_none()
 
     async def get_by_username(self, username: str):

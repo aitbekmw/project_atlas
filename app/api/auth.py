@@ -1,8 +1,11 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 
-from app.core.exceptions import (EmailAlreadyExists, InvalidCredentials,
-                                 UsernameAlreadyExists)
+from app.core.exceptions import (
+    EmailAlreadyExists,
+    InvalidCredentials,
+    UsernameAlreadyExists,
+)
 from app.dependencies.services import get_auth_service
 from app.schemas.user import UserCreate, UserLogin, UserResponse
 from app.services.auth import AuthService

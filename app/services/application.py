@@ -1,5 +1,8 @@
-from app.core.exceptions import (ApplicationAlreadyExists, ApplicationNotFound,
-                                 PermissionDenied)
+from app.core.exceptions import (
+    ApplicationAlreadyExists,
+    ApplicationNotFound,
+    PermissionDenied,
+)
 from app.models.application import Application
 from app.repositories.application import ApplicationRepository
 from app.repositories.job import JobRepository
@@ -7,7 +10,6 @@ from app.schemas.application import ApplicationCreate, ApplicationUpdate
 
 
 class ApplicationService:
-
     def __init__(
         self,
         repo: ApplicationRepository,
