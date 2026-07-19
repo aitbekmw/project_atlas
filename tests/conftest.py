@@ -13,6 +13,15 @@ from app.core.config import settings
 from app.db.base import Base
 from app.db.session import get_db
 from app.main import app
+from app.models.category import Category
+
+
+from sqlalchemy import update
+
+from app.models.enum import UserRole
+from app.models.user import User
+
+
 
 TEST_DATABASE_URL = settings.TEST_DATABASE_URL
 
@@ -110,3 +119,75 @@ async def authorized_user(client, auth_headers):
     assert response.status_code == 200
 
     return response.json()
+
+
+@pytest_asyncio.fixture
+async def category():
+    async with TestingSessionLocal() as session:
+        category = Category(
+            name="Testing Category",
+            description="Category for tests",
+        )
+
+        session.add(category)
+        await session.commit()
+        await session.refresh(category)
+
+        return category
+
+
+@pytest_asyncio.fixture
+async def db():
+    async with TestingSessionLocal() as session:
+        yield session
+
+
+@pytest_asyncio.fixture
+async def customer_headers(client, db):
+    ...
+
+@pytest_asyncio.fixture
+async def customer_headers(client, db):
+    unique = uuid.uuid4().hex[:8]
+
+    user_data = {
+        "username": f"customer_{unique}",
+        "email": f"{unique}@test.com",
+        "password": "12345678",
+        "first_name": "Test",
+        "last_name": "Customer",
+        "phone": "+996700000000",
+    }
+
+    # Регистрация
+    response = await client.post(
+        "/auth/register",
+        json=user_data,
+    )
+
+    assert response.status_code == 201
+
+    # Меняем роль на CUSTOMER
+    await db.execute(
+        update(User)
+        .where(User.email == user_data["email"])
+        .values(role=UserRole.CUSTOMER.value)
+    )
+    await db.commit()
+
+    # Логин
+    response = await client.post(
+        "/auth/login",
+        json={
+            "email": user_data["email"],
+            "password": user_data["password"],
+        },
+    )
+
+    assert response.status_code == 200
+
+    token = response.json()["access_token"]
+
+    return {
+        "Authorization": f"Bearer {token}"
+    }

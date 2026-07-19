@@ -51,10 +51,10 @@ class JobRepository:
         if city:
             filters.append(Job.city == city)
 
-        if category_id:
+        if category_id is not None:
             filters.append(Job.category_id == category_id)
 
-        if min_salary:
+        if min_salary is not None:
             filters.append(Job.salary >= min_salary)
 
         if filters:

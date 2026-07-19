@@ -3,7 +3,6 @@ from datetime import datetime
 from pydantic import BaseModel, Field, ConfigDict
 
 
-
 class ReviewCreate(BaseModel):
     job_id: int
     to_user_id: int
@@ -12,6 +11,7 @@ class ReviewCreate(BaseModel):
 
 
 class ReviewResponse(BaseModel):
+    id: int
     comment: str
     job_id: int
     from_user_id: int
@@ -19,4 +19,3 @@ class ReviewResponse(BaseModel):
     created_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
-

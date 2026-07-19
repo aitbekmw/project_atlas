@@ -19,6 +19,8 @@ router = APIRouter(
     "",
     response_model=JobResponse,
     status_code=status.HTTP_201_CREATED,
+
+
 )
 async def create_job(
     data: JobCreate,
