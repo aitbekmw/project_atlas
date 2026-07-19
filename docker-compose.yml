@@ -19,6 +19,12 @@ services:
       - postgres_data:/var/lib/postgresql/data
       - ./docker/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql
 
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   redis:
     image: redis:7-alpine
     container_name: atlas_redis
@@ -29,6 +35,12 @@ services:
 
     volumes:
       - redis_data:/data
+
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   minio:
     image: minio/minio
@@ -48,24 +60,33 @@ services:
     volumes:
       - minio_data:/data
 
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   api:
     build: .
     container_name: atlas_api
     restart: always
 
     depends_on:
-      - db
-      - redis
-      - minio
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
 
-    ports:
-      - "8000:8000"
+    expose:
+      - "8000"
 
     env_file:
       - .env.docker
 
   nginx:
-    image: nginx:latest
+    build: ./nginx
     container_name: atlas_nginx
     restart: always
 
@@ -74,9 +95,6 @@ services:
 
     ports:
       - "80:80"
-
-    volumes:
-      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
 
 volumes:
   postgres_data:
