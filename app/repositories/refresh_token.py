@@ -5,7 +5,6 @@ from app.models.refresh_token import RefreshToken
 
 
 class RefreshTokenRepository:
-
     def __init__(self, db: AsyncSession):
         self.db = db
 

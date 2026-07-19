@@ -1,27 +1,21 @@
 import uuid
 
-from httpx import ASGITransport, AsyncClient
 import pytest_asyncio
+from httpx import ASGITransport, AsyncClient
+from sqlalchemy import update
 from sqlalchemy.ext.asyncio import (
     AsyncSession,
     async_sessionmaker,
     create_async_engine,
 )
 
-
 from app.core.config import settings
 from app.db.base import Base
 from app.db.session import get_db
 from app.main import app
 from app.models.category import Category
-
-
-from sqlalchemy import update
-
 from app.models.enum import UserRole
 from app.models.user import User
-
-
 
 TEST_DATABASE_URL = settings.TEST_DATABASE_URL
 
@@ -72,6 +66,7 @@ async def client():
 
     app.dependency_overrides.clear()
 
+
 @pytest_asyncio.fixture
 async def auth_headers(client):
     unique = uuid.uuid4().hex[:8]
@@ -104,9 +99,7 @@ async def auth_headers(client):
 
     token = response.json()["access_token"]
 
-    return {
-        "Authorization": f"Bearer {token}"
-    }
+    return {"Authorization": f"Bearer {token}"}
 
 
 @pytest_asyncio.fixture
@@ -141,10 +134,6 @@ async def db():
     async with TestingSessionLocal() as session:
         yield session
 
-
-@pytest_asyncio.fixture
-async def customer_headers(client, db):
-    ...
 
 @pytest_asyncio.fixture
 async def customer_headers(client, db):
@@ -188,6 +177,4 @@ async def customer_headers(client, db):
 
     token = response.json()["access_token"]
 
-    return {
-        "Authorization": f"Bearer {token}"
-    }
+    return {"Authorization": f"Bearer {token}"}

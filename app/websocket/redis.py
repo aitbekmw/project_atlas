@@ -28,7 +28,6 @@ async def subscriber():
 
     try:
         async for message in pubsub.listen():
-
             if message["type"] != "message":
                 continue
 

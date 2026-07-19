@@ -5,7 +5,6 @@ from app.models.conversation import Conversation
 
 
 class ConversationRepository:
-
     def __init__(
         self,
         db: AsyncSession,

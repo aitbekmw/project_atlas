@@ -9,7 +9,6 @@ from app.services.minio import MinioService
 
 
 class UserService:
-
     def __init__(
         self,
         repo: UserRepository,

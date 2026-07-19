@@ -84,18 +84,14 @@ async def test_send_and_get_messages(
     assert messages[0]["text"] == "Hello!"
 
     # Отмечаем как доставленное
-    delivered = await client.patch(
-        f"/messages/{message_data['id']}/delivered"
-    )
+    delivered = await client.patch(f"/messages/{message_data['id']}/delivered")
 
     print(delivered.json())
 
     assert delivered.status_code == 200
 
     # Отмечаем как прочитанное
-    read = await client.patch(
-        f"/messages/{message_data['id']}/read"
-    )
+    read = await client.patch(f"/messages/{message_data['id']}/read")
 
     assert read.status_code == 200
     assert read.json()["is_read"] is True

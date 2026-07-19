@@ -9,13 +9,15 @@ line_length = 88
 [tool.ruff]
 line-length = 88
 target-version = "py313"
+exclude = [
+    "migrations",
+]
 
 [tool.ruff.lint]
 select = [
     "E",
     "F",
     "I",
-    "UP",
 ]
 
 [tool.pytest.ini_options]

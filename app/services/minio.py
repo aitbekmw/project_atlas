@@ -9,7 +9,6 @@ from app.core.minio import minio_client
 
 
 class MinioService:
-
     async def upload_avatar(
         self,
         file: UploadFile,

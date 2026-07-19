@@ -3,13 +3,9 @@ import uuid
 import pytest
 from sqlalchemy import update
 
-from app.models.enum import UserRole
+from app.models.enum import JobStatus, UserRole
 from app.models.user import User
 from tests.conftest import TestingSessionLocal
-
-from app.models.enum import JobStatus
-
-
 
 # ==========================================================
 # CREATE
@@ -145,7 +141,6 @@ async def test_get_job_not_found(client):
     assert response.json()["detail"] == "Job not found"
 
 
-
 # ==========================================================
 # UPDATE
 # ==========================================================
@@ -264,9 +259,7 @@ async def test_update_job_not_owner(client, customer_headers, category):
 
     token = response.json()["access_token"]
 
-    headers = {
-        "Authorization": f"Bearer {token}"
-    }
+    headers = {"Authorization": f"Bearer {token}"}
 
     response = await client.put(
         f"/jobs/{job_id}",
@@ -387,9 +380,7 @@ async def test_delete_job_not_owner(client, customer_headers, category):
 
     token = response.json()["access_token"]
 
-    headers = {
-        "Authorization": f"Bearer {token}"
-    }
+    headers = {"Authorization": f"Bearer {token}"}
 
     response = await client.delete(
         f"/jobs/{job_id}",
@@ -397,184 +388,6 @@ async def test_delete_job_not_owner(client, customer_headers, category):
     )
 
     assert response.status_code == 403
-
-
-
-
-@pytest.mark.asyncio
-async def test_complete_job_success(client, customer_headers, category):
-    payload = {
-        "title": "Complete Job",
-        "description": "Test",
-        "salary": 100000,
-        "city": "Bishkek",
-        "address": "Manas",
-        "category_id": category.id,
-    }
-
-    response = await client.post(
-        "/jobs",
-        json=payload,
-        headers=customer_headers,
-    )
-
-    job_id = response.json()["id"]
-
-    response = await client.post(
-        f"/jobs/{job_id}/complete",
-        headers=customer_headers,
-    )
-
-    assert response.status_code == 200
-    assert response.json()["is_active"] is True
-
-
-@pytest.mark.asyncio
-async def test_complete_job_not_found(client, customer_headers):
-    response = await client.post(
-        "/jobs/999999/complete",
-        headers=customer_headers,
-    )
-
-    assert response.status_code == 404
-
-
-
-
-@pytest.mark.asyncio
-async def test_complete_job_not_owner(client, customer_headers, category):
-    payload = {
-        "title": "Complete",
-        "description": "Test",
-        "salary": 100000,
-        "city": "Bishkek",
-        "address": "Manas",
-        "category_id": category.id,
-    }
-
-    response = await client.post(
-        "/jobs",
-        json=payload,
-        headers=customer_headers,
-    )
-
-    job_id = response.json()["id"]
-
-    unique = uuid.uuid4().hex[:8]
-
-    second_user = {
-        "username": f"user_{unique}",
-        "email": f"{unique}@test.com",
-        "password": "12345678",
-        "first_name": "Test",
-        "last_name": "User",
-        "phone": "+996700000000",
-    }
-
-    await client.post("/auth/register", json=second_user)
-
-    async with TestingSessionLocal() as session:
-        await session.execute(
-            update(User)
-            .where(User.email == second_user["email"])
-            .values(role=UserRole.CUSTOMER.value)
-        )
-        await session.commit()
-
-    response = await client.post(
-        "/auth/login",
-        json={
-            "email": second_user["email"],
-            "password": second_user["password"],
-        },
-    )
-
-    headers = {
-        "Authorization": f"Bearer {response.json()['access_token']}"
-    }
-
-    response = await client.post(
-        f"/jobs/{job_id}/complete",
-        headers=headers,
-    )
-
-    assert response.status_code == 403
-
-
-
-
-@pytest.mark.asyncio
-async def test_search_job_by_city(client, customer_headers, category):
-    payload = {
-        "title": "Python",
-        "description": "Backend",
-        "salary": 120000,
-        "city": "Bishkek",
-        "address": "Manas",
-        "category_id": category.id,
-    }
-
-    await client.post(
-        "/jobs",
-        json=payload,
-        headers=customer_headers,
-    )
-
-    response = await client.get("/jobs?city=Bishkek")
-
-    assert response.status_code == 200
-    assert len(response.json()) == 1
-
-
-
-
-@pytest.mark.asyncio
-async def test_search_job_by_title(client, customer_headers, category):
-    payload = {
-        "title": "FastAPI Developer",
-        "description": "Backend",
-        "salary": 120000,
-        "city": "Osh",
-        "address": "Lenina",
-        "category_id": category.id,
-    }
-
-    await client.post(
-        "/jobs",
-        json=payload,
-        headers=customer_headers,
-    )
-
-    response = await client.get("/jobs?search=FastAPI")
-
-    assert response.status_code == 200
-    assert len(response.json()) == 1
-
-
-
-
-@pytest.mark.asyncio
-async def test_search_job_by_salary(client, customer_headers, category):
-    payload = {
-        "title": "Senior",
-        "description": "Backend",
-        "salary": 200000,
-        "city": "Bishkek",
-        "address": "Manas",
-        "category_id": category.id,
-    }
-
-    await client.post(
-        "/jobs",
-        json=payload,
-        headers=customer_headers,
-    )
-
-    response = await client.get("/jobs?min_salary=150000")
-
-    assert response.status_code == 200
-    assert len(response.json()) == 1
-
 
 
 @pytest.mark.asyncio
@@ -610,7 +423,6 @@ async def test_complete_job_success(client, customer_headers, category):
     assert data["status"] == JobStatus.COMPLETED.value
 
 
-
 @pytest.mark.asyncio
 async def test_complete_job_not_found(client, customer_headers):
     response = await client.post(
@@ -620,8 +432,6 @@ async def test_complete_job_not_found(client, customer_headers):
 
     assert response.status_code == 404
     assert response.json()["detail"] == "Job not found"
-
-
 
 
 @pytest.mark.asyncio
@@ -672,9 +482,7 @@ async def test_complete_job_not_owner(client, customer_headers, category):
         },
     )
 
-    headers = {
-        "Authorization": f"Bearer {response.json()['access_token']}"
-    }
+    headers = {"Authorization": f"Bearer {response.json()['access_token']}"}
 
     response = await client.post(
         f"/jobs/{job_id}/complete",
@@ -682,8 +490,6 @@ async def test_complete_job_not_owner(client, customer_headers, category):
     )
 
     assert response.status_code == 403
-
-
 
 
 @pytest.mark.asyncio
@@ -713,8 +519,6 @@ async def test_search_job_by_title(client, customer_headers, category):
     assert jobs[0]["title"] == "FastAPI Developer"
 
 
-
-
 @pytest.mark.asyncio
 async def test_search_job_by_city(client, customer_headers, category):
     payload = {
@@ -740,7 +544,6 @@ async def test_search_job_by_city(client, customer_headers, category):
 
     assert len(jobs) == 1
     assert jobs[0]["city"] == "Osh"
-
 
 
 @pytest.mark.asyncio
@@ -770,7 +573,6 @@ async def test_search_job_by_salary(client, customer_headers, category):
     assert jobs[0]["salary"] >= 150000
 
 
-
 @pytest.mark.asyncio
 async def test_search_job_by_category(client, customer_headers, category):
     payload = {
@@ -788,9 +590,7 @@ async def test_search_job_by_category(client, customer_headers, category):
         headers=customer_headers,
     )
 
-    response = await client.get(
-        f"/jobs?category_id={category.id}"
-    )
+    response = await client.get(f"/jobs?category_id={category.id}")
 
     assert response.status_code == 200
 
@@ -798,6 +598,3 @@ async def test_search_job_by_category(client, customer_headers, category):
 
     assert len(jobs) == 1
     assert jobs[0]["category_id"] == category.id
-
-
-

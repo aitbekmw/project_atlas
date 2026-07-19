@@ -28,12 +28,11 @@ async def test_get_me_without_token(client):
 async def test_get_me_invalid_token(client):
     response = await client.get(
         "/users/me",
-        headers={
-            "Authorization": "Bearer invalid_token"
-        },
+        headers={"Authorization": "Bearer invalid_token"},
     )
 
     assert response.status_code == 401
+
 
 @pytest.mark.asyncio
 async def test_change_password_success(client, auth_headers):
@@ -50,6 +49,7 @@ async def test_change_password_success(client, auth_headers):
 
     assert response.status_code == 200
     assert response.json()["message"] == "Password changed successfully"
+
 
 @pytest.mark.asyncio
 async def test_change_password_wrong_current_password(client, auth_headers):
@@ -108,7 +108,6 @@ async def test_update_me_success(client, auth_headers):
     assert data["phone"] == "+996777123456"
 
 
-
 @pytest.mark.asyncio
 async def test_get_user_by_id_success(client, auth_headers):
     me = await client.get(
@@ -149,7 +148,6 @@ async def test_get_my_jobs_empty(client, auth_headers):
     assert response.json() == []
 
 
-
 @pytest.mark.asyncio
 async def test_get_my_applications_empty(client, auth_headers):
     response = await client.get(
@@ -159,5 +157,3 @@ async def test_get_my_applications_empty(client, auth_headers):
 
     assert response.status_code == 200
     assert response.json() == []
-
-

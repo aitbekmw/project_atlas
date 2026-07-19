@@ -1,6 +1,6 @@
 from pydantic import BaseModel, ConfigDict
-from app.models.enum import JobStatus
 
+from app.models.enum import JobStatus
 
 
 class JobBase(BaseModel):

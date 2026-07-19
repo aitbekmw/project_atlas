@@ -86,23 +86,17 @@ async def test_create_get_and_delete_review(
     assert len(reviews.json()) >= 1
 
     # Получить отзыв по id
-    response = await client.get(
-        f"/reviews/{review_data['id']}"
-    )
+    response = await client.get(f"/reviews/{review_data['id']}")
 
     assert response.status_code == 200
     assert response.json()["comment"] == "Excellent work!"
 
     # Получить отзывы пользователя
-    user_reviews = await client.get(
-        f"/reviews/user/{worker['id']}"
-    )
+    user_reviews = await client.get(f"/reviews/user/{worker['id']}")
 
     assert user_reviews.status_code == 200
 
     # Удалить отзыв
-    deleted = await client.delete(
-        f"/reviews/{review_data['id']}"
-    )
+    deleted = await client.delete(f"/reviews/{review_data['id']}")
 
     assert deleted.status_code == 204

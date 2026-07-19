@@ -1,11 +1,17 @@
 from fastapi import Request
 from fastapi.responses import JSONResponse
 
-from app.core.exceptions import (ApplicationNotFound, CategoryNotFound,
-                                 JobNotCompleted, JobNotFound,
-                                 PermissionDenied, ReviewAlreadyExists,
-                                 ReviewNotFound, SelfReviewNotAllowed,
-                                 UserNotFound)
+from app.core.exceptions import (
+    ApplicationNotFound,
+    CategoryNotFound,
+    JobNotCompleted,
+    JobNotFound,
+    PermissionDenied,
+    ReviewAlreadyExists,
+    ReviewNotFound,
+    SelfReviewNotAllowed,
+    UserNotFound,
+)
 
 
 async def job_not_found_handler(

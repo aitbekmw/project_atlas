@@ -5,7 +5,6 @@ from app.models.job import Job
 
 
 class JobRepository:
-
     def __init__(self, db: AsyncSession):
         self.db = db
 

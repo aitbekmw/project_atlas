@@ -59,7 +59,6 @@ async def test_get_applications(
     assert isinstance(data, list)
 
 
-
 @pytest.mark.asyncio
 async def test_get_application_by_id(
     client,
@@ -96,9 +95,7 @@ async def test_get_application_by_id(
 
     application = response.json()
 
-    response = await client.get(
-        f"/applications/{application['id']}"
-    )
+    response = await client.get(f"/applications/{application['id']}")
 
     assert response.status_code == 200
 
@@ -146,9 +143,7 @@ async def test_update_application(
 
     response = await client.put(
         f"/applications/{application['id']}",
-        json={
-            "status": "ACCEPTED"
-        },
+        json={"status": "ACCEPTED"},
     )
 
     assert response.status_code == 200
@@ -156,8 +151,6 @@ async def test_update_application(
     data = response.json()
 
     assert data["status"] == "ACCEPTED"
-
-
 
 
 @pytest.mark.asyncio
@@ -196,20 +189,13 @@ async def test_delete_application(
 
     application = response.json()
 
-    response = await client.delete(
-        f"/applications/{application['id']}"
-    )
+    response = await client.delete(f"/applications/{application['id']}")
 
     assert response.status_code == 204
 
-    response = await client.get(
-        f"/applications/{application['id']}"
-    )
+    response = await client.get(f"/applications/{application['id']}")
 
     assert response.status_code == 404
-
-
-
 
 
 @pytest.mark.asyncio
@@ -260,10 +246,6 @@ async def test_accept_application(
     assert data["status"] == "ACCEPTED"
 
 
-
-
-
-
 @pytest.mark.asyncio
 async def test_reject_application(
     client,
@@ -310,15 +292,3 @@ async def test_reject_application(
     data = response.json()
 
     assert data["status"] == "REJECTED"
-
-
-
-
-
-
-
-
-
-
-
-

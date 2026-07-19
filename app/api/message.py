@@ -7,8 +7,7 @@ from app.models.user import User
 from app.repositories.conversation import ConversationRepository
 from app.repositories.message import MessageRepository
 from app.schemas.message import MessageCreate, MessageResponse
-from app.services.message import (ConversationNotFound, MessageNotFound,
-                                  MessageService)
+from app.services.message import ConversationNotFound, MessageNotFound, MessageService
 
 router = APIRouter(
     prefix="/messages",

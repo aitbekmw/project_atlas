@@ -5,7 +5,6 @@ from app.models.application import Application
 
 
 class ApplicationRepository:
-
     def __init__(self, db: AsyncSession):
         self.db = db
 

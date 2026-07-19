@@ -28,7 +28,6 @@ async def test_register_success(client):
     assert "id" in data
 
 
-
 @pytest.mark.asyncio
 async def test_register_duplicate_email(client):
     unique = uuid.uuid4().hex[:8]
@@ -83,6 +82,7 @@ async def test_login_success(client):
     assert "access_token" in data
     assert "token_type" in data
 
+
 @pytest.mark.asyncio
 async def test_login_wrong_password(client):
     unique = uuid.uuid4().hex[:8]
@@ -109,6 +109,7 @@ async def test_login_wrong_password(client):
     assert response.status_code == 401
     assert response.json()["detail"] == "Invalid email or password"
 
+
 @pytest.mark.asyncio
 async def test_login_unknown_email(client):
     response = await client.post(
@@ -121,6 +122,7 @@ async def test_login_unknown_email(client):
 
     assert response.status_code == 401
     assert response.json()["detail"] == "Invalid email or password"
+
 
 @pytest.mark.asyncio
 async def test_register_duplicate_username(client):

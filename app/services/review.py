@@ -14,7 +14,6 @@ class ReviewAlreadyExists(Exception):
 
 
 class ReviewService:
-
     def __init__(
         self,
         repo: ReviewRepository,

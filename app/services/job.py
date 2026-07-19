@@ -1,12 +1,11 @@
 from app.core.exceptions import JobNotFound, PermissionDenied
+from app.models.enum import JobStatus
 from app.models.job import Job
 from app.repositories.job import JobRepository
 from app.schemas.job import JobCreate, JobUpdate
-from app.models.enum import JobStatus
 
 
 class JobService:
-
     def __init__(self, repo: JobRepository):
         self.repo = repo
 

@@ -1,15 +1,21 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.exceptions import (ApplicationAlreadyExists, ApplicationNotFound,
-                                 PermissionDenied)
+from app.core.exceptions import (
+    ApplicationAlreadyExists,
+    ApplicationNotFound,
+    PermissionDenied,
+)
 from app.db.session import get_db
 from app.dependencies.auth import get_current_user
 from app.models.user import User
 from app.repositories.application import ApplicationRepository
 from app.repositories.job import JobRepository
-from app.schemas.application import (ApplicationCreate, ApplicationResponse,
-                                     ApplicationUpdate)
+from app.schemas.application import (
+    ApplicationCreate,
+    ApplicationResponse,
+    ApplicationUpdate,
+)
 from app.services.application import ApplicationService
 
 router = APIRouter(

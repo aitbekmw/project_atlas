@@ -5,7 +5,6 @@ from app.models.category import Category
 
 
 class CategoryRepository:
-
     def __init__(self, db: AsyncSession):
         self.db = db
 
