@@ -1,6 +1,6 @@
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 
-from app.core.exceptions import PermissionDenied
+from app.core.exceptions import ConversationNotFound, PermissionDenied
 from app.db.session import AsyncSessionLocal
 from app.dependencies.websocket import get_websocket_user_id
 from app.repositories.conversation import ConversationRepository
@@ -8,7 +8,7 @@ from app.repositories.job import JobRepository
 from app.repositories.message import MessageRepository
 from app.repositories.user import UserRepository
 from app.services.conversation import ConversationService
-from app.services.message import ConversationNotFound, MessageService
+from app.services.message import MessageService
 from app.services.user import UserService
 from app.websocket.manager import manager
 from app.websocket.redis import publish
@@ -21,6 +21,8 @@ async def websocket_chat(
     websocket: WebSocket,
     conversation_id: int,
 ):
+    await websocket.accept()
+
     user_id = None
 
     try:
@@ -29,9 +31,6 @@ async def websocket_chat(
         )
 
         async with AsyncSessionLocal() as db:
-            # ==========================
-            # User
-            # ==========================
             user_service = UserService(
                 UserRepository(db),
             )
@@ -44,12 +43,10 @@ async def websocket_chat(
                 user,
             )
 
-            # ==========================
-            # Conversation
-            # ==========================
             conversation_service = ConversationService(
                 ConversationRepository(db),
                 JobRepository(db),
+                UserRepository(db),
             )
 
             await conversation_service.check_access(
@@ -57,10 +54,7 @@ async def websocket_chat(
                 user_id,
             )
 
-            # ==========================
-            # Connect
-            # ==========================
-            await manager.connect(
+            manager.connect(
                 conversation_id,
                 websocket,
             )
@@ -70,9 +64,6 @@ async def websocket_chat(
                 user_id,
             )
 
-            # ==========================
-            # Message Service
-            # ==========================
             message_service = MessageService(
                 MessageRepository(db),
                 ConversationRepository(db),
@@ -83,41 +74,30 @@ async def websocket_chat(
 
                 event = data.get("type")
 
-                # ==========================
-                # Typing
-                # ==========================
                 if event == "typing":
                     await manager.send_typing(
                         conversation_id,
                         user_id,
                     )
-
                     continue
 
-                # ==========================
-                # Stop Typing
-                # ==========================
                 if event == "stop_typing":
                     await manager.send_stop_typing(
                         conversation_id,
                         user_id,
                     )
-
                     continue
 
-                # ==========================
-                # Message
-                # ==========================
                 if event == "message":
                     text = data.get("text")
 
-                    if not text:
+                    if not text or not str(text).strip():
                         continue
 
                     message = await message_service.send(
                         conversation_id=conversation_id,
                         sender_id=user_id,
-                        text=text,
+                        text=str(text).strip(),
                     )
 
                     await publish(
@@ -132,6 +112,11 @@ async def websocket_chat(
                             ),
                         }
                     )
+
+    except PermissionError:
+        await websocket.close(
+            code=1008,
+        )
 
     except PermissionDenied:
         await websocket.close(

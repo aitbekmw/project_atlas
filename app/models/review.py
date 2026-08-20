@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlalchemy import DateTime, ForeignKey, Integer, Text, func
+from sqlalchemy import DateTime, ForeignKey, Integer, Text, UniqueConstraint, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
@@ -8,6 +8,13 @@ from app.db.base import Base
 
 class Review(Base):
     __tablename__ = "reviews"
+    __table_args__ = (
+        UniqueConstraint(
+            "job_id",
+            "from_user_id",
+            name="uq_review_job_author",
+        ),
+    )
 
     id: Mapped[int] = mapped_column(
         Integer,
@@ -56,6 +63,7 @@ class Review(Base):
 
     job = relationship(
         "Job",
+        back_populates="reviews",
     )
 
     from_user = relationship(

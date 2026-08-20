@@ -19,14 +19,31 @@ class ReviewRepository:
         return result.scalar_one_or_none()
 
     async def get_all(self):
-        result = await self.db.execute(select(Review))
+        result = await self.db.execute(
+            select(Review).order_by(Review.created_at.desc())
+        )
         return result.scalars().all()
 
     async def get_by_user(self, user_id: int):
         result = await self.db.execute(
-            select(Review).where(Review.to_user_id == user_id)
+            select(Review)
+            .where(Review.to_user_id == user_id)
+            .order_by(Review.created_at.desc())
         )
         return result.scalars().all()
+
+    async def get_by_job_and_author(
+        self,
+        job_id: int,
+        from_user_id: int,
+    ):
+        result = await self.db.execute(
+            select(Review).where(
+                Review.job_id == job_id,
+                Review.from_user_id == from_user_id,
+            )
+        )
+        return result.scalar_one_or_none()
 
     async def delete(self, review: Review):
         await self.db.delete(review)

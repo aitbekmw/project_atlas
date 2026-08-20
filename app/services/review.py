@@ -1,16 +1,18 @@
-from app.models.enum import JobStatus
+from app.core.exceptions import (
+    JobNotCompleted,
+    JobNotFound,
+    PermissionDenied,
+    ReviewAlreadyExists,
+    ReviewNotFound,
+    SelfReviewNotAllowed,
+)
+from app.models.enum import JobStatus, UserRole
 from app.models.review import Review
+from app.models.user import User
+from app.repositories.application import ApplicationRepository
 from app.repositories.job import JobRepository
 from app.repositories.review import ReviewRepository
 from app.schemas.review import ReviewCreate
-
-
-class ReviewNotFound(Exception):
-    pass
-
-
-class ReviewAlreadyExists(Exception):
-    pass
 
 
 class ReviewService:
@@ -18,9 +20,11 @@ class ReviewService:
         self,
         repo: ReviewRepository,
         job_repo: JobRepository,
+        application_repo: ApplicationRepository,
     ):
         self.repo = repo
         self.job_repo = job_repo
+        self.application_repo = application_repo
 
     async def create(
         self,
@@ -30,13 +34,35 @@ class ReviewService:
         job = await self.job_repo.get_by_id(data.job_id)
 
         if not job:
-            raise Exception("Job not found")
+            raise JobNotFound()
 
-        if job.status != JobStatus.COMPLETED:
-            raise Exception("Job is not completed")
+        if job.status != JobStatus.COMPLETED.value:
+            raise JobNotCompleted()
 
         if from_user_id == data.to_user_id:
-            raise Exception("You cannot review yourself")
+            raise SelfReviewNotAllowed()
+
+        accepted = await self.application_repo.get_accepted_by_job(job.id)
+
+        if not accepted:
+            raise PermissionDenied()
+
+        if from_user_id == job.owner_id:
+            if data.to_user_id != accepted.worker_id:
+                raise PermissionDenied()
+        elif from_user_id == accepted.worker_id:
+            if data.to_user_id != job.owner_id:
+                raise PermissionDenied()
+        else:
+            raise PermissionDenied()
+
+        existing = await self.repo.get_by_job_and_author(
+            data.job_id,
+            from_user_id,
+        )
+
+        if existing:
+            raise ReviewAlreadyExists()
 
         review = Review(
             rating=data.rating,
@@ -71,7 +97,11 @@ class ReviewService:
     async def delete(
         self,
         review_id: int,
+        user: User,
     ):
         review = await self.get_by_id(review_id)
+
+        if review.from_user_id != user.id and user.role != UserRole.ADMIN.value:
+            raise PermissionDenied()
 
         await self.repo.delete(review)

@@ -18,3 +18,8 @@ class ApplicationStatus(str, Enum):
     PENDING = "PENDING"
     ACCEPTED = "ACCEPTED"
     REJECTED = "REJECTED"
+
+
+class ReviewSort(str, Enum):
+    NEWEST = "newest"
+    OLDEST = "oldest"

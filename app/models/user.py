@@ -132,11 +132,13 @@ class User(Base):
     customer_conversations = relationship(
         "Conversation",
         foreign_keys="Conversation.customer_id",
+        back_populates="customer",
     )
 
     worker_conversations = relationship(
         "Conversation",
         foreign_keys="Conversation.worker_id",
+        back_populates="worker",
     )
 
     messages = relationship(

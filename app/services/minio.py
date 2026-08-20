@@ -13,7 +13,7 @@ class MinioService:
         self,
         file: UploadFile,
     ) -> str:
-        extension = file.filename.split(".")[-1].lower()
+        extension = (file.filename or "jpg").rsplit(".", 1)[-1].lower()
 
         object_name = f"avatars/{uuid4()}.{extension}"
 

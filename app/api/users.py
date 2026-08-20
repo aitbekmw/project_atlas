@@ -1,6 +1,7 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.config import settings
 from app.core.exceptions import IncorrectPassword, SamePassword, UserNotFound
 from app.db.session import get_db
 from app.dependencies.auth import get_current_user
@@ -18,6 +19,12 @@ router = APIRouter(
     prefix="/users",
     tags=["Users"],
 )
+
+ALLOWED_AVATAR_TYPES = {
+    "image/jpeg",
+    "image/png",
+    "image/webp",
+}
 
 
 @router.get(
@@ -77,24 +84,6 @@ async def change_password(
 
 
 @router.get(
-    "/{user_id}",
-    response_model=UserResponse,
-)
-async def get_user(
-    user_id: int,
-    service: UserService = Depends(get_user_service),
-):
-    try:
-        return await service.get_by_id(user_id)
-
-    except UserNotFound:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="User not found",
-        )
-
-
-@router.get(
     "/me/jobs",
     response_model=list[JobResponse],
 )
@@ -122,3 +111,63 @@ async def get_my_applications(
     return await repo.get_by_worker(
         current_user.id,
     )
+
+
+@router.post(
+    "/me/avatar",
+    response_model=UserResponse,
+)
+async def upload_avatar(
+    file: UploadFile = File(...),
+    service: UserService = Depends(get_user_service),
+    current_user: User = Depends(get_current_user),
+):
+    if file.content_type not in ALLOWED_AVATAR_TYPES:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Unsupported file type",
+        )
+
+    content = await file.read()
+
+    if len(content) > settings.MAX_FILE_SIZE:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="File too large",
+        )
+
+    await file.seek(0)
+
+    return await service.upload_avatar(
+        current_user,
+        file,
+    )
+
+
+@router.delete(
+    "/me/avatar",
+    response_model=UserResponse,
+)
+async def delete_avatar(
+    service: UserService = Depends(get_user_service),
+    current_user: User = Depends(get_current_user),
+):
+    return await service.delete_avatar(current_user)
+
+
+@router.get(
+    "/{user_id}",
+    response_model=UserResponse,
+)
+async def get_user(
+    user_id: int,
+    service: UserService = Depends(get_user_service),
+):
+    try:
+        return await service.get_by_id(user_id)
+
+    except UserNotFound:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found",
+        )

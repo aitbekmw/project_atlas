@@ -29,6 +29,16 @@ class Settings(BaseSettings):
     JWT_ISSUER: str = "atlas-api"
     JWT_AUDIENCE: str = "atlas-users"
 
+    DATABASE_ECHO: bool = False
+
+    CORS_ORIGINS: list[str] = [
+        "http://localhost:3000",
+        "http://localhost:5173",
+        "http://localhost",
+        "http://127.0.0.1:3000",
+        "http://127.0.0.1:5173",
+    ]
+
     # ==========================
     # Uploads (оставим для будущих локальных файлов)
     # ==========================

@@ -1,4 +1,7 @@
+import os
 import uuid
+
+os.environ["TESTING"] = "true"
 
 import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
@@ -136,7 +139,7 @@ async def db():
 
 
 @pytest_asyncio.fixture
-async def customer_headers(client, db):
+async def customer_headers(client):
     unique = uuid.uuid4().hex[:8]
 
     user_data = {
@@ -146,9 +149,9 @@ async def customer_headers(client, db):
         "first_name": "Test",
         "last_name": "Customer",
         "phone": "+996700000000",
+        "role": UserRole.CUSTOMER.value,
     }
 
-    # Регистрация
     response = await client.post(
         "/auth/register",
         json=user_data,
@@ -156,15 +159,49 @@ async def customer_headers(client, db):
 
     assert response.status_code == 201
 
-    # Меняем роль на CUSTOMER
+    # Логин
+    response = await client.post(
+        "/auth/login",
+        json={
+            "email": user_data["email"],
+            "password": user_data["password"],
+        },
+    )
+
+    assert response.status_code == 200
+
+    token = response.json()["access_token"]
+
+    return {"Authorization": f"Bearer {token}"}
+
+
+@pytest_asyncio.fixture
+async def admin_headers(client, db):
+    unique = uuid.uuid4().hex[:8]
+
+    user_data = {
+        "username": f"admin_{unique}",
+        "email": f"admin_{unique}@test.com",
+        "password": "12345678",
+        "first_name": "Test",
+        "last_name": "Admin",
+        "phone": "+996700000000",
+    }
+
+    response = await client.post(
+        "/auth/register",
+        json=user_data,
+    )
+
+    assert response.status_code == 201
+
     await db.execute(
         update(User)
         .where(User.email == user_data["email"])
-        .values(role=UserRole.CUSTOMER.value)
+        .values(role=UserRole.ADMIN.value)
     )
     await db.commit()
 
-    # Логин
     response = await client.post(
         "/auth/login",
         json={

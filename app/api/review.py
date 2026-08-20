@@ -1,13 +1,18 @@
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.db.session import get_db
+from app.core.exceptions import (
+    JobNotCompleted,
+    JobNotFound,
+    PermissionDenied,
+    ReviewAlreadyExists,
+    ReviewNotFound,
+    SelfReviewNotAllowed,
+)
 from app.dependencies.auth import get_current_user
+from app.dependencies.services import get_review_service
 from app.models.user import User
-from app.repositories.job import JobRepository
-from app.repositories.review import ReviewRepository
 from app.schemas.review import ReviewCreate, ReviewResponse
-from app.services.review import ReviewNotFound, ReviewService
+from app.services.review import ReviewService
 
 router = APIRouter(
     prefix="/reviews",
@@ -22,24 +27,26 @@ router = APIRouter(
 )
 async def create_review(
     data: ReviewCreate,
-    db: AsyncSession = Depends(get_db),
+    service: ReviewService = Depends(get_review_service),
     current_user: User = Depends(get_current_user),
 ):
-    service = ReviewService(
-        ReviewRepository(db),
-        JobRepository(db),
-    )
-
     try:
         return await service.create(
             data,
             current_user.id,
         )
-
-    except Exception as e:
+    except JobNotFound:
+        raise HTTPException(status_code=404, detail="Job not found")
+    except JobNotCompleted:
+        raise HTTPException(status_code=400, detail="Job is not completed")
+    except SelfReviewNotAllowed:
+        raise HTTPException(status_code=400, detail="You cannot review yourself")
+    except ReviewAlreadyExists:
+        raise HTTPException(status_code=400, detail="Review already exists")
+    except PermissionDenied:
         raise HTTPException(
-            status_code=400,
-            detail=str(e),
+            status_code=403,
+            detail="You can review only after the job is completed by its participants",
         )
 
 
@@ -48,14 +55,20 @@ async def create_review(
     response_model=list[ReviewResponse],
 )
 async def get_reviews(
-    db: AsyncSession = Depends(get_db),
+    service: ReviewService = Depends(get_review_service),
 ):
-    service = ReviewService(
-        ReviewRepository(db),
-        JobRepository(db),
-    )
-
     return await service.get_all()
+
+
+@router.get(
+    "/user/{user_id}",
+    response_model=list[ReviewResponse],
+)
+async def get_user_reviews(
+    user_id: int,
+    service: ReviewService = Depends(get_review_service),
+):
+    return await service.get_by_user(user_id)
 
 
 @router.get(
@@ -64,13 +77,8 @@ async def get_reviews(
 )
 async def get_review(
     review_id: int,
-    db: AsyncSession = Depends(get_db),
+    service: ReviewService = Depends(get_review_service),
 ):
-    service = ReviewService(
-        ReviewRepository(db),
-        JobRepository(db),
-    )
-
     try:
         return await service.get_by_id(review_id)
 
@@ -81,40 +89,26 @@ async def get_review(
         )
 
 
-@router.get(
-    "/user/{user_id}",
-    response_model=list[ReviewResponse],
-)
-async def get_user_reviews(
-    user_id: int,
-    db: AsyncSession = Depends(get_db),
-):
-    service = ReviewService(
-        ReviewRepository(db),
-        JobRepository(db),
-    )
-
-    return await service.get_by_user(user_id)
-
-
 @router.delete(
     "/{review_id}",
     status_code=status.HTTP_204_NO_CONTENT,
 )
 async def delete_review(
     review_id: int,
-    db: AsyncSession = Depends(get_db),
+    service: ReviewService = Depends(get_review_service),
+    current_user: User = Depends(get_current_user),
 ):
-    service = ReviewService(
-        ReviewRepository(db),
-        JobRepository(db),
-    )
-
     try:
-        await service.delete(review_id)
+        await service.delete(review_id, current_user)
 
     except ReviewNotFound:
         raise HTTPException(
             status_code=404,
             detail="Review not found",
+        )
+
+    except PermissionDenied:
+        raise HTTPException(
+            status_code=403,
+            detail="You can delete only your own reviews",
         )

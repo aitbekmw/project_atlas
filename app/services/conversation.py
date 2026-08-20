@@ -1,15 +1,16 @@
-from app.core.exceptions import JobNotFound, PermissionDenied
+from app.core.exceptions import (
+    ConversationAlreadyExists,
+    ConversationNotFound,
+    JobNotFound,
+    PermissionDenied,
+    UserNotFound,
+)
 from app.models.conversation import Conversation
+from app.models.enum import UserRole
+from app.models.user import User
 from app.repositories.conversation import ConversationRepository
 from app.repositories.job import JobRepository
-
-
-class ConversationAlreadyExists(Exception):
-    pass
-
-
-class ConversationNotFound(Exception):
-    pass
+from app.repositories.user import UserRepository
 
 
 class ConversationService:
@@ -17,9 +18,11 @@ class ConversationService:
         self,
         repo: ConversationRepository,
         job_repo: JobRepository,
+        user_repo: UserRepository,
     ):
         self.repo = repo
         self.job_repo = job_repo
+        self.user_repo = user_repo
 
     async def create(
         self,
@@ -27,15 +30,29 @@ class ConversationService:
         customer_id: int,
         worker_id: int,
     ):
+        if customer_id == worker_id:
+            raise PermissionDenied()
+
         job = await self.job_repo.get_by_id(job_id)
 
         if not job:
             raise JobNotFound()
 
+        if job.owner_id != customer_id:
+            raise PermissionDenied()
+
+        worker = await self.user_repo.get_by_id(worker_id)
+
+        if not worker:
+            raise UserNotFound()
+
         conversation = await self.repo.get_by_job(job_id)
 
         if conversation:
-            raise ConversationAlreadyExists()
+            if conversation.worker_id != worker_id:
+                raise ConversationAlreadyExists()
+
+            return conversation
 
         conversation = Conversation(
             job_id=job_id,
@@ -66,10 +83,17 @@ class ConversationService:
         self,
         conversation_id: int,
         user_id: int,
+        user: User | None = None,
     ):
         conversation = await self.get_by_id(conversation_id)
 
-        if conversation.customer_id != user_id and conversation.worker_id != user_id:
+        is_admin = user is not None and user.role == UserRole.ADMIN.value
+
+        if (
+            conversation.customer_id != user_id
+            and conversation.worker_id != user_id
+            and not is_admin
+        ):
             raise PermissionDenied()
 
         return conversation
@@ -77,7 +101,12 @@ class ConversationService:
     async def delete(
         self,
         conversation_id: int,
+        user: User,
     ):
-        conversation = await self.get_by_id(conversation_id)
+        conversation = await self.check_access(
+            conversation_id,
+            user.id,
+            user,
+        )
 
         await self.repo.delete(conversation)

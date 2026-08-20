@@ -1,9 +1,9 @@
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.exceptions import CategoryAlreadyExists, CategoryNotFound
-from app.db.session import get_db
-from app.repositories.category import CategoryRepository
+from app.dependencies.permissions import require_admin
+from app.dependencies.services import get_category_service
+from app.models.user import User
 from app.schemas.category import CategoryCreate, CategoryResponse, CategoryUpdate
 from app.services.category import CategoryService
 
@@ -20,10 +20,9 @@ router = APIRouter(
 )
 async def create_category(
     data: CategoryCreate,
-    db: AsyncSession = Depends(get_db),
+    service: CategoryService = Depends(get_category_service),
+    _current_user: User = Depends(require_admin),
 ):
-    service = CategoryService(CategoryRepository(db))
-
     try:
         return await service.create(data)
 
@@ -39,9 +38,8 @@ async def create_category(
     response_model=list[CategoryResponse],
 )
 async def get_categories(
-    db: AsyncSession = Depends(get_db),
+    service: CategoryService = Depends(get_category_service),
 ):
-    service = CategoryService(CategoryRepository(db))
     return await service.get_all()
 
 
@@ -51,10 +49,8 @@ async def get_categories(
 )
 async def get_category(
     category_id: int,
-    db: AsyncSession = Depends(get_db),
+    service: CategoryService = Depends(get_category_service),
 ):
-    service = CategoryService(CategoryRepository(db))
-
     try:
         return await service.get_by_id(category_id)
 
@@ -72,10 +68,9 @@ async def get_category(
 async def update_category(
     category_id: int,
     data: CategoryUpdate,
-    db: AsyncSession = Depends(get_db),
+    service: CategoryService = Depends(get_category_service),
+    _current_user: User = Depends(require_admin),
 ):
-    service = CategoryService(CategoryRepository(db))
-
     try:
         return await service.update(category_id, data)
 
@@ -92,10 +87,9 @@ async def update_category(
 )
 async def delete_category(
     category_id: int,
-    db: AsyncSession = Depends(get_db),
+    service: CategoryService = Depends(get_category_service),
+    _current_user: User = Depends(require_admin),
 ):
-    service = CategoryService(CategoryRepository(db))
-
     try:
         await service.delete(category_id)
 

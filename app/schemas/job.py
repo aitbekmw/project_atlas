@@ -1,14 +1,16 @@
-from pydantic import BaseModel, ConfigDict
+from datetime import datetime
+
+from pydantic import BaseModel, ConfigDict, Field
 
 from app.models.enum import JobStatus
 
 
 class JobBase(BaseModel):
-    title: str
-    description: str
-    salary: int
-    city: str
-    address: str
+    title: str = Field(min_length=1, max_length=255)
+    description: str = Field(min_length=1)
+    salary: int = Field(ge=0)
+    city: str = Field(min_length=1, max_length=100)
+    address: str = Field(min_length=1, max_length=255)
     category_id: int
 
 
@@ -17,11 +19,11 @@ class JobCreate(JobBase):
 
 
 class JobUpdate(BaseModel):
-    title: str | None = None
-    description: str | None = None
-    salary: int | None = None
-    city: str | None = None
-    address: str | None = None
+    title: str | None = Field(default=None, min_length=1, max_length=255)
+    description: str | None = Field(default=None, min_length=1)
+    salary: int | None = Field(default=None, ge=0)
+    city: str | None = Field(default=None, min_length=1, max_length=100)
+    address: str | None = Field(default=None, min_length=1, max_length=255)
     category_id: int | None = None
     is_active: bool | None = None
 
@@ -31,5 +33,6 @@ class JobResponse(JobBase):
     owner_id: int
     is_active: bool
     status: JobStatus
+    created_at: datetime | None = None
 
     model_config = ConfigDict(from_attributes=True)

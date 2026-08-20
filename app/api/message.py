@@ -1,13 +1,11 @@
-from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.ext.asyncio import AsyncSession
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 
-from app.db.session import get_db
+from app.core.exceptions import ConversationNotFound, MessageNotFound, PermissionDenied
 from app.dependencies.auth import get_current_user
+from app.dependencies.services import get_message_service
 from app.models.user import User
-from app.repositories.conversation import ConversationRepository
-from app.repositories.message import MessageRepository
 from app.schemas.message import MessageCreate, MessageResponse
-from app.services.message import ConversationNotFound, MessageNotFound, MessageService
+from app.services.message import MessageService
 
 router = APIRouter(
     prefix="/messages",
@@ -23,19 +21,27 @@ router = APIRouter(
 async def send_message(
     conversation_id: int,
     data: MessageCreate,
-    db: AsyncSession = Depends(get_db),
+    service: MessageService = Depends(get_message_service),
     current_user: User = Depends(get_current_user),
 ):
-    service = MessageService(
-        MessageRepository(db),
-        ConversationRepository(db),
-    )
+    try:
+        return await service.send(
+            conversation_id,
+            current_user.id,
+            data.text,
+        )
 
-    return await service.send(
-        conversation_id,
-        current_user.id,
-        data.text,
-    )
+    except ConversationNotFound:
+        raise HTTPException(
+            status_code=404,
+            detail="Conversation not found",
+        )
+
+    except PermissionDenied:
+        raise HTTPException(
+            status_code=403,
+            detail="Access denied",
+        )
 
 
 @router.get(
@@ -44,17 +50,17 @@ async def send_message(
 )
 async def get_history(
     conversation_id: int,
-    db: AsyncSession = Depends(get_db),
+    page: int = Query(1, ge=1),
+    size: int = Query(100, ge=1, le=100),
+    service: MessageService = Depends(get_message_service),
     current_user: User = Depends(get_current_user),
 ):
-    service = MessageService(
-        MessageRepository(db),
-        ConversationRepository(db),
-    )
-
     try:
         messages = await service.get_history(
             conversation_id,
+            current_user.id,
+            page=page,
+            size=size,
         )
 
         await service.mark_all_read(
@@ -70,6 +76,12 @@ async def get_history(
             detail="Conversation not found",
         )
 
+    except PermissionDenied:
+        raise HTTPException(
+            status_code=403,
+            detail="Access denied",
+        )
+
 
 @router.patch(
     "/{message_id}/delivered",
@@ -77,22 +89,25 @@ async def get_history(
 )
 async def mark_delivered(
     message_id: int,
-    db: AsyncSession = Depends(get_db),
+    service: MessageService = Depends(get_message_service),
+    current_user: User = Depends(get_current_user),
 ):
-    service = MessageService(
-        MessageRepository(db),
-        ConversationRepository(db),
-    )
-
     try:
         return await service.mark_delivered(
             message_id,
+            current_user.id,
         )
 
     except MessageNotFound:
         raise HTTPException(
             status_code=404,
             detail="Message not found",
+        )
+
+    except PermissionDenied:
+        raise HTTPException(
+            status_code=403,
+            detail="Access denied",
         )
 
 
@@ -102,20 +117,51 @@ async def mark_delivered(
 )
 async def mark_as_read(
     message_id: int,
-    db: AsyncSession = Depends(get_db),
+    service: MessageService = Depends(get_message_service),
+    current_user: User = Depends(get_current_user),
 ):
-    service = MessageService(
-        MessageRepository(db),
-        ConversationRepository(db),
-    )
-
     try:
         return await service.mark_as_read(
             message_id,
+            current_user.id,
         )
 
     except MessageNotFound:
         raise HTTPException(
             status_code=404,
             detail="Message not found",
+        )
+
+    except PermissionDenied:
+        raise HTTPException(
+            status_code=403,
+            detail="Access denied",
+        )
+
+
+@router.delete(
+    "/{message_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+)
+async def delete_message(
+    message_id: int,
+    service: MessageService = Depends(get_message_service),
+    current_user: User = Depends(get_current_user),
+):
+    try:
+        await service.delete(
+            message_id,
+            current_user.id,
+        )
+
+    except MessageNotFound:
+        raise HTTPException(
+            status_code=404,
+            detail="Message not found",
+        )
+
+    except PermissionDenied:
+        raise HTTPException(
+            status_code=403,
+            detail="You can delete only your own messages",
         )

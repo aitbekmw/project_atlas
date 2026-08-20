@@ -35,11 +35,20 @@ class MessageRepository:
     async def get_by_conversation(
         self,
         conversation_id: int,
+        page: int = 1,
+        size: int = 100,
     ):
+        offset = (page - 1) * size
+
         result = await self.db.execute(
             select(Message)
             .where(Message.conversation_id == conversation_id)
-            .order_by(Message.created_at.asc())
+            .order_by(
+                Message.created_at.asc(),
+                Message.id.asc(),
+            )
+            .offset(offset)
+            .limit(size)
         )
 
         return result.scalars().all()
@@ -59,8 +68,9 @@ class MessageRepository:
         self,
         message: Message,
     ):
-        message.is_read = True
-        message.read_at = datetime.now(timezone.utc)
+        if not message.is_read:
+            message.is_read = True
+            message.read_at = datetime.now(timezone.utc)
 
         await self.db.commit()
         await self.db.refresh(message)

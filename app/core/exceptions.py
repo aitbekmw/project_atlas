@@ -1,12 +1,5 @@
 class AtlasException(Exception):
-    """Базовое исключение проекта."""
-
-    pass
-
-
-# ==========================
-# User
-# ==========================
+    """Base project exception."""
 
 
 class JobNotFound(AtlasException):
@@ -37,11 +30,6 @@ class ApplicationAlreadyExists(AtlasException):
     pass
 
 
-# ==========================
-# Category
-# ==========================
-
-
 class CategoryAlreadyExists(AtlasException):
     pass
 
@@ -66,13 +54,12 @@ class JobNotCompleted(AtlasException):
     pass
 
 
-class SelfReviewNotAllowed(AtlasException):
+class JobNotOpen(AtlasException):
     pass
 
 
-# ==========================
-# Password
-# ==========================
+class SelfReviewNotAllowed(AtlasException):
+    pass
 
 
 class IncorrectPassword(AtlasException):
@@ -80,4 +67,24 @@ class IncorrectPassword(AtlasException):
 
 
 class SamePassword(AtlasException):
+    pass
+
+
+class ConversationNotFound(AtlasException):
+    pass
+
+
+class ConversationAlreadyExists(AtlasException):
+    pass
+
+
+class MessageNotFound(AtlasException):
+    pass
+
+
+class InvalidRefreshToken(AtlasException):
+    pass
+
+
+class InvalidFile(AtlasException):
     pass

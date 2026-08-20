@@ -1,16 +1,15 @@
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.exceptions import (
     ApplicationAlreadyExists,
     ApplicationNotFound,
+    JobNotFound,
+    JobNotOpen,
     PermissionDenied,
 )
-from app.db.session import get_db
 from app.dependencies.auth import get_current_user
+from app.dependencies.services import get_application_service
 from app.models.user import User
-from app.repositories.application import ApplicationRepository
-from app.repositories.job import JobRepository
 from app.schemas.application import (
     ApplicationCreate,
     ApplicationResponse,
@@ -31,23 +30,37 @@ router = APIRouter(
 )
 async def create_application(
     data: ApplicationCreate,
-    db: AsyncSession = Depends(get_db),
+    service: ApplicationService = Depends(get_application_service),
     current_user: User = Depends(get_current_user),
 ):
-    service = ApplicationService(
-        ApplicationRepository(db),
-        JobRepository(db),
-    )
     try:
         return await service.create(
             data,
             current_user.id,
         )
 
+    except JobNotFound:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Job not found",
+        )
+
     except ApplicationAlreadyExists:
         raise HTTPException(
-            status_code=400,
+            status_code=status.HTTP_400_BAD_REQUEST,
             detail="You have already applied",
+        )
+
+    except JobNotOpen:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Job is not open for applications",
+        )
+
+    except PermissionDenied:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You cannot apply to your own job",
         )
 
 
@@ -56,14 +69,10 @@ async def create_application(
     response_model=list[ApplicationResponse],
 )
 async def get_applications(
-    db: AsyncSession = Depends(get_db),
+    service: ApplicationService = Depends(get_application_service),
+    current_user: User = Depends(get_current_user),
 ):
-    service = ApplicationService(
-        ApplicationRepository(db),
-        JobRepository(db),
-    )
-
-    return await service.get_all()
+    return await service.get_all(current_user)
 
 
 @router.get(
@@ -72,20 +81,22 @@ async def get_applications(
 )
 async def get_application(
     application_id: int,
-    db: AsyncSession = Depends(get_db),
+    service: ApplicationService = Depends(get_application_service),
+    current_user: User = Depends(get_current_user),
 ):
-    service = ApplicationService(
-        ApplicationRepository(db),
-        JobRepository(db),
-    )
-
     try:
-        return await service.get_by_id(application_id)
+        return await service.get_by_id(application_id, current_user)
 
     except ApplicationNotFound:
         raise HTTPException(
-            status_code=404,
+            status_code=status.HTTP_404_NOT_FOUND,
             detail="Application not found",
+        )
+
+    except PermissionDenied:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Permission denied",
         )
 
 
@@ -96,23 +107,26 @@ async def get_application(
 async def update_application(
     application_id: int,
     data: ApplicationUpdate,
-    db: AsyncSession = Depends(get_db),
+    service: ApplicationService = Depends(get_application_service),
+    current_user: User = Depends(get_current_user),
 ):
-    service = ApplicationService(
-        ApplicationRepository(db),
-        JobRepository(db),
-    )
-
     try:
         return await service.update(
             application_id,
             data,
+            current_user,
         )
 
     except ApplicationNotFound:
         raise HTTPException(
-            status_code=404,
+            status_code=status.HTTP_404_NOT_FOUND,
             detail="Application not found",
+        )
+
+    except PermissionDenied:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You are not the owner of this job",
         )
 
 
@@ -122,20 +136,22 @@ async def update_application(
 )
 async def delete_application(
     application_id: int,
-    db: AsyncSession = Depends(get_db),
+    service: ApplicationService = Depends(get_application_service),
+    current_user: User = Depends(get_current_user),
 ):
-    service = ApplicationService(
-        ApplicationRepository(db),
-        JobRepository(db),
-    )
-
     try:
-        await service.delete(application_id)
+        await service.delete(application_id, current_user)
 
     except ApplicationNotFound:
         raise HTTPException(
-            status_code=404,
+            status_code=status.HTTP_404_NOT_FOUND,
             detail="Application not found",
+        )
+
+    except PermissionDenied:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Permission denied",
         )
 
 
@@ -145,29 +161,24 @@ async def delete_application(
 )
 async def accept_application(
     application_id: int,
-    db: AsyncSession = Depends(get_db),
+    service: ApplicationService = Depends(get_application_service),
     current_user: User = Depends(get_current_user),
 ):
-    service = ApplicationService(
-        ApplicationRepository(db),
-        JobRepository(db),
-    )
-
     try:
         return await service.accept(
             application_id,
-            current_user.id,
+            current_user,
         )
 
     except ApplicationNotFound:
         raise HTTPException(
-            status_code=404,
+            status_code=status.HTTP_404_NOT_FOUND,
             detail="Application not found",
         )
 
     except PermissionDenied:
         raise HTTPException(
-            status_code=403,
+            status_code=status.HTTP_403_FORBIDDEN,
             detail="You are not the owner of this job",
         )
 
@@ -178,28 +189,23 @@ async def accept_application(
 )
 async def reject_application(
     application_id: int,
-    db: AsyncSession = Depends(get_db),
+    service: ApplicationService = Depends(get_application_service),
     current_user: User = Depends(get_current_user),
 ):
-    service = ApplicationService(
-        ApplicationRepository(db),
-        JobRepository(db),
-    )
-
     try:
         return await service.reject(
             application_id,
-            current_user.id,
+            current_user,
         )
 
     except ApplicationNotFound:
         raise HTTPException(
-            status_code=404,
+            status_code=status.HTTP_404_NOT_FOUND,
             detail="Application not found",
         )
 
     except PermissionDenied:
         raise HTTPException(
-            status_code=403,
+            status_code=status.HTTP_403_FORBIDDEN,
             detail="You are not the owner of this job",
         )

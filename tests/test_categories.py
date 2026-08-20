@@ -2,7 +2,7 @@ import pytest
 
 
 @pytest.mark.asyncio
-async def test_create_category(client):
+async def test_create_category(client, admin_headers):
     payload = {
         "name": "IT",
         "description": "Information Technology",
@@ -11,6 +11,7 @@ async def test_create_category(client):
     response = await client.post(
         "/categories",
         json=payload,
+        headers=admin_headers,
     )
 
     assert response.status_code == 201
@@ -22,7 +23,31 @@ async def test_create_category(client):
 
 
 @pytest.mark.asyncio
-async def test_get_categories(client):
+async def test_create_category_unauthorized(client, auth_headers):
+    response = await client.post(
+        "/categories",
+        json={
+            "name": "IT",
+            "description": "Information Technology",
+        },
+    )
+
+    assert response.status_code == 401
+
+    response = await client.post(
+        "/categories",
+        json={
+            "name": "IT",
+            "description": "Information Technology",
+        },
+        headers=auth_headers,
+    )
+
+    assert response.status_code == 403
+
+
+@pytest.mark.asyncio
+async def test_get_categories(client, admin_headers):
     payload = {
         "name": "IT",
         "description": "Information Technology",
@@ -31,6 +56,7 @@ async def test_get_categories(client):
     response = await client.post(
         "/categories",
         json=payload,
+        headers=admin_headers,
     )
 
     assert response.status_code == 201
@@ -47,7 +73,7 @@ async def test_get_categories(client):
 
 
 @pytest.mark.asyncio
-async def test_get_category_by_id(client):
+async def test_get_category_by_id(client, admin_headers):
     payload = {
         "name": "IT",
         "description": "Information Technology",
@@ -56,6 +82,7 @@ async def test_get_category_by_id(client):
     response = await client.post(
         "/categories",
         json=payload,
+        headers=admin_headers,
     )
 
     assert response.status_code == 201
@@ -74,7 +101,7 @@ async def test_get_category_by_id(client):
 
 
 @pytest.mark.asyncio
-async def test_update_category(client):
+async def test_update_category(client, admin_headers):
     payload = {
         "name": "IT",
         "description": "Information Technology",
@@ -83,6 +110,7 @@ async def test_update_category(client):
     response = await client.post(
         "/categories",
         json=payload,
+        headers=admin_headers,
     )
 
     assert response.status_code == 201
@@ -95,6 +123,7 @@ async def test_update_category(client):
             "name": "Backend",
             "description": "Backend Development",
         },
+        headers=admin_headers,
     )
 
     assert response.status_code == 200
@@ -106,7 +135,7 @@ async def test_update_category(client):
 
 
 @pytest.mark.asyncio
-async def test_delete_category(client):
+async def test_delete_category(client, admin_headers):
     payload = {
         "name": "IT",
         "description": "Information Technology",
@@ -115,13 +144,17 @@ async def test_delete_category(client):
     response = await client.post(
         "/categories",
         json=payload,
+        headers=admin_headers,
     )
 
     assert response.status_code == 201
 
     category = response.json()
 
-    response = await client.delete(f"/categories/{category['id']}")
+    response = await client.delete(
+        f"/categories/{category['id']}",
+        headers=admin_headers,
+    )
 
     assert response.status_code == 204
 

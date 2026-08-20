@@ -38,7 +38,15 @@ class CategoryService:
     ):
         category = await self.get_by_id(category_id)
 
-        for key, value in data.model_dump(exclude_unset=True).items():
+        payload = data.model_dump(exclude_unset=True)
+
+        if "name" in payload:
+            existing = await self.repo.get_by_name(payload["name"])
+
+            if existing and existing.id != category.id:
+                raise CategoryAlreadyExists()
+
+        for key, value in payload.items():
             setattr(category, key, value)
 
         await self.repo.update()

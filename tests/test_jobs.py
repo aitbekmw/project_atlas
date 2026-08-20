@@ -13,7 +13,7 @@ from tests.conftest import TestingSessionLocal
 
 
 @pytest.mark.asyncio
-async def test_create_job_success(client, customer_headers, category, job_id=None):
+async def test_create_job_success(client, customer_headers, category):
     payload = {
         "title": "Python Backend Developer",
         "description": "Need FastAPI developer",
@@ -58,6 +58,26 @@ async def test_create_job_unauthorized(client, category):
     )
 
     assert response.status_code == 401
+
+
+@pytest.mark.asyncio
+async def test_create_job_forbidden_for_worker(client, auth_headers, category):
+    payload = {
+        "title": "Backend",
+        "description": "FastAPI",
+        "salary": 100000,
+        "city": "Bishkek",
+        "address": "Manas",
+        "category_id": category.id,
+    }
+
+    response = await client.post(
+        "/jobs",
+        json=payload,
+        headers=auth_headers,
+    )
+
+    assert response.status_code == 403
 
 
 # ==========================================================
@@ -598,3 +618,37 @@ async def test_search_job_by_category(client, customer_headers, category):
 
     assert len(jobs) == 1
     assert jobs[0]["category_id"] == category.id
+
+
+@pytest.mark.asyncio
+async def test_cancel_job_success(client, customer_headers, category):
+    payload = {
+        "title": "Cancel Job",
+        "description": "Test",
+        "salary": 100000,
+        "city": "Bishkek",
+        "address": "Manas",
+        "category_id": category.id,
+    }
+
+    response = await client.post(
+        "/jobs",
+        json=payload,
+        headers=customer_headers,
+    )
+
+    assert response.status_code == 201
+
+    job_id = response.json()["id"]
+
+    response = await client.post(
+        f"/jobs/{job_id}/cancel",
+        headers=customer_headers,
+    )
+
+    assert response.status_code == 200
+
+    data = response.json()
+
+    assert data["status"] == JobStatus.CANCELLED.value
+    assert data["is_active"] is False

@@ -1,4 +1,3 @@
-import asyncio
 from datetime import datetime, timezone
 
 from sqlalchemy import select
@@ -12,12 +11,6 @@ class UserRepository:
         self.db = db
 
     async def get_by_email(self, email: str):
-        print("=" * 60)
-        print("REPOSITORY")
-        print("Session:", id(self.db))
-        print("Loop:", asyncio.get_running_loop())
-        print("=" * 60)
-
         result = await self.db.execute(select(User).where(User.email == email))
         return result.scalar_one_or_none()
 

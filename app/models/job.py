@@ -48,7 +48,10 @@ class Job(Base):
     )
 
     category_id: Mapped[int] = mapped_column(
-        ForeignKey("categories.id"),
+        ForeignKey(
+            "categories.id",
+            ondelete="RESTRICT",
+        ),
         nullable=False,
     )
 
@@ -88,6 +91,12 @@ class Job(Base):
 
     applications = relationship(
         "Application",
+        back_populates="job",
+        cascade="all, delete-orphan",
+    )
+
+    reviews = relationship(
+        "Review",
         back_populates="job",
         cascade="all, delete-orphan",
     )

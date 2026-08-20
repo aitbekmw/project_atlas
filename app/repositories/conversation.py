@@ -1,4 +1,4 @@
-from sqlalchemy import select
+from sqlalchemy import desc, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.conversation import Conversation
@@ -47,10 +47,12 @@ class ConversationRepository:
         user_id: int,
     ):
         result = await self.db.execute(
-            select(Conversation).where(
+            select(Conversation)
+            .where(
                 (Conversation.customer_id == user_id)
                 | (Conversation.worker_id == user_id)
             )
+            .order_by(desc(Conversation.created_at))
         )
 
         return result.scalars().all()

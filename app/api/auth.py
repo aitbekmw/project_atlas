@@ -1,12 +1,8 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, status
 from fastapi.security import OAuth2PasswordRequestForm
 
-from app.core.exceptions import (
-    EmailAlreadyExists,
-    InvalidCredentials,
-    UsernameAlreadyExists,
-)
 from app.dependencies.services import get_auth_service
+from app.schemas.token import RefreshTokenRequest, TokenResponse
 from app.schemas.user import UserCreate, UserLogin, UserResponse
 from app.services.auth import AuthService
 
@@ -25,53 +21,54 @@ async def register(
     data: UserCreate,
     service: AuthService = Depends(get_auth_service),
 ):
-    try:
-        return await service.register(data)
-
-    except EmailAlreadyExists:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Email already exists",
-        )
-
-    except UsernameAlreadyExists:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Username already exists",
-        )
+    return await service.register(data)
 
 
-@router.post("/login")
+@router.post(
+    "/login",
+    response_model=TokenResponse,
+)
 async def login(
     data: UserLogin,
     service: AuthService = Depends(get_auth_service),
 ):
-    try:
-        return await service.login(
-            data.email,
-            data.password,
-        )
-
-    except InvalidCredentials:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid email or password",
-        )
+    return await service.login(
+        data.email,
+        data.password,
+    )
 
 
-@router.post("/token")
+@router.post(
+    "/token",
+    response_model=TokenResponse,
+)
 async def token(
     form_data: OAuth2PasswordRequestForm = Depends(),
     service: AuthService = Depends(get_auth_service),
 ):
-    try:
-        return await service.login_by_username(
-            form_data.username,
-            form_data.password,
-        )
+    return await service.login_by_username(
+        form_data.username,
+        form_data.password,
+    )
 
-    except InvalidCredentials:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid username or password",
-        )
+
+@router.post(
+    "/refresh",
+    response_model=TokenResponse,
+)
+async def refresh(
+    data: RefreshTokenRequest,
+    service: AuthService = Depends(get_auth_service),
+):
+    return await service.refresh(data.refresh_token)
+
+
+@router.post(
+    "/logout",
+    status_code=status.HTTP_204_NO_CONTENT,
+)
+async def logout(
+    data: RefreshTokenRequest,
+    service: AuthService = Depends(get_auth_service),
+):
+    await service.logout(data.refresh_token)

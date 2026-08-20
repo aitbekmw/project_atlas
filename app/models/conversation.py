@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlalchemy import DateTime, ForeignKey, Integer, UniqueConstraint, func
+from sqlalchemy import DateTime, ForeignKey, Integer, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
@@ -8,13 +8,6 @@ from app.db.base import Base
 
 class Conversation(Base):
     __tablename__ = "conversations"
-
-    __table_args__ = (
-        UniqueConstraint(
-            "job_id",
-            name="uq_conversation_job",
-        ),
-    )
 
     id: Mapped[int] = mapped_column(
         Integer,

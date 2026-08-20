@@ -6,21 +6,8 @@ async def test_create_conversation(
     client,
     customer_headers,
     auth_headers,
+    category,
 ):
-    # Создаем категорию
-    category = await client.post(
-        "/categories",
-        json={
-            "name": "IT",
-            "description": "Information Technology",
-        },
-    )
-
-    assert category.status_code == 201
-
-    category_data = category.json()
-
-    # Создаем вакансию
     job = await client.post(
         "/jobs",
         json={
@@ -29,7 +16,7 @@ async def test_create_conversation(
             "salary": 5000,
             "city": "Bishkek",
             "address": "Chui 100",
-            "category_id": category_data["id"],
+            "category_id": category.id,
         },
         headers=customer_headers,
     )
@@ -38,19 +25,14 @@ async def test_create_conversation(
 
     job_data = job.json()
 
-    # Получаем текущего worker
-    me = await client.get(
-        "/users/me",
-        headers=auth_headers,
-    )
+    customer = await client.get("/users/me", headers=customer_headers)
+    worker = await client.get("/users/me", headers=auth_headers)
 
-    assert me.status_code == 200
+    assert customer.status_code == 200
+    assert worker.status_code == 200
 
-    worker = me.json()
-
-    # Создаем диалог
     response = await client.post(
-        f"/conversations/{job_data['id']}/{worker['id']}",
+        f"/conversations/{job_data['id']}/{worker.json()['id']}",
         headers=customer_headers,
     )
 
@@ -59,5 +41,21 @@ async def test_create_conversation(
     data = response.json()
 
     assert data["job_id"] == job_data["id"]
-    assert data["customer_id"] == 1
-    assert data["worker_id"] == worker["id"]
+    assert data["customer_id"] == customer.json()["id"]
+    assert data["worker_id"] == worker.json()["id"]
+
+    fetched = await client.get(
+        f"/conversations/{data['id']}",
+        headers=customer_headers,
+    )
+
+    assert fetched.status_code == 200
+    assert fetched.json()["id"] == data["id"]
+
+    my_conversations = await client.get(
+        "/conversations",
+        headers=auth_headers,
+    )
+
+    assert my_conversations.status_code == 200
+    assert len(my_conversations.json()) == 1

@@ -39,11 +39,13 @@ class Message(Base):
     is_delivered: Mapped[bool] = mapped_column(
         Boolean,
         default=False,
+        nullable=False,
     )
 
     is_read: Mapped[bool] = mapped_column(
         Boolean,
         default=False,
+        nullable=False,
     )
 
     read_at: Mapped[datetime | None] = mapped_column(

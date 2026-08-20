@@ -10,13 +10,11 @@ class ConnectionManager:
             list[WebSocket],
         ] = defaultdict(list)
 
-    async def connect(
+    def connect(
         self,
         conversation_id: int,
         websocket: WebSocket,
     ):
-        await websocket.accept()
-
         self.active_connections[conversation_id].append(websocket)
 
     def disconnect(

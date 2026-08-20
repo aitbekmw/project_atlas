@@ -74,6 +74,9 @@ def decode_access_token(
             issuer=settings.JWT_ISSUER,
         )
 
+        if payload.get("type") != "access":
+            return None
+
         return payload
 
     except JWTError:
