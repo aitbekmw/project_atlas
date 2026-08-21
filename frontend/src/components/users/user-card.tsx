@@ -4,8 +4,9 @@ import { Link } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { UserAvatar } from "@/components/users/user-avatar";
+import { useI18n } from "@/i18n/locale-context";
+import { roleKey } from "@/i18n/status";
 import type { User } from "@/types/api";
-import { ROLE_LABEL } from "@/types/api";
 
 interface UserCardProps {
   user: User;
@@ -13,6 +14,7 @@ interface UserCardProps {
 }
 
 export function UserCard({ user, href }: UserCardProps) {
+  const { t } = useI18n();
   const content = (
     <Card className="h-full transition-shadow hover:shadow-md">
       <CardContent className="flex items-center gap-4 p-5">
@@ -26,9 +28,9 @@ export function UserCard({ user, href }: UserCardProps) {
           </p>
           <p className="truncate text-sm text-muted-foreground">@{user.username}</p>
           <div className="mt-2 flex items-center gap-2">
-            <Badge variant="secondary">{ROLE_LABEL[user.role]}</Badge>
+            <Badge variant="secondary">{t(roleKey(user.role))}</Badge>
             {user.is_online ? (
-              <span className="text-xs text-success">онлайн</span>
+              <span className="text-xs text-success">{t("common.online")}</span>
             ) : null}
           </div>
         </div>

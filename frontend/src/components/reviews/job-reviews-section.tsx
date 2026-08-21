@@ -9,6 +9,7 @@ import { EmptyState } from "@/components/states/empty-state";
 import { ErrorState } from "@/components/states/error-state";
 import { ReviewListSkeleton } from "@/components/states/loading-state";
 import { Card, CardContent } from "@/components/ui/card";
+import { useI18n } from "@/i18n/locale-context";
 import { queryKeys } from "@/lib/query-keys";
 import { fullName, getErrorMessage } from "@/lib/utils";
 import type { Application, Job, User } from "@/types/api";
@@ -26,6 +27,7 @@ export function JobReviewsSection({
   applications = [],
   myAccepted,
 }: JobReviewsSectionProps) {
+  const { t } = useI18n();
   const queryClient = useQueryClient();
   const reviewsQuery = useQuery({
     queryKey: queryKeys.reviews,
@@ -60,7 +62,7 @@ export function JobReviewsSection({
         comment: values.comment,
       }),
     onSuccess: async () => {
-      toast.success("Отзыв опубликован");
+      toast.success(t("reviews.published"));
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: queryKeys.reviews }),
         queryClient.invalidateQueries({ queryKey: queryKeys.userReviews(toUserId ?? 0) }),
@@ -73,7 +75,7 @@ export function JobReviewsSection({
   return (
     <Card className="mt-4">
       <CardContent className="p-6">
-        <h2 className="text-lg font-semibold">Отзывы по заказу</h2>
+        <h2 className="text-lg font-semibold">{t("reviews.forJob")}</h2>
         {reviewsQuery.isLoading ? (
           <div className="mt-4">
             <ReviewListSkeleton count={2} />
@@ -87,8 +89,8 @@ export function JobReviewsSection({
         {!reviewsQuery.isLoading && !reviewsQuery.isError && jobReviews.length === 0 ? (
           <div className="mt-4">
             <EmptyState
-              title="Отзывов по этому заказу нет"
-              description="Оценку могут оставить заказчик и принятый исполнитель после статуса COMPLETED."
+              title={t("reviews.noneForJob")}
+              description={t("reviews.noneForJobHint")}
               className="border-dashed"
             />
           </div>
@@ -109,11 +111,11 @@ export function JobReviewsSection({
         {canReview && toUserId ? (
           <div className="mt-6 rounded-xl border p-4">
             <p className="mb-3 text-sm text-muted-foreground">
-              Отзыв для{" "}
-              {recipientQuery.data
-                ? fullName(recipientQuery.data)
-                : `пользователя #${toUserId}`}
-              . Оценка 1–5, как в ReviewCreate.
+              {t("reviews.forUser", {
+                name: recipientQuery.data
+                  ? fullName(recipientQuery.data)
+                  : t("common.userFallback", { id: toUserId }),
+              })}
             </p>
             <ReviewForm
               isSubmitting={createMutation.isPending}
@@ -124,7 +126,7 @@ export function JobReviewsSection({
           </div>
         ) : null}
         {job.status === "COMPLETED" && alreadyReviewed ? (
-          <p className="mt-4 text-sm text-muted-foreground">Вы уже оставили отзыв по этому заказу.</p>
+          <p className="mt-4 text-sm text-muted-foreground">{t("reviews.already")}</p>
         ) : null}
       </CardContent>
     </Card>
@@ -146,6 +148,7 @@ function JobReviewRow({
   createdAt: string;
   jobId: number;
 }) {
+  const { t } = useI18n();
   const fromQuery = useQuery({
     queryKey: queryKeys.user(fromUserId),
     queryFn: () => getUser(fromUserId),
@@ -162,8 +165,8 @@ function JobReviewRow({
       rating={rating}
       comment={comment}
       createdAt={createdAt}
-      author={fromQuery.data ? fullName(fromQuery.data) : `Пользователь #${fromUserId}`}
-      recipient={toQuery.data ? fullName(toQuery.data) : `Пользователь #${toUserId}`}
+      author={fromQuery.data ? fullName(fromQuery.data) : t("common.userFallback", { id: fromUserId })}
+      recipient={toQuery.data ? fullName(toQuery.data) : t("common.userFallback", { id: toUserId })}
       jobId={jobId}
     />
   );

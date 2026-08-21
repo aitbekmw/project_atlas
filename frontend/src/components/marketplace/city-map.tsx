@@ -179,21 +179,20 @@ export function CityMap({
           <MapPin className="h-6 w-6 text-primary" />
           <p className="text-sm font-medium">{t("map.missing")}</p>
           <p className="max-w-sm text-xs text-muted-foreground">
-            Добавьте ключ MapGL в <code>VITE_2GIS_API_KEY</code>. Координаты заказов
-            backend не отдаёт — маркеры строятся геокодированием city + address.
+            {t("map.hint")}
           </p>
         </div>
       )}
 
       {API_KEY && coordsQuery.isLoading ? (
         <div className="absolute left-4 top-4 rounded-xl border bg-card px-3 py-2 text-xs text-muted-foreground">
-          Ищем адреса на карте…
+          {t("map.geocoding")}
         </div>
       ) : null}
 
       {API_KEY && !coordsQuery.isLoading && jobs.length > 0 && located.length === 0 ? (
         <div className="absolute left-4 top-4 rounded-xl border bg-card px-3 py-2 text-xs text-muted-foreground">
-          Не удалось определить координаты по адресам заказов
+          {t("map.noCoords")}
         </div>
       ) : null}
 
@@ -206,7 +205,7 @@ export function CityMap({
           <p className="mt-1 text-sm font-semibold leading-snug">{selected.title}</p>
           <p className="mt-2 text-sm font-bold text-primary">{formatMoney(selected.salary)}</p>
           <Button asChild size="sm" className="mt-3 w-full">
-            <Link to={jobHref(selected)}>Открыть заказ</Link>
+            <Link to={jobHref(selected)}>{t("map.openJob")}</Link>
           </Button>
         </div>
       ) : null}

@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { useI18n } from "@/i18n/locale-context";
 import { formatDate } from "@/lib/utils";
 
 interface ReviewCardProps {
@@ -13,7 +14,6 @@ interface ReviewCardProps {
   recipient?: string;
   jobId?: number;
   jobTitle?: string;
-  demo?: boolean;
   onDelete?: () => void;
   deleting?: boolean;
 }
@@ -26,10 +26,10 @@ export function ReviewCard({
   recipient,
   jobId,
   jobTitle,
-  demo = false,
   onDelete,
   deleting,
 }: ReviewCardProps) {
+  const { t } = useI18n();
   return (
     <Card>
       <CardContent className="p-5">
@@ -41,20 +41,17 @@ export function ReviewCard({
         <p className="mt-3 text-sm leading-6">{comment}</p>
         <div className="mt-4 space-y-1 text-xs text-muted-foreground">
           {author ? <p className="font-medium text-foreground">{author}</p> : null}
-          {recipient ? <p>Оценка для: {recipient}</p> : null}
+          {recipient ? <p>{t("reviews.forRecipient", { name: recipient })}</p> : null}
           {jobId ? (
             <p>
               <Link to={`/jobs/${jobId}`} className="hover:text-primary">
-                {jobTitle ?? `Заказ #${jobId}`}
+                {jobTitle ?? t("common.jobFallback", { id: jobId })}
               </Link>
             </p>
           ) : jobTitle ? (
             <p>{jobTitle}</p>
           ) : null}
-          <p>
-            {formatDate(createdAt)}
-            {demo ? " · демо" : ""}
-          </p>
+          <p>{formatDate(createdAt)}</p>
         </div>
         {onDelete ? (
           <Button
@@ -64,7 +61,7 @@ export function ReviewCard({
             disabled={deleting}
             onClick={onDelete}
           >
-            Удалить
+            {t("common.delete")}
           </Button>
         ) : null}
       </CardContent>

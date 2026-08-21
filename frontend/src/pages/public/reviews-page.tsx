@@ -8,9 +8,11 @@ import { EmptyState } from "@/components/states/empty-state";
 import { ErrorState } from "@/components/states/error-state";
 import { ReviewListSkeleton } from "@/components/states/loading-state";
 import { queryKeys } from "@/lib/query-keys";
+import { useI18n } from "@/i18n/locale-context";
 import { fullName } from "@/lib/utils";
 
 export function ReviewsPage() {
+  const { t } = useI18n();
   const reviewsQuery = useQuery({
     queryKey: queryKeys.reviews,
     queryFn: listReviews,
@@ -36,9 +38,9 @@ export function ReviewsPage() {
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-12">
-      <h1 className="text-3xl font-bold tracking-tight">Отзывы</h1>
+      <h1 className="text-3xl font-bold tracking-tight">{t("reviews.title")}</h1>
       <p className="mt-2 max-w-2xl text-muted-foreground">
-        Реальные оценки из GET /reviews после завершённых заказов.
+        {t("reviews.hint")}
       </p>
       {reviewsQuery.isLoading ? (
         <div className="mt-8">
@@ -53,8 +55,8 @@ export function ReviewsPage() {
       {!reviewsQuery.isLoading && !reviewsQuery.isError && reviews.length === 0 ? (
         <div className="mt-8">
           <EmptyState
-            title="Отзывов пока нет"
-            description="После завершения заказа участники смогут оставить оценку. Пустой список API не заменяется демо."
+            title={t("reviews.empty")}
+            description={t("reviews.emptyHint")}
           />
         </div>
       ) : null}
@@ -66,10 +68,10 @@ export function ReviewsPage() {
               rating={review.rating}
               comment={review.comment}
               createdAt={review.created_at}
-              author={labelFor(review.from_user_id, namesQuery.data)}
-              recipient={labelFor(review.to_user_id, namesQuery.data)}
+              author={labelFor(review.from_user_id, namesQuery.data, t("common.userFallback", { id: review.from_user_id }))}
+              recipient={labelFor(review.to_user_id, namesQuery.data, t("common.userFallback", { id: review.to_user_id }))}
               jobId={review.job_id}
-              jobTitle={jobsQuery.data?.[review.job_id]}
+              jobTitle={jobsQuery.data?.[review.job_id] || t("common.jobFallback", { id: review.job_id })}
             />
           ))}
         </div>
@@ -78,8 +80,8 @@ export function ReviewsPage() {
   );
 }
 
-function labelFor(userId: number, names?: Record<number, string>): string {
-  return names?.[userId] ?? `Пользователь #${userId}`;
+function labelFor(userId: number, names?: Record<number, string>, fallback = ""): string {
+  return names?.[userId] || fallback;
 }
 
 async function fetchUserNames(ids: number[]): Promise<Record<number, string>> {
@@ -89,7 +91,7 @@ async function fetchUserNames(ids: number[]): Promise<Record<number, string>> {
         const user = await getUser(id);
         return [id, fullName(user)] as const;
       } catch {
-        return [id, `Пользователь #${id}`] as const;
+        return [id, ""] as const;
       }
     }),
   );
@@ -103,7 +105,7 @@ async function fetchJobTitles(ids: number[]): Promise<Record<number, string>> {
         const job = await getJob(id);
         return [id, job.title] as const;
       } catch {
-        return [id, `Заказ #${id}`] as const;
+        return [id, ""] as const;
       }
     }),
   );

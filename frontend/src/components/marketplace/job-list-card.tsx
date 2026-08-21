@@ -2,8 +2,10 @@ import { Clock, MapPin } from "lucide-react";
 import { Link } from "react-router-dom";
 
 import { Badge } from "@/components/ui/badge";
+import { useI18n } from "@/i18n/locale-context";
+import { jobStatusKey } from "@/i18n/status";
 import { cn, formatDate, formatMoney } from "@/lib/utils";
-import { JOB_STATUS_LABEL, type Job, type JobStatus } from "@/types/api";
+import type { Job, JobStatus } from "@/types/api";
 
 const statusVariant: Record<JobStatus, "success" | "warning" | "secondary" | "danger"> = {
   OPEN: "success",
@@ -27,6 +29,7 @@ export function MarketplaceJobCard({
   layout = "list",
   active = false,
 }: MarketplaceJobCardProps) {
+  const { t } = useI18n();
   const to = href ?? `/jobs/${job.id}`;
   const compact = layout === "horizontal";
 
@@ -40,8 +43,10 @@ export function MarketplaceJobCard({
       )}
     >
       <div className="flex items-start justify-between gap-3">
-        <Badge variant="secondary">{categoryName ?? `Категория #${job.category_id}`}</Badge>
-        <Badge variant={statusVariant[job.status]}>{JOB_STATUS_LABEL[job.status]}</Badge>
+        <Badge variant="secondary">
+          {categoryName ?? t("common.categoryFallback", { id: job.category_id })}
+        </Badge>
+        <Badge variant={statusVariant[job.status]}>{t(jobStatusKey(job.status))}</Badge>
       </div>
       <h3 className={cn("mt-3 font-semibold leading-snug", compact ? "text-base" : "text-lg")}>
         {job.title}

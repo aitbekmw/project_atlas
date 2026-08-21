@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 
 import { cn, formatDateTime } from "@/lib/utils";
+import { useI18n } from "@/i18n/locale-context";
 import type { Message } from "@/types/api";
 
 interface MessageListProps {
@@ -9,6 +10,7 @@ interface MessageListProps {
 }
 
 export function MessageList({ messages, currentUserId }: MessageListProps) {
+  const { t } = useI18n();
   const endRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -18,7 +20,7 @@ export function MessageList({ messages, currentUserId }: MessageListProps) {
   if (messages.length === 0) {
     return (
       <div className="flex h-full items-center justify-center p-6 text-center text-sm text-muted-foreground">
-        Напишите первое сообщение
+        {t("chat.first")}
       </div>
     );
   }
@@ -49,9 +51,9 @@ export function MessageList({ messages, currentUserId }: MessageListProps) {
               >
                 {formatDateTime(message.created_at)}
                 {mine && message.is_read
-                  ? " · прочитано"
+                  ? ` · ${t("chat.read")}`
                   : mine && message.is_delivered
-                    ? " · доставлено"
+                    ? ` · ${t("chat.delivered")}`
                     : ""}
               </p>
             </div>

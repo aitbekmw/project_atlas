@@ -11,6 +11,7 @@ import {
   MAX_AVATAR_BYTES,
   resolveAvatarSrc,
 } from "@/lib/avatar";
+import { useI18n } from "@/i18n/locale-context";
 import { queryKeys } from "@/lib/query-keys";
 import { getErrorMessage } from "@/lib/utils";
 import type { User } from "@/types/api";
@@ -21,6 +22,7 @@ interface AvatarEditorProps {
 }
 
 export function AvatarEditor({ user, onUpdated }: AvatarEditorProps) {
+  const { t } = useI18n();
   const inputRef = useRef<HTMLInputElement>(null);
   const queryClient = useQueryClient();
   const storedValue = user.avatar;
@@ -30,7 +32,7 @@ export function AvatarEditor({ user, onUpdated }: AvatarEditorProps) {
     mutationFn: uploadAvatar,
     onSuccess: async (updated) => {
       await syncUser(updated);
-      toast.success("Фото профиля обновлено");
+      toast.success(t("avatar.updated"));
     },
     onError: (error) => toast.error(getErrorMessage(error)),
   });
@@ -39,7 +41,7 @@ export function AvatarEditor({ user, onUpdated }: AvatarEditorProps) {
     mutationFn: deleteAvatar,
     onSuccess: async (updated) => {
       await syncUser(updated);
-      toast.success("Фото профиля удалено");
+      toast.success(t("avatar.deleted"));
     },
     onError: (error) => toast.error(getErrorMessage(error)),
   });
@@ -60,12 +62,12 @@ export function AvatarEditor({ user, onUpdated }: AvatarEditorProps) {
     }
 
     if (!isAllowedAvatarType(file.type)) {
-      toast.error("Можно загрузить JPEG, PNG или WebP");
+      toast.error(t("error.unsupportedFile"));
       return;
     }
 
     if (file.size > MAX_AVATAR_BYTES) {
-      toast.error("Файл больше 5 МБ");
+      toast.error(t("error.fileTooLarge"));
       return;
     }
 
@@ -81,9 +83,9 @@ export function AvatarEditor({ user, onUpdated }: AvatarEditorProps) {
             {displayUrl}
           </p>
         ) : (
-          <p className="text-sm text-muted-foreground">Фото не загружено — показаны инициалы</p>
+          <p className="text-sm text-muted-foreground">{t("avatar.none")}</p>
         )}
-        <p className="mt-1 text-xs text-muted-foreground">JPEG, PNG или WebP, до 5 МБ</p>
+        <p className="mt-1 text-xs text-muted-foreground">{t("avatar.hint")}</p>
         <div className="mt-3 flex flex-wrap gap-2">
           <input
             ref={inputRef}
@@ -98,7 +100,7 @@ export function AvatarEditor({ user, onUpdated }: AvatarEditorProps) {
             disabled={busy}
             onClick={() => inputRef.current?.click()}
           >
-            {uploadMutation.isPending ? "Загрузка…" : "Загрузить фото"}
+            {uploadMutation.isPending ? t("avatar.uploading") : t("avatar.upload")}
           </Button>
           {storedValue ? (
             <Button
@@ -108,7 +110,7 @@ export function AvatarEditor({ user, onUpdated }: AvatarEditorProps) {
               disabled={busy}
               onClick={() => deleteMutation.mutate()}
             >
-              {deleteMutation.isPending ? "Удаление…" : "Удалить"}
+              {deleteMutation.isPending ? t("common.deleting") : t("common.delete")}
             </Button>
           ) : null}
         </div>

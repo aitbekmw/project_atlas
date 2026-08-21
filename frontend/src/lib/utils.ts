@@ -2,8 +2,34 @@ import { isAxiosError } from "axios";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 
+import { BCP47, messages, type Locale, type MessageKey } from "@/i18n/messages";
+
 export function cn(...inputs: ClassValue[]): string {
   return twMerge(clsx(inputs));
+}
+
+let activeLocale: Locale = "ru";
+
+export function setActiveLocale(locale: Locale): void {
+  activeLocale = locale;
+}
+
+export function getActiveLocale(): Locale {
+  return activeLocale;
+}
+
+function interpolate(template: string, vars?: Record<string, string | number>): string {
+  if (!vars) {
+    return template;
+  }
+  return template.replace(/\{(\w+)\}/g, (_, name: string) =>
+    vars[name] === undefined ? `{${name}}` : String(vars[name]),
+  );
+}
+
+function tr(key: MessageKey, vars?: Record<string, string | number>): string {
+  const value = messages[activeLocale][key];
+  return interpolate(value ?? key, vars);
 }
 
 export function getHttpStatus(error: unknown): number | undefined {
@@ -21,13 +47,50 @@ export function getHttpStatus(error: unknown): number | undefined {
   return undefined;
 }
 
+const AUTH_ERROR_KEYS: Record<string, MessageKey> = {
+  "Invalid email or password": "error.invalidCredentials",
+  "Email already exists": "error.emailExists",
+  "Username already exists": "error.usernameExists",
+  "Invalid refresh token": "error.sessionExpired",
+  "You have already applied": "error.alreadyApplied",
+  "Job is not open for applications": "error.jobNotOpen",
+  "You cannot apply to your own job": "error.ownJob",
+  "You are not the owner of this job": "error.notOwner",
+  "Permission denied": "error.permission",
+  "Application not found": "error.applicationNotFound",
+  "Job not found": "error.jobNotFound",
+  "Access denied": "error.accessDenied",
+  "Conversation not found": "error.conversationNotFound",
+  "Message not found": "error.messageNotFound",
+  "Conversation already exists": "error.conversationExists",
+  "Review not found": "error.reviewNotFound",
+  "Job is not completed": "error.jobNotCompleted",
+  "You cannot review yourself": "error.selfReview",
+  "Review already exists": "error.reviewExists",
+  "You can review only after the job is completed by its participants":
+    "error.reviewParticipants",
+  "You can delete only your own reviews": "error.deleteOwnReview",
+  "Unsupported file type": "error.unsupportedFile",
+  "File too large": "error.fileTooLarge",
+  "User not found": "error.userNotFound",
+  "Current password is incorrect": "error.wrongPassword",
+  "New password must be different": "error.passwordSame",
+  "Not authenticated": "error.notAuthenticated",
+};
+
+function looksTechnical(text: string): boolean {
+  return /GET \/|POST \/|DELETE \/|PATCH \/|FastAPI|endpoint|ECONNABORTED|Network Error|Request failed|status code/i.test(
+    text,
+  );
+}
+
 export function getErrorMessage(error: unknown): string {
   if (isAxiosError(error)) {
     if (error.code === "ECONNABORTED") {
-      return "Превышено время ожидания ответа сервера.";
+      return tr("error.timeout");
     }
     if (!error.response) {
-      return "Нет соединения с сервером. Проверьте интернет и адрес API.";
+      return tr("error.network");
     }
   }
 
@@ -44,59 +107,34 @@ export function getErrorMessage(error: unknown): string {
   ) {
     const detail = error.response.data.detail;
     if (typeof detail === "string") {
-      return AUTH_ERROR_MESSAGES[detail] ?? detail;
+      const key = AUTH_ERROR_KEYS[detail];
+      if (key) {
+        return tr(key);
+      }
+      if (looksTechnical(detail)) {
+        return tr("error.generic");
+      }
+      return tr("error.generic");
     }
     if (Array.isArray(detail) && detail.length > 0) {
-      const first = detail[0] as { msg?: unknown };
-      if (typeof first?.msg === "string") {
-        return first.msg.replace(/^Value error,\s*/i, "");
-      }
+      return tr("error.validation");
     }
   }
 
   if (error instanceof Error) {
-    if (error.message === "Network Error") {
-      return "Нет соединения с сервером. Проверьте интернет и адрес API.";
+    if (error.message === "Network Error" || error.message === "Failed to fetch") {
+      return tr("error.network");
     }
-    return error.message;
+    if (looksTechnical(error.message)) {
+      return tr("error.generic");
+    }
   }
 
-  return "Произошла ошибка. Попробуйте ещё раз.";
+  return tr("error.generic");
 }
 
-const AUTH_ERROR_MESSAGES: Record<string, string> = {
-  "Invalid email or password": "Неверный email или пароль",
-  "Email already exists": "Этот email уже зарегистрирован",
-  "Username already exists": "Это имя пользователя уже занято",
-  "Invalid refresh token": "Сессия истекла. Войдите снова",
-  "You have already applied": "Вы уже откликнулись на этот заказ",
-  "Job is not open for applications": "Этот заказ больше не принимает отклики",
-  "You cannot apply to your own job": "Нельзя откликнуться на свой заказ",
-  "You are not the owner of this job": "Только владелец заказа может это сделать",
-  "Permission denied": "Недостаточно прав для этого действия",
-  "Application not found": "Отклик не найден",
-  "Job not found": "Заказ не найден",
-  "Access denied": "Нет доступа к этому диалогу",
-  "Conversation not found": "Диалог не найден",
-  "Message not found": "Сообщение не найдено",
-  "Conversation already exists": "Диалог по этому заказу уже создан",
-  "Review not found": "Отзыв не найден",
-  "Job is not completed": "Отзыв можно оставить только после завершения заказа",
-  "You cannot review yourself": "Нельзя оставить отзыв самому себе",
-  "Review already exists": "Вы уже оставили отзыв по этому заказу",
-  "You can review only after the job is completed by its participants":
-    "Отзыв доступен только участникам завершённого заказа",
-  "You can delete only your own reviews": "Можно удалить только свой отзыв",
-  "Unsupported file type": "Можно загрузить JPEG, PNG или WebP",
-  "File too large": "Файл больше 5 МБ",
-  "User not found": "Пользователь не найден",
-  "Current password is incorrect": "Текущий пароль неверный",
-  "New password must be different": "Новый пароль должен отличаться от текущего",
-  "Not authenticated": "Нужна авторизация",
-};
-
 export function formatMoney(value: number): string {
-  return new Intl.NumberFormat("ru-RU").format(value) + " сом";
+  return `${new Intl.NumberFormat(BCP47[activeLocale]).format(value)} ${tr("common.som")}`;
 }
 
 export function formatDate(value?: string | null): string {
@@ -104,7 +142,7 @@ export function formatDate(value?: string | null): string {
     return "—";
   }
 
-  return new Intl.DateTimeFormat("ru-RU", {
+  return new Intl.DateTimeFormat(BCP47[activeLocale], {
     day: "numeric",
     month: "short",
     year: "numeric",
@@ -116,7 +154,7 @@ export function formatDateTime(value?: string | null): string {
     return "—";
   }
 
-  return new Intl.DateTimeFormat("ru-RU", {
+  return new Intl.DateTimeFormat(BCP47[activeLocale], {
     day: "numeric",
     month: "short",
     hour: "2-digit",

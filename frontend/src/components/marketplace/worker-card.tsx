@@ -1,8 +1,10 @@
 import { BadgeCheck, Star } from "lucide-react";
 
 import { UserAvatar } from "@/components/users/user-avatar";
+import { useI18n } from "@/i18n/locale-context";
+import { roleKey } from "@/i18n/status";
 import { formatRating } from "@/lib/marketplace";
-import { ROLE_LABEL, type Review, type User } from "@/types/api";
+import type { Review, User } from "@/types/api";
 
 export interface FeaturedWorker {
   id: number;
@@ -10,7 +12,7 @@ export interface FeaturedWorker {
   last_name: string;
   avatar: string | null;
   verified: boolean;
-  roleLabel: string;
+  role: User["role"];
   rating: number;
   reviewCount: number;
 }
@@ -41,7 +43,7 @@ export function featuredWorkersFromReviews(
           last_name: user.last_name,
           avatar: user.avatar,
           verified: user.is_verified,
-          roleLabel: ROLE_LABEL[user.role],
+          role: user.role,
           rating: total / values.length,
           reviewCount: values.length,
         } satisfies FeaturedWorker,
@@ -52,6 +54,7 @@ export function featuredWorkersFromReviews(
 }
 
 export function WorkerCard({ worker }: { worker: FeaturedWorker }) {
+  const { t } = useI18n();
   return (
     <article className="rounded-2xl border bg-card p-5 transition-colors duration-200 hover:border-primary/30 hover:bg-card-hover">
       <div className="flex items-start gap-3">
@@ -60,10 +63,10 @@ export function WorkerCard({ worker }: { worker: FeaturedWorker }) {
           <h3 className="truncate font-semibold">
             {worker.first_name} {worker.last_name}
             {worker.verified ? (
-              <BadgeCheck className="ml-1 inline h-4 w-4 text-primary" aria-label="Проверен" />
+              <BadgeCheck className="ml-1 inline h-4 w-4 text-primary" aria-label={t("common.verified")} />
             ) : null}
           </h3>
-          <p className="mt-0.5 text-sm text-muted-foreground">{worker.roleLabel}</p>
+          <p className="mt-0.5 text-sm text-muted-foreground">{t(roleKey(worker.role))}</p>
         </div>
       </div>
       <div className="mt-4 grid grid-cols-2 gap-2 text-center text-xs">
@@ -72,11 +75,11 @@ export function WorkerCard({ worker }: { worker: FeaturedWorker }) {
             <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
             {formatRating(worker.rating)}
           </p>
-          <p className="mt-1 text-muted-foreground">рейтинг</p>
+          <p className="mt-1 text-muted-foreground">{t("common.rating")}</p>
         </div>
         <div className="rounded-xl bg-secondary px-2 py-2">
           <p className="font-semibold">{worker.reviewCount}</p>
-          <p className="mt-1 text-muted-foreground">отзывов</p>
+          <p className="mt-1 text-muted-foreground">{t("common.reviewsCount")}</p>
         </div>
       </div>
     </article>

@@ -1,4 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -13,20 +14,31 @@ import { useAuth } from "@/context/auth-context";
 import { useI18n } from "@/i18n/locale-context";
 import { getErrorMessage } from "@/lib/utils";
 
-const schema = z.object({
-  first_name: z.string().trim().min(1, "Укажите имя").max(100),
-  last_name: z.string().trim().min(1, "Укажите фамилию").max(100),
-  username: z.string().trim().min(3, "Минимум 3 символа").max(50, "Максимум 50 символов"),
-  email: z.string().email("Введите корректный email"),
-  phone: z.string().max(30).optional(),
-  password: z.string().min(8, "Минимум 8 символов"),
-  role: z.enum(["customer", "worker"]),
-});
-
-type Values = z.infer<typeof schema>;
+type Values = {
+  first_name: string;
+  last_name: string;
+  username: string;
+  email: string;
+  phone?: string;
+  password: string;
+  role: "customer" | "worker";
+};
 
 export function RegisterPage() {
   const { t } = useI18n();
+  const schema = useMemo(
+    () =>
+      z.object({
+        first_name: z.string().trim().min(1, t("auth.nameRequired")).max(100),
+        last_name: z.string().trim().min(1, t("auth.lastNameRequired")).max(100),
+        username: z.string().trim().min(3, t("auth.usernameMin")).max(50, t("auth.usernameMax")),
+        email: z.string().email(t("auth.emailInvalid")),
+        phone: z.string().max(30).optional(),
+        password: z.string().min(8, t("auth.passwordMin")),
+        role: z.enum(["customer", "worker"]),
+      }),
+    [t],
+  );
   const { register } = useAuth();
   const navigate = useNavigate();
   const form = useForm<Values>({

@@ -1,16 +1,28 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 
 import { messages, type Locale, type MessageKey } from "@/i18n/messages";
+import { setActiveLocale } from "@/lib/utils";
 
 const STORAGE_KEY = "atlas.locale";
+
+export type TranslateFn = (key: MessageKey, vars?: Record<string, string | number>) => string;
 
 interface LocaleContextValue {
   locale: Locale;
   setLocale: (locale: Locale) => void;
-  t: (key: MessageKey) => string;
+  t: TranslateFn;
 }
 
 const LocaleContext = createContext<LocaleContextValue | null>(null);
+
+function interpolate(template: string, vars?: Record<string, string | number>): string {
+  if (!vars) {
+    return template;
+  }
+  return template.replace(/\{(\w+)\}/g, (_, name: string) =>
+    vars[name] === undefined ? `{${name}}` : String(vars[name]),
+  );
+}
 
 function readStoredLocale(): Locale {
   try {
@@ -25,10 +37,15 @@ function readStoredLocale(): Locale {
 }
 
 export function LocaleProvider({ children }: { children: ReactNode }) {
-  const [locale, setLocaleState] = useState<Locale>(readStoredLocale);
+  const [locale, setLocaleState] = useState<Locale>(() => {
+    const initial = readStoredLocale();
+    setActiveLocale(initial);
+    return initial;
+  });
 
   useEffect(() => {
     document.documentElement.lang = locale;
+    setActiveLocale(locale);
     try {
       localStorage.setItem(STORAGE_KEY, locale);
     } catch {
@@ -40,8 +57,17 @@ export function LocaleProvider({ children }: { children: ReactNode }) {
     setLocaleState(next);
   }, []);
 
-  const t = useCallback(
-    (key: MessageKey) => messages[locale][key] ?? messages.ru[key] ?? key,
+  const t = useCallback<TranslateFn>(
+    (key, vars) => {
+      const value = messages[locale][key];
+      if (!value) {
+        if (import.meta.env.DEV) {
+          console.warn(`[i18n] missing key "${key}" for locale "${locale}"`);
+        }
+        return key;
+      }
+      return interpolate(value, vars);
+    },
     [locale],
   );
 

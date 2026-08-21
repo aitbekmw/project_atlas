@@ -1,4 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -13,15 +14,21 @@ import { useAuth } from "@/context/auth-context";
 import { useI18n } from "@/i18n/locale-context";
 import { getErrorMessage } from "@/lib/utils";
 
-const schema = z.object({
-  email: z.string().email("Введите корректный email"),
-  password: z.string().min(8, "Минимум 8 символов"),
-});
-
-type Values = z.infer<typeof schema>;
+type Values = {
+  email: string;
+  password: string;
+};
 
 export function LoginPage() {
   const { t } = useI18n();
+  const schema = useMemo(
+    () =>
+      z.object({
+        email: z.string().email(t("auth.emailInvalid")),
+        password: z.string().min(8, t("auth.passwordMin")),
+      }),
+    [t],
+  );
   const { login } = useAuth();
   const navigate = useNavigate();
   const form = useForm<Values>({

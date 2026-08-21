@@ -1,4 +1,6 @@
 import { MarketplaceJobCard } from "@/components/marketplace/job-list-card";
+import { localizedCategoryName } from "@/i18n/categories";
+import type { MessageKey } from "@/i18n/messages";
 import type { Category, Job } from "@/types/api";
 
 interface JobCardProps {
@@ -18,6 +20,11 @@ export function JobCard({ job, categoryName, href }: JobCardProps) {
   );
 }
 
-export function categoryMap(categories: Category[]): Record<number, string> {
-  return Object.fromEntries(categories.map((item) => [item.id, item.name]));
+export function categoryMap(
+  categories: Category[],
+  t: (key: MessageKey, vars?: Record<string, string | number>) => string,
+): Record<number, string> {
+  return Object.fromEntries(
+    categories.map((item) => [item.id, localizedCategoryName(item, t)]),
+  );
 }

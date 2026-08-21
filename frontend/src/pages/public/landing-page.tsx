@@ -1,16 +1,16 @@
 import { useQuery } from "@tanstack/react-query";
 import {
-  BadgeCheck,
   ClipboardList,
+  FolderTree,
   Headphones,
   Inbox,
+  MapPin,
   MessageSquare,
   Search,
   ShieldCheck,
   Star,
   UserPlus,
   UserRoundCheck,
-  Wallet,
 } from "lucide-react";
 import { useMemo, useState, type FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
@@ -30,6 +30,7 @@ import { JobListSkeleton, ReviewListSkeleton } from "@/components/states/loading
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/context/auth-context";
+import { localizedCategoryDescription, localizedCategoryName } from "@/i18n/categories";
 import { useI18n } from "@/i18n/locale-context";
 import { iconForCategory } from "@/lib/category-icons";
 import { formatRating } from "@/lib/marketplace";
@@ -61,16 +62,16 @@ export function LandingPage() {
   });
 
   const apiCategories = (categoriesQuery.data ?? []).filter((item) => item.is_active);
-  const categories = apiCategories.slice(0, 6);
-  const names = categoryMap(apiCategories);
+  const categories = apiCategories;
+  const names = categoryMap(apiCategories, t);
   const jobs: Job[] = jobsQuery.data ?? [];
   const nearby = jobs.slice(0, 4);
   const popular = jobs.slice(0, 6);
   const selected = nearby.find((job) => job.id === activeJobId) ?? nearby[0];
 
   const chips = useMemo(
-    () => categories.slice(0, 5).map((item) => item.name),
-    [categories],
+    () => categories.slice(0, 5).map((item) => localizedCategoryName(item, t)),
+    [categories, t],
   );
 
   const apiReviews = reviewsQuery.data ?? [];
@@ -130,50 +131,69 @@ export function LandingPage() {
   }
 
   return (
-    <div>
-      <section className="border-b">
-        <div className="mx-auto grid max-w-6xl items-center gap-10 px-4 py-12 lg:grid-cols-[1.05fr_0.95fr] lg:py-16">
-          <div>
-            <h1 className="max-w-xl text-4xl font-extrabold tracking-tight sm:text-5xl">
-              {t("landing.heroTitle")}{" "}
-              <span className="text-primary">{t("landing.heroAccent")}</span>
+    <div className="overflow-x-hidden">
+      <section className="relative border-b bg-surface">
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,rgb(22_119_255_/_0.12),transparent_55%)] dark:bg-[radial-gradient(ellipse_at_top_left,rgb(22_119_255_/_0.18),transparent_50%)]" />
+        <div className="relative mx-auto grid max-w-6xl items-stretch gap-8 px-4 py-10 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)] lg:gap-12 lg:py-16">
+          <div className="min-w-0">
+            <p className="inline-flex items-center gap-1.5 rounded-full border bg-card px-3 py-1 text-xs font-medium text-muted-foreground">
+              <MapPin className="h-3.5 w-3.5 text-primary" />
+              {t("landing.location")}
+            </p>
+            <h1 className="mt-5 max-w-xl text-3xl font-extrabold tracking-tight text-balance sm:text-4xl lg:text-5xl">
+              {t("landing.heroTitle")}
             </h1>
-            <p className="mt-4 max-w-lg text-base text-muted-foreground">
+            <p className="mt-4 max-w-lg text-base leading-relaxed text-muted-foreground sm:text-lg">
               {t("landing.heroText")}
             </p>
 
             <form
               onSubmit={onSearch}
-              className="mt-8 grid gap-2 rounded-2xl border bg-card p-2 soft-shadow sm:grid-cols-[1.2fr_0.8fr_0.8fr_auto]"
+              className="mt-8 grid gap-3 rounded-2xl border bg-card p-3 soft-shadow-lg sm:p-4 lg:grid-cols-[1.3fr_0.85fr_0.75fr_auto]"
             >
-              <Input
-                value={need}
-                onChange={(event) => setNeed(event.target.value)}
-                placeholder={t("jobs.search")}
-                className="h-12 border-0 shadow-none focus-visible:ring-0"
-                aria-label={t("jobs.search")}
-              />
-              <Input
-                value={where}
-                onChange={(event) => setWhere(event.target.value)}
-                placeholder={t("jobs.where")}
-                className="h-12 border-0 shadow-none focus-visible:ring-0"
-                aria-label={t("jobs.where")}
-              />
-              <Input
-                value={when}
-                onChange={(event) => setWhen(event.target.value)}
-                placeholder={t("landing.when")}
-                className="h-12 border-0 shadow-none focus-visible:ring-0"
-                aria-label={t("landing.when")}
-              />
-              <Button type="submit" size="lg" className="h-12">
+              <label className="grid min-w-0 gap-1">
+                <span className="px-1 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                  {t("landing.searchNeed")}
+                </span>
+                <Input
+                  value={need}
+                  onChange={(event) => setNeed(event.target.value)}
+                  placeholder={t("landing.searchNeed")}
+                  className="h-12 min-h-12 border-0 bg-surface shadow-none focus-visible:ring-1"
+                  aria-label={t("landing.searchNeed")}
+                />
+              </label>
+              <label className="grid min-w-0 gap-1">
+                <span className="px-1 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                  {t("landing.searchWhere")}
+                </span>
+                <Input
+                  value={where}
+                  onChange={(event) => setWhere(event.target.value)}
+                  placeholder={t("landing.searchWhere")}
+                  className="h-12 min-h-12 border-0 bg-surface shadow-none focus-visible:ring-1"
+                  aria-label={t("landing.searchWhere")}
+                />
+              </label>
+              <label className="grid min-w-0 gap-1">
+                <span className="px-1 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                  {t("landing.searchWhen")}
+                </span>
+                <Input
+                  value={when}
+                  onChange={(event) => setWhen(event.target.value)}
+                  placeholder={t("landing.searchWhen")}
+                  className="h-12 min-h-12 border-0 bg-surface shadow-none focus-visible:ring-1"
+                  aria-label={t("landing.searchWhen")}
+                />
+              </label>
+              <Button type="submit" size="lg" className="h-12 min-h-12 w-full lg:mt-5 lg:w-auto">
                 <Search className="h-4 w-4" />
-                {t("landing.findHelp")}
+                {t("landing.searchCta")}
               </Button>
             </form>
 
-            <div className="mt-4 flex flex-wrap gap-2">
+            <div className="mt-5 flex flex-wrap gap-2">
               {chips.map((chip) => (
                 <button
                   key={chip}
@@ -182,24 +202,41 @@ export function LandingPage() {
                     setNeed(chip);
                     navigate(`/jobs?search=${encodeURIComponent(chip)}`);
                   }}
-                  className="rounded-full border bg-card px-3 py-1.5 text-sm text-muted-foreground transition-colors duration-200 hover:border-primary/40 hover:text-foreground"
+                  className="rounded-full border bg-card px-3 py-2 text-sm text-muted-foreground transition-colors duration-200 hover:border-primary/40 hover:text-foreground"
                 >
                   {chip}
                 </button>
               ))}
             </div>
+
+            <ul className="mt-6 grid gap-2 sm:grid-cols-2">
+              {[
+                { icon: FolderTree, key: "landing.trustCategories" as const },
+                { icon: Search, key: "landing.trustSearch" as const },
+                { icon: MessageSquare, key: "landing.trustChat" as const },
+                { icon: MapPin, key: "landing.trustCity" as const },
+              ].map((item) => (
+                <li
+                  key={item.key}
+                  className="flex items-center gap-2 text-sm text-muted-foreground"
+                >
+                  <item.icon className="h-4 w-4 shrink-0 text-primary" />
+                  {t(item.key)}
+                </li>
+              ))}
+            </ul>
           </div>
 
           <CityMap
             jobs={nearby}
             selectedJobId={selected?.id}
             onJobSelect={(job) => setActiveJobId(job.id)}
-            className="min-h-[360px] soft-shadow-lg"
+            className="h-[240px] min-h-[240px] w-full max-w-full sm:h-[320px] lg:h-auto lg:min-h-[460px]"
           />
         </div>
       </section>
 
-      <section id="categories" className="mx-auto max-w-6xl scroll-mt-24 px-4 py-16">
+      <section id="categories" className="mx-auto max-w-6xl scroll-mt-24 px-4 py-14 sm:py-16">
         <div className="flex items-end justify-between gap-4">
           <div>
             <h2 className="text-2xl font-bold tracking-tight">{t("landing.categories")}</h2>
@@ -207,19 +244,24 @@ export function LandingPage() {
               {t("landing.categoriesHint")}
             </p>
           </div>
-          <Button asChild variant="link">
+          <Button asChild variant="link" className="shrink-0">
             <Link to="/categories">{t("landing.allCategories")}</Link>
           </Button>
         </div>
-        <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
-          {categoriesQuery.isLoading ? (
-            <div className="col-span-full">
-              <JobListSkeleton />
-            </div>
-          ) : null}
+        <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+          {categoriesQuery.isLoading
+            ? Array.from({ length: 5 }).map((_, index) => (
+                <div key={index} className="rounded-2xl border bg-card p-4">
+                  <div className="h-10 w-10 animate-pulse rounded-xl bg-muted" />
+                  <div className="mt-3 h-4 w-24 animate-pulse rounded bg-muted" />
+                  <div className="mt-2 h-3 w-16 animate-pulse rounded bg-muted" />
+                </div>
+              ))
+            : null}
           {categoriesQuery.isError ? (
             <div className="col-span-full">
               <ErrorState
+                title={t("category.error")}
                 error={categoriesQuery.error}
                 onRetry={() => void categoriesQuery.refetch()}
               />
@@ -236,17 +278,25 @@ export function LandingPage() {
           ) : null}
           {categories.map((category) => {
             const Icon = iconForCategory(category);
+            const categoryName = localizedCategoryName(category, t);
+            const categoryDescription = localizedCategoryDescription(category, t);
             return (
               <Link
                 key={category.id}
                 to={`/jobs?category_id=${category.id}`}
                 className="rounded-2xl border bg-card p-4 transition-colors duration-200 hover:border-primary/30 hover:bg-card-hover"
               >
-                <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary/10 text-primary">
                   <Icon className="h-5 w-5" />
                 </span>
-                <p className="mt-3 text-sm font-semibold">{category.name}</p>
-                <p className="mt-1 text-xs text-muted-foreground">Смотреть заказы</p>
+                <p className="mt-3 text-sm font-semibold leading-snug">{categoryName}</p>
+                {categoryDescription ? (
+                  <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">
+                    {categoryDescription}
+                  </p>
+                ) : (
+                  <p className="mt-1 text-xs text-muted-foreground">{t("landing.viewCategoryJobs")}</p>
+                )}
               </Link>
             );
           })}
@@ -257,13 +307,13 @@ export function LandingPage() {
         <div className="mx-auto max-w-6xl px-4 py-16">
           <div className="flex items-end justify-between gap-4">
             <div>
-              <h2 className="text-2xl font-bold tracking-tight">Заказы рядом</h2>
+              <h2 className="text-2xl font-bold tracking-tight">{t("landing.nearbyTitle")}</h2>
               <p className="mt-1 text-sm text-muted-foreground">
-                Актуальные задания на карте и в списке
+                {t("landing.nearbyHint")}
               </p>
             </div>
             <Button asChild variant="outline" size="sm">
-              <Link to="/jobs">Все заказы</Link>
+              <Link to="/jobs">{t("landing.allJobs")}</Link>
             </Button>
           </div>
           {jobsQuery.isLoading ? <JobListSkeleton /> : null}
@@ -276,11 +326,11 @@ export function LandingPage() {
           {!jobsQuery.isLoading && !jobsQuery.isError && nearby.length === 0 ? (
             <EmptyState
               icon="jobs"
-              title="Пока нет открытых заказов"
-              description="Как только заказчики опубликуют задачи, они появятся здесь."
+              title={t("landing.nearbyEmpty")}
+              description={t("landing.nearbyEmptyHint")}
               action={
                 <Button asChild>
-                  <Link to="/app/jobs/new">Разместить заказ</Link>
+                  <Link to="/app/jobs/new">{t("nav.placeOrder")}</Link>
                 </Button>
               }
             />
@@ -314,9 +364,9 @@ export function LandingPage() {
 
       <section className="mx-auto max-w-6xl px-4 py-16">
         <div className="flex items-end justify-between gap-4">
-          <h2 className="text-2xl font-bold tracking-tight">Популярные заказы</h2>
+          <h2 className="text-2xl font-bold tracking-tight">{t("landing.popularTitle")}</h2>
           <Button asChild variant="link">
-            <Link to="/jobs">Смотреть все</Link>
+            <Link to="/jobs">{t("landing.viewAll")}</Link>
           </Button>
         </div>
         {jobsQuery.isLoading ? <JobListSkeleton /> : null}
@@ -324,8 +374,8 @@ export function LandingPage() {
           <EmptyState
             className="mt-6"
             icon="jobs"
-            title="Популярных заказов пока нет"
-            description="Новые задания из GET /jobs появятся в этой ленте."
+            title={t("landing.popularEmpty")}
+            description={t("landing.popularEmptyHint")}
           />
         ) : null}
         {popular.length > 0 ? (
@@ -345,10 +395,9 @@ export function LandingPage() {
 
       <section className="border-y bg-card">
         <div className="mx-auto max-w-6xl px-4 py-16">
-          <h2 className="text-2xl font-bold tracking-tight">Лучшие исполнители</h2>
+          <h2 className="text-2xl font-bold tracking-tight">{t("landing.topWorkers")}</h2>
           <p className="mt-1 text-sm text-muted-foreground">
-            Исполнители с отзывами из GET /reviews и карточками GET /users/{"{id}"}.
-            Отдельного списка исполнителей в API нет.
+            {t("landing.topWorkersHint")}
           </p>
           {reviewsQuery.isLoading ? (
             <div className="mt-6">
@@ -367,8 +416,8 @@ export function LandingPage() {
             <EmptyState
               className="mt-6"
               icon="inbox"
-              title="Пока нет исполнителей с отзывами"
-              description="GET /users отсутствует. Здесь появляются worker-профили, которым уже оставили отзыв."
+              title={t("landing.topWorkersEmpty")}
+              description={t("landing.topWorkersEmptyHint")}
             />
           ) : null}
           {featuredWorkers.length > 0 ? (
@@ -383,36 +432,35 @@ export function LandingPage() {
 
       <section id="how-it-works" className="mx-auto max-w-6xl scroll-mt-24 px-4 py-16">
         <div className="max-w-2xl">
-          <h2 className="text-2xl font-bold tracking-tight">Как это работает</h2>
+          <h2 className="text-2xl font-bold tracking-tight">{t("landing.howTitle")}</h2>
           <p className="mt-2 text-sm text-muted-foreground">
-            Atlas — двусторонний маркетплейс. Заказчик публикует задачу, исполнитель
-            откликается, стороны договариваются в чате и оставляют отзыв.
+            {t("landing.howHint")}
           </p>
         </div>
         <div className="mt-8 grid gap-8 lg:grid-cols-2">
           <div>
-            <p className="text-sm font-semibold text-primary">Для заказчика</p>
+            <p className="text-sm font-semibold text-primary">{t("landing.forCustomer")}</p>
             <div className="mt-4 grid gap-3">
               {[
                 {
                   icon: ClipboardList,
-                  title: "Разместите заказ",
-                  text: "Категория, город, адрес и бюджет — поля как в API JobCreate.",
+                  title: t("landing.howC1Title"),
+                  text: t("landing.howC1Text"),
                 },
                 {
                   icon: Inbox,
-                  title: "Получите отклики",
-                  text: "Исполнители отправляют заявки. Статусы: на рассмотрении, принята, отклонена.",
+                  title: t("landing.howC2Title"),
+                  text: t("landing.howC2Text"),
                 },
                 {
                   icon: UserRoundCheck,
-                  title: "Выберите исполнителя",
-                  text: "Примите заявку, откройте диалог и согласуйте детали в чате.",
+                  title: t("landing.howC3Title"),
+                  text: t("landing.howC3Text"),
                 },
                 {
                   icon: Star,
-                  title: "Закройте заказ и оставьте отзыв",
-                  text: "После выполнения оценка и комментарий появляются в профиле.",
+                  title: t("landing.howC4Title"),
+                  text: t("landing.howC4Text"),
                 },
               ].map((item) => (
                 <div key={item.title} className="flex gap-4 rounded-2xl border bg-card p-5">
@@ -428,28 +476,28 @@ export function LandingPage() {
             </div>
           </div>
           <div>
-            <p className="text-sm font-semibold text-primary">Для исполнителя</p>
+            <p className="text-sm font-semibold text-primary">{t("landing.forWorker")}</p>
             <div className="mt-4 grid gap-3">
               {[
                 {
                   icon: UserPlus,
-                  title: "Создайте профиль",
-                  text: "Регистрация с ролью worker. Доступны имя, контакты и отклики.",
+                  title: t("landing.howW1Title"),
+                  text: t("landing.howW1Text"),
                 },
                 {
                   icon: Search,
-                  title: "Найдите заказы рядом",
-                  text: "Фильтры поиска совпадают с API: текст, город, категория, оплата.",
+                  title: t("landing.howW2Title"),
+                  text: t("landing.howW2Text"),
                 },
                 {
                   icon: Inbox,
-                  title: "Откликнитесь",
-                  text: "Одна заявка на заказ. Заказчик принимает или отклоняет её.",
+                  title: t("landing.howW3Title"),
+                  text: t("landing.howW3Text"),
                 },
                 {
                   icon: MessageSquare,
-                  title: "Договоритесь в чате",
-                  text: "После принятия заявки открывается диалог по заказу.",
+                  title: t("landing.howW4Title"),
+                  text: t("landing.howW4Text"),
                 },
               ].map((item) => (
                 <div key={item.title} className="flex gap-4 rounded-2xl border bg-card p-5">
@@ -471,68 +519,54 @@ export function LandingPage() {
         <div className="mx-auto max-w-6xl px-4 py-16">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
             <div>
-              <h2 className="text-2xl font-bold tracking-tight">Доверие и отзывы</h2>
+              <h2 className="text-2xl font-bold tracking-tight">{t("landing.trustTitle")}</h2>
               <p className="mt-1 text-sm text-muted-foreground">
-                Рейтинг и отзывы считаются из GET /reviews. Счётчика всех исполнителей
-                и эквайринга в API нет.
+                {t("landing.trustHint")}
               </p>
             </div>
             <Button asChild variant="outline" size="sm">
-              <Link to="/reviews">Все отзывы</Link>
+              <Link to="/reviews">{t("landing.allReviews")}</Link>
             </Button>
           </div>
-          <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+          <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {[
               {
                 icon: Star,
                 title:
                   averageRating == null
-                    ? "Рейтинг появится после отзывов"
-                    : `${formatRating(averageRating)} рейтинг`,
+                    ? t("landing.ratingSoon")
+                    : t("landing.ratingValue", { rating: formatRating(averageRating) }),
                 text:
                   averageRating == null
-                    ? "GET /reviews пока пуст"
-                    : `Среднее по ${apiReviews.length} отзывам из API`,
-                demo: false,
+                    ? t("landing.ratingEmpty")
+                    : t("landing.ratingAvg", { count: apiReviews.length }),
               },
               {
                 icon: Inbox,
                 title:
                   openJobsCount === null
-                    ? "Заказы загружаются"
-                    : `${openJobsCount} открытых заказов`,
+                    ? t("landing.jobsLoading")
+                    : t("landing.openJobsCount", { count: openJobsCount }),
                 text:
                   openJobsCount === null
-                    ? "GET /jobs"
-                    : "Сейчас открыто в GET /jobs",
-                demo: false,
-              },
-              {
-                icon: BadgeCheck,
-                title: "Число исполнителей неизвестно",
-                text: "Демо-заглушка: списка пользователей в API нет",
-                demo: true,
+                    ? t("landing.jobsLoadingHint")
+                    : t("landing.openJobsHint"),
               },
               {
                 icon: ShieldCheck,
-                title: "Проверка репутации",
-                text: "Отзыв можно оставить после завершённого заказа",
-                demo: false,
+                title: t("landing.reputationTitle"),
+                text: t("landing.reputationText"),
               },
               {
-                icon: Wallet,
-                title: "Безопасные договорённости",
-                text: "Демо-формулировка: эквайринга в backend нет",
-                demo: true,
+                icon: MessageSquare,
+                title: t("landing.directDealTitle"),
+                text: t("landing.directDealText"),
               },
             ].map((item) => (
               <div key={item.title} className="rounded-2xl border bg-card p-5">
                 <item.icon className="h-5 w-5 text-primary" />
                 <h3 className="mt-3 font-semibold">{item.title}</h3>
                 <p className="mt-1 text-sm text-muted-foreground">{item.text}</p>
-                {item.demo ? (
-                  <p className="mt-2 text-[11px] text-muted-foreground">демо</p>
-                ) : null}
               </div>
             ))}
           </div>
@@ -549,8 +583,8 @@ export function LandingPage() {
             {!reviewsQuery.isLoading && !reviewsQuery.isError && previewReviews.length === 0 ? (
               <div className="md:col-span-3">
                 <EmptyState
-                  title="Отзывов пока нет"
-                  description="После завершения заказа оценки из GET /reviews появятся здесь. Пустой API не заменяется демо."
+                  title={t("landing.noReviews")}
+                  description={t("landing.noReviewsHint")}
                 />
               </div>
             ) : null}
@@ -561,7 +595,7 @@ export function LandingPage() {
                     rating={review.rating}
                     comment={review.comment}
                     createdAt={review.created_at}
-                    author={reviewAuthors[review.from_user_id] ?? `Пользователь #${review.from_user_id}`}
+                    author={reviewAuthors[review.from_user_id] ?? t("common.userFallback", { id: review.from_user_id })}
                     jobId={review.job_id}
                   />
                 ))
@@ -570,10 +604,9 @@ export function LandingPage() {
           <div className="mt-6 flex items-start gap-3 rounded-2xl border bg-card p-5">
             <Headphones className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
             <div>
-              <h3 className="font-semibold">Поддержка</h3>
+              <h3 className="font-semibold">{t("landing.supportTitle")}</h3>
               <p className="mt-1 text-sm text-muted-foreground">
-                Демо-блок: отдельного support API нет. Споры решаются через статусы
-                заказа, отклики и чат.
+                {t("landing.supportText")}
               </p>
             </div>
           </div>
@@ -582,14 +615,13 @@ export function LandingPage() {
 
       <section id="cta" className="px-4 py-16">
         <div className="mx-auto max-w-6xl rounded-3xl bg-primary px-6 py-12 text-center text-primary-foreground sm:px-12">
-          <h2 className="text-3xl font-bold tracking-tight">Нужна помощь сегодня?</h2>
+          <h2 className="text-3xl font-bold tracking-tight">{t("landing.ctaTitle")}</h2>
           <p className="mx-auto mt-3 max-w-xl text-sm text-primary-foreground/80">
-            Разместите заказ за пару минут или начните выполнять задания как исполнитель.
-            Регистрация и вход идут через FastAPI /auth.
+            {t("landing.ctaText")}
           </p>
           <div className="mt-6 flex flex-col items-center justify-center gap-3 sm:flex-row">
             <Button asChild size="lg" variant="secondary" className="bg-background text-primary hover:bg-background/90">
-              <Link to={createOrderTo}>Разместить заказ</Link>
+              <Link to={createOrderTo}>{t("nav.placeOrder")}</Link>
             </Button>
             <Button
               asChild
@@ -597,7 +629,7 @@ export function LandingPage() {
               variant="outline"
               className="border-primary-foreground/40 bg-transparent text-primary-foreground hover:bg-primary-foreground/10 hover:text-primary-foreground"
             >
-              <Link to={becomeWorkerTo}>Стать исполнителем</Link>
+              <Link to={becomeWorkerTo}>{t("landing.becomeWorker")}</Link>
             </Button>
           </div>
         </div>

@@ -157,21 +157,3 @@ export interface Message {
   created_at: string;
 }
 
-export const JOB_STATUS_LABEL: Record<JobStatus, string> = {
-  OPEN: "Открыта",
-  IN_PROGRESS: "В работе",
-  COMPLETED: "Завершена",
-  CANCELLED: "Отменена",
-};
-
-export const APPLICATION_STATUS_LABEL: Record<ApplicationStatus, string> = {
-  PENDING: "На рассмотрении",
-  ACCEPTED: "Принята",
-  REJECTED: "Отклонена",
-};
-
-export const ROLE_LABEL: Record<UserRole, string> = {
-  customer: "Заказчик",
-  worker: "Исполнитель",
-  admin: "Администратор",
-};

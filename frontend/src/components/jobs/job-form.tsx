@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { localizedCategoryName } from "@/i18n/categories";
 import { useI18n } from "@/i18n/locale-context";
 import type { Category, JobPayload } from "@/types/api";
 
@@ -101,7 +102,7 @@ export function JobForm({
             <option value={0}>{categoryPlaceholder}</option>
             {activeCategories.map((category) => (
               <option key={category.id} value={category.id}>
-                {category.name}
+                {localizedCategoryName(category, t)}
               </option>
             ))}
           </select>

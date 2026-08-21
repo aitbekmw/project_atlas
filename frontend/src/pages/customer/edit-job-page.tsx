@@ -10,10 +10,12 @@ import { Card, CardContent } from "@/components/ui/card";
 import { ErrorState } from "@/components/states/error-state";
 import { PageSpinner } from "@/components/states/loading-state";
 import { queryKeys } from "@/lib/query-keys";
+import { useI18n } from "@/i18n/locale-context";
 import { getErrorMessage } from "@/lib/utils";
 import type { JobPayload } from "@/types/api";
 
 export function EditJobPage() {
+  const { t } = useI18n();
   const { jobId } = useParams();
   const id = Number(jobId);
   const navigate = useNavigate();
@@ -30,7 +32,7 @@ export function EditJobPage() {
   const mutation = useMutation({
     mutationFn: (values: JobPayload) => updateJob(id, values),
     onSuccess: () => {
-      toast.success("Заказ обновлён");
+      toast.success(t("job.updated"));
       navigate("/app/jobs");
     },
     onError: (error) => toast.error(getErrorMessage(error)),
@@ -45,7 +47,7 @@ export function EditJobPage() {
 
   return (
     <div>
-      <PageHeader title="Редактирование заказа" description={jobQuery.data.title} />
+      <PageHeader title={t("job.editTitle")} description={jobQuery.data.title} />
       <Card>
         <CardContent className="p-6">
           <JobForm
@@ -54,7 +56,7 @@ export function EditJobPage() {
             categoriesError={categoriesQuery.isError}
             onRetryCategories={() => void categoriesQuery.refetch()}
             defaultValues={jobQuery.data}
-            submitLabel="Сохранить"
+            submitLabel={t("common.save")}
             isSubmitting={mutation.isPending}
             onSubmit={async (values) => {
               await mutation.mutateAsync(values);

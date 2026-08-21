@@ -22,10 +22,13 @@ import { EmptyState } from "@/components/states/empty-state";
 import { ErrorState } from "@/components/states/error-state";
 import { ApplicationListSkeleton, JobDetailsSkeleton } from "@/components/states/loading-state";
 import { useAuth } from "@/context/auth-context";
+import { localizedCategoryName } from "@/i18n/categories";
+import { useI18n } from "@/i18n/locale-context";
+import { applicationStatusKey, jobStatusKey } from "@/i18n/status";
 import { formatRating } from "@/lib/marketplace";
 import { queryKeys } from "@/lib/query-keys";
 import { formatDate, formatMoney, fullName, getErrorMessage } from "@/lib/utils";
-import { APPLICATION_STATUS_LABEL, JOB_STATUS_LABEL, type Application, type Job, type JobStatus } from "@/types/api";
+import type { Application, Job, JobStatus } from "@/types/api";
 
 const statusVariant: Record<JobStatus, "success" | "warning" | "secondary" | "danger"> = {
   OPEN: "success",
@@ -35,6 +38,7 @@ const statusVariant: Record<JobStatus, "success" | "warning" | "secondary" | "da
 };
 
 export function JobDetailsPage() {
+  const { t } = useI18n();
   const { jobId } = useParams();
   const id = Number(jobId);
   const jobIdValid = Number.isFinite(id) && id > 0;
@@ -79,7 +83,7 @@ export function JobDetailsPage() {
   const applyMutation = useMutation({
     mutationFn: () => createApplication(id),
     onSuccess: async () => {
-      toast.success("Отклик отправлен");
+      toast.success(t("job.applied"));
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: queryKeys.myApplications }),
         queryClient.invalidateQueries({ queryKey: queryKeys.applications }),
@@ -91,7 +95,7 @@ export function JobDetailsPage() {
   const acceptMutation = useMutation({
     mutationFn: acceptApplication,
     onSuccess: async () => {
-      toast.success("Отклик принят");
+      toast.success(t("app.accepted"));
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: queryKeys.jobApplications(id) }),
         queryClient.invalidateQueries({ queryKey: queryKeys.applications }),
@@ -106,7 +110,7 @@ export function JobDetailsPage() {
   const rejectMutation = useMutation({
     mutationFn: rejectApplication,
     onSuccess: async () => {
-      toast.success("Отклик отклонён");
+      toast.success(t("app.rejected"));
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: queryKeys.jobApplications(id) }),
         queryClient.invalidateQueries({ queryKey: queryKeys.applications }),
@@ -118,7 +122,7 @@ export function JobDetailsPage() {
   const completeMutation = useMutation({
     mutationFn: () => completeJob(id),
     onSuccess: async () => {
-      toast.success("Заказ завершён");
+      toast.success(t("job.completedToast"));
       await queryClient.invalidateQueries({ queryKey: queryKeys.job(id) });
       await queryClient.invalidateQueries({ queryKey: queryKeys.myJobs });
     },
@@ -127,7 +131,7 @@ export function JobDetailsPage() {
   const cancelMutation = useMutation({
     mutationFn: () => cancelJob(id),
     onSuccess: async () => {
-      toast.success("Заказ отменён");
+      toast.success(t("job.cancelledToast"));
       await queryClient.invalidateQueries({ queryKey: queryKeys.job(id) });
       await queryClient.invalidateQueries({ queryKey: queryKeys.myJobs });
     },
@@ -137,7 +141,7 @@ export function JobDetailsPage() {
   if (!jobIdValid) {
     return (
       <div className="mx-auto max-w-6xl px-4 py-10">
-        <ErrorState title="Заказ не найден" description="Некорректный идентификатор заказа." />
+        <ErrorState title={t("error.jobNotFound")} description={t("error.notFoundHint")} />
       </div>
     );
   }
@@ -168,13 +172,17 @@ export function JobDetailsPage() {
   return (
     <div className="mx-auto max-w-6xl px-4 py-10">
       <Link to="/jobs" className="text-sm text-muted-foreground hover:text-foreground">
-        ← Найти заказы
+        ← {t("nav.jobs")}
       </Link>
       <div className="mt-6 grid gap-6 lg:grid-cols-[1.15fr_0.85fr]">
         <div>
           <div className="flex flex-wrap gap-2">
-            <Badge variant="secondary">{category?.name ?? `Категория #${job.category_id}`}</Badge>
-            <Badge variant={statusVariant[job.status]}>{JOB_STATUS_LABEL[job.status]}</Badge>
+            <Badge variant="secondary">
+              {category
+                ? localizedCategoryName(category, t)
+                : t("common.categoryFallback", { id: job.category_id })}
+            </Badge>
+            <Badge variant={statusVariant[job.status]}>{t(jobStatusKey(job.status))}</Badge>
           </div>
           <h1 className="mt-3 text-3xl font-bold tracking-tight">{job.title}</h1>
           <p className="mt-3 flex items-center gap-2 text-muted-foreground">
@@ -183,12 +191,12 @@ export function JobDetailsPage() {
             {job.address ? `, ${job.address}` : ""}
           </p>
           <p className="mt-2 text-sm text-muted-foreground">
-            Опубликовано {formatDate(job.created_at)}
+            {t("job.publishedAt", { date: formatDate(job.created_at) })}
           </p>
 
           <Card className="mt-6">
             <CardContent className="p-6">
-              <h2 className="text-lg font-semibold">Описание</h2>
+              <h2 className="text-lg font-semibold">{t("job.description")}</h2>
               <p className="mt-3 whitespace-pre-wrap text-sm leading-6 text-muted-foreground">
                 {job.description}
               </p>
@@ -198,7 +206,7 @@ export function JobDetailsPage() {
           {ownerQuery.data ? (
             <Card className="mt-4">
               <CardContent className="p-6">
-                <h2 className="text-lg font-semibold">Заказчик</h2>
+                <h2 className="text-lg font-semibold">{t("job.owner")}</h2>
                 <p className="mt-2 font-medium">
                   {ownerQuery.data.first_name} {ownerQuery.data.last_name}
                 </p>
@@ -210,13 +218,13 @@ export function JobDetailsPage() {
                       {formatRating(ownerRating)}
                     </span>
                   ) : (
-                    <span>Отзывов пока нет</span>
+                    <span>{t("landing.noReviews")}</span>
                   )}
-                  <span>{reviews.length} отзывов</span>
+                  <span>{t("job.reviewsCount", { count: reviews.length })}</span>
                   {applicationsQuery.data ? (
                     <span className="inline-flex items-center gap-1">
                       <MessageSquare className="h-4 w-4" />
-                      {applicationsQuery.data.length} откликов
+                      {t("job.applicationsCount", { count: applicationsQuery.data.length })}
                     </span>
                   ) : null}
                 </div>
@@ -228,9 +236,9 @@ export function JobDetailsPage() {
             <Card className="mt-4">
               <CardContent className="p-6">
                 <div className="flex items-center justify-between gap-3">
-                  <h2 className="text-lg font-semibold">Отклики на заказ</h2>
+                  <h2 className="text-lg font-semibold">{t("job.applications")}</h2>
                   <Button asChild variant="link" className="h-auto p-0">
-                    <Link to="/app/applications">Все отклики</Link>
+                    <Link to="/app/applications">{t("job.allApplications")}</Link>
                   </Button>
                 </div>
                 {applicationsQuery.isLoading ? <ApplicationListSkeleton rows={3} /> : null}
@@ -248,8 +256,8 @@ export function JobDetailsPage() {
                   <div className="mt-4">
                     <EmptyState
                       icon="inbox"
-                      title="Откликов пока нет"
-                      description="Когда исполнители откликнутся, они появятся здесь."
+                      title={t("job.noApplications")}
+                      description={t("job.noApplicationsHint")}
                     />
                   </div>
                 ) : null}
@@ -301,7 +309,7 @@ export function JobDetailsPage() {
         <div className="space-y-4">
           <Card>
             <CardContent className="p-6">
-              <p className="text-sm text-muted-foreground">Оплата</p>
+              <p className="text-sm text-muted-foreground">{t("job.pay")}</p>
               <p className="mt-1 text-3xl font-bold text-primary">{formatMoney(job.salary)}</p>
               <div className="mt-6 flex flex-col gap-3">
                 {user?.role === "worker" && job.status === "OPEN" && !isOwner ? (
@@ -313,22 +321,22 @@ export function JobDetailsPage() {
                     }
                     onClick={() => applyMutation.mutate()}
                   >
-                    {alreadyApplied ? "Вы уже откликнулись" : "Откликнуться"}
+                    {alreadyApplied ? t("job.alreadyApplied") : t("job.apply")}
                   </Button>
                 ) : null}
                 {myApplication ? (
                   <p className="text-sm text-muted-foreground">
-                    Статус отклика: {APPLICATION_STATUS_LABEL[myApplication.status]}
+                    {t("job.myApplication", { status: t(applicationStatusKey(myApplication.status)) })}
                   </p>
                 ) : null}
                 {!isAuthenticated ? (
                   <Button asChild>
-                    <Link to="/login">Войдите, чтобы откликнуться</Link>
+                    <Link to="/login">{t("job.loginToApply")}</Link>
                   </Button>
                 ) : null}
                 {isOwner ? (
                   <Button variant="outline" onClick={() => navigate(`/app/jobs/${job.id}/edit`)}>
-                    Редактировать
+                    {t("common.edit")}
                   </Button>
                 ) : null}
                 {isOwner && canManageStatus ? (
@@ -337,19 +345,19 @@ export function JobDetailsPage() {
                       disabled={completeMutation.isPending}
                       onClick={() => completeMutation.mutate()}
                     >
-                      Завершить заказ
+                      {t("job.complete")}
                     </Button>
                     <Button
                       variant="outline"
                       disabled={cancelMutation.isPending}
                       onClick={() => cancelMutation.mutate()}
                     >
-                      Отменить заказ
+                      {t("job.cancel")}
                     </Button>
                   </>
                 ) : null}
                 <Button asChild variant="outline">
-                  <Link to="/jobs">Другие заказы</Link>
+                  <Link to="/jobs">{t("job.otherJobs")}</Link>
                 </Button>
               </div>
             </CardContent>
@@ -381,6 +389,7 @@ function JobApplicationRow({
   onReject: () => void;
   onChat: () => void;
 }) {
+  const { t } = useI18n();
   const workerQuery = useQuery({
     queryKey: queryKeys.user(application.worker_id),
     queryFn: () => getUser(application.worker_id),
@@ -388,7 +397,7 @@ function JobApplicationRow({
   });
   const workerName = workerQuery.data
     ? fullName(workerQuery.data)
-    : `Пользователь #${application.worker_id}`;
+    : t("common.userFallback", { id: application.worker_id });
   const isPending = application.status === "PENDING";
   const isAccepted = application.status === "ACCEPTED";
 

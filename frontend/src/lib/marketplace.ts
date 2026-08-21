@@ -1,3 +1,5 @@
+import { getActiveLocale } from "@/lib/utils";
+import { BCP47 } from "@/i18n/messages";
 import type { Job } from "@/types/api";
 
 export type JobUrgency = "Срочно" | "Сегодня" | "Гибко";
@@ -66,5 +68,8 @@ export function formatDistance(km: number): string {
 }
 
 export function formatRating(value: number): string {
-  return value.toFixed(1).replace(".", ",");
+  return new Intl.NumberFormat(BCP47[getActiveLocale()], {
+    minimumFractionDigits: 1,
+    maximumFractionDigits: 1,
+  }).format(value);
 }

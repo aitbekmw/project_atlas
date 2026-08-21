@@ -21,6 +21,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/context/auth-context";
+import { useI18n } from "@/i18n/locale-context";
 import {
   chatWebSocketUrl,
   messageFromSocketEvent,
@@ -34,6 +35,7 @@ import type { Message } from "@/types/api";
 type SocketStatus = "connecting" | "open" | "closed" | "denied";
 
 export function ChatPage() {
+  const { t } = useI18n();
   const { conversationId } = useParams();
   const activeId = conversationId ? Number(conversationId) : undefined;
   const conversationIdValid = Number.isFinite(activeId) && (activeId ?? 0) > 0;
@@ -253,12 +255,12 @@ export function ChatPage() {
   const peerName = peerQuery.data
     ? fullName(peerQuery.data)
     : peerId
-      ? `Пользователь #${peerId}`
+      ? t("common.userFallback", { id: peerId })
       : "";
 
   return (
     <div>
-      <PageHeader title="Сообщения" description="Переписка по заказам" />
+      <PageHeader title={t("chat.title")} description={t("chat.hint")} />
       <div className="grid min-h-[70vh] overflow-hidden rounded-2xl border bg-card lg:grid-cols-[20rem_1fr]">
         <div className="border-b lg:border-b-0 lg:border-r">
           {conversationsQuery.isLoading ? <ChatListSkeleton /> : null}
@@ -283,8 +285,8 @@ export function ChatPage() {
             <div className="flex flex-1 items-center justify-center p-6">
               <EmptyState
                 icon="chat"
-                title="Выберите диалог"
-                description="Список слева строится из GET /conversations."
+                title={t("chat.pick")}
+                description={t("chat.pickHint")}
                 className="border-0 bg-transparent"
               />
             </div>
@@ -306,18 +308,18 @@ export function ChatPage() {
                       {jobQuery.data.title}
                     </Link>
                   ) : (
-                    `Заказ #${conversationQuery.data?.job_id}`
+                    t("common.jobFallback", { id: conversationQuery.data?.job_id ?? 0 })
                   )}
                 </p>
                 <p className="mt-1 text-xs text-muted-foreground">
                   {peerName}
-                  {typingUserId ? " · печатает…" : ""}
+                  {typingUserId ? ` · ${t("chat.typing")}` : ""}
                 </p>
                 {socketStatus === "denied" ? (
-                  <p className="mt-1 text-xs text-destructive">Нет доступа к realtime-каналу</p>
+                  <p className="mt-1 text-xs text-destructive">{t("chat.denied")}</p>
                 ) : socketStatus !== "open" ? (
                   <p className="mt-1 text-xs text-muted-foreground">
-                    Нет живого соединения, отправка идёт через POST /messages
+                    {t("chat.noRealtime")}
                   </p>
                 ) : null}
               </div>
@@ -349,13 +351,14 @@ export function ChatPage() {
                   value={text}
                   onChange={(event) => onComposerChange(event.target.value)}
                   placeholder={
-                    isParticipant ? "Напишите сообщение" : "Отправка доступна только участникам диалога"
+                    isParticipant ? t("chat.placeholder") : t("chat.placeholderDenied")
                   }
                   disabled={!isParticipant}
                 />
                 <Button
                   type="submit"
                   size="icon"
+                  aria-label={t("chat.send")}
                   disabled={!isParticipant || !text.trim() || sendMutation.isPending}
                 >
                   <Send className="h-4 w-4" />

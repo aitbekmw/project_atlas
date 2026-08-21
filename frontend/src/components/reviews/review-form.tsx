@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { useI18n } from "@/i18n/locale-context";
 import { cn } from "@/lib/utils";
 
 interface ReviewFormProps {
@@ -13,10 +14,11 @@ interface ReviewFormProps {
 }
 
 export function ReviewForm({
-  submitLabel = "Оставить отзыв",
+  submitLabel,
   isSubmitting,
   onSubmit,
 }: ReviewFormProps) {
+  const { t } = useI18n();
   const [rating, setRating] = useState(5);
   const [comment, setComment] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -28,7 +30,7 @@ export function ReviewForm({
         event.preventDefault();
         const text = comment.trim();
         if (!text) {
-          setError("Напишите комментарий");
+          setError(t("reviews.commentRequired"));
           return;
         }
         setError(null);
@@ -38,7 +40,7 @@ export function ReviewForm({
       }}
     >
       <div className="grid gap-2">
-        <Label>Оценка</Label>
+        <Label>{t("reviews.rating")}</Label>
         <div className="flex gap-1">
           {Array.from({ length: 5 }).map((_, index) => {
             const value = index + 1;
@@ -48,7 +50,7 @@ export function ReviewForm({
                 type="button"
                 onClick={() => setRating(value)}
                 className="rounded-md p-1 text-amber-500 hover:bg-secondary"
-                aria-label={`${value} из 5`}
+                aria-label={t("reviews.stars", { value })}
               >
                 <Star
                   className={cn("h-5 w-5", value <= rating ? "fill-current" : "text-muted-foreground")}
@@ -59,17 +61,17 @@ export function ReviewForm({
         </div>
       </div>
       <div className="grid gap-2">
-        <Label htmlFor="review-comment">Комментарий</Label>
+        <Label htmlFor="review-comment">{t("reviews.comment")}</Label>
         <Textarea
           id="review-comment"
           value={comment}
           onChange={(event) => setComment(event.target.value)}
-          placeholder="Как прошла работа"
+          placeholder={t("reviews.commentPlaceholder")}
         />
         {error ? <p className="text-xs text-destructive">{error}</p> : null}
       </div>
       <Button type="submit" disabled={isSubmitting}>
-        {isSubmitting ? "Отправляем..." : submitLabel}
+        {isSubmitting ? t("reviews.sending") : submitLabel ?? t("reviews.submit")}
       </Button>
     </form>
   );

@@ -1,5 +1,6 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -14,21 +15,29 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/context/auth-context";
+import { useI18n } from "@/i18n/locale-context";
 import { queryKeys } from "@/lib/query-keys";
 import { getErrorMessage } from "@/lib/utils";
 
-const profileSchema = z.object({
-  first_name: z.string().trim().min(1, "Укажите имя").max(100),
-  last_name: z.string().trim().min(1, "Укажите фамилию").max(100),
-  phone: z.string().max(30).optional(),
-});
-
-const passwordSchema = z.object({
-  current_password: z.string().min(1, "Укажите текущий пароль"),
-  new_password: z.string().min(8, "Минимум 8 символов"),
-});
-
 export function SettingsPage() {
+  const { t } = useI18n();
+  const profileSchema = useMemo(
+    () =>
+      z.object({
+        first_name: z.string().trim().min(1, t("auth.nameRequired")).max(100),
+        last_name: z.string().trim().min(1, t("auth.lastNameRequired")).max(100),
+        phone: z.string().max(30).optional(),
+      }),
+    [t],
+  );
+  const passwordSchema = useMemo(
+    () =>
+      z.object({
+        current_password: z.string().min(1, t("settings.currentPasswordRequired")),
+        new_password: z.string().min(8, t("auth.passwordMin")),
+      }),
+    [t],
+  );
   const { applyUser, refreshUser } = useAuth();
   const meQuery = useQuery({
     queryKey: queryKeys.me,
@@ -54,7 +63,7 @@ export function SettingsPage() {
     onSuccess: async (updated) => {
       applyUser(updated);
       await refreshUser();
-      toast.success("Профиль обновлён");
+      toast.success(t("settings.profileUpdated"));
     },
     onError: (error) => {
       const message = getErrorMessage(error);
@@ -66,7 +75,7 @@ export function SettingsPage() {
     mutationFn: changePassword,
     onSuccess: () => {
       passwordForm.reset();
-      toast.success("Пароль изменён");
+      toast.success(t("settings.passwordChanged"));
     },
     onError: (error) => {
       const message = getErrorMessage(error);
@@ -78,7 +87,7 @@ export function SettingsPage() {
   if (meQuery.isLoading) {
     return (
       <div>
-        <PageHeader title="Настройки" description="Профиль и безопасность" />
+        <PageHeader title={t("settings.title")} description={t("settings.hint")} />
         <div className="grid gap-6 lg:grid-cols-2">
           <Skeleton className="h-80 rounded-xl" />
           <Skeleton className="h-64 rounded-xl" />
@@ -90,7 +99,7 @@ export function SettingsPage() {
   if (meQuery.isError || !user) {
     return (
       <div>
-        <PageHeader title="Настройки" description="Профиль и безопасность" />
+        <PageHeader title={t("settings.title")} description={t("settings.hint")} />
         <ErrorState error={meQuery.error} onRetry={() => void meQuery.refetch()} />
       </div>
     );
@@ -98,11 +107,11 @@ export function SettingsPage() {
 
   return (
     <div>
-      <PageHeader title="Настройки" description="Профиль и безопасность" />
+      <PageHeader title={t("settings.title")} description={t("settings.hint")} />
       <div className="grid gap-6 lg:grid-cols-2">
         <Card>
           <CardHeader>
-            <CardTitle>Личные данные</CardTitle>
+            <CardTitle>{t("settings.personal")}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="mb-6">
@@ -130,7 +139,7 @@ export function SettingsPage() {
                 </p>
               ) : null}
               <div className="grid gap-2">
-                <Label>Имя</Label>
+                <Label>{t("auth.firstName")}</Label>
                 <Input maxLength={100} {...profileForm.register("first_name")} />
                 {profileForm.formState.errors.first_name ? (
                   <p className="text-sm text-destructive">
@@ -139,7 +148,7 @@ export function SettingsPage() {
                 ) : null}
               </div>
               <div className="grid gap-2">
-                <Label>Фамилия</Label>
+                <Label>{t("auth.lastName")}</Label>
                 <Input maxLength={100} {...profileForm.register("last_name")} />
                 {profileForm.formState.errors.last_name ? (
                   <p className="text-sm text-destructive">
@@ -148,7 +157,7 @@ export function SettingsPage() {
                 ) : null}
               </div>
               <div className="grid gap-2">
-                <Label>Телефон</Label>
+                <Label>{t("auth.phone")}</Label>
                 <Input maxLength={30} {...profileForm.register("phone")} />
                 {profileForm.formState.errors.phone ? (
                   <p className="text-sm text-destructive">
@@ -157,14 +166,14 @@ export function SettingsPage() {
                 ) : null}
               </div>
               <Button type="submit" disabled={profileMutation.isPending}>
-                {profileMutation.isPending ? "Сохранение…" : "Сохранить"}
+                {profileMutation.isPending ? t("common.saving") : t("common.save")}
               </Button>
             </form>
           </CardContent>
         </Card>
         <Card>
           <CardHeader>
-            <CardTitle>Смена пароля</CardTitle>
+            <CardTitle>{t("settings.password")}</CardTitle>
           </CardHeader>
           <CardContent>
             <form
@@ -179,7 +188,7 @@ export function SettingsPage() {
                 </p>
               ) : null}
               <div className="grid gap-2">
-                <Label>Текущий пароль</Label>
+                <Label>{t("settings.currentPassword")}</Label>
                 <Input type="password" {...passwordForm.register("current_password")} />
                 {passwordForm.formState.errors.current_password ? (
                   <p className="text-sm text-destructive">
@@ -188,7 +197,7 @@ export function SettingsPage() {
                 ) : null}
               </div>
               <div className="grid gap-2">
-                <Label>Новый пароль</Label>
+                <Label>{t("settings.newPassword")}</Label>
                 <Input type="password" {...passwordForm.register("new_password")} />
                 {passwordForm.formState.errors.new_password ? (
                   <p className="text-sm text-destructive">
@@ -197,7 +206,7 @@ export function SettingsPage() {
                 ) : null}
               </div>
               <Button type="submit" disabled={passwordMutation.isPending}>
-                {passwordMutation.isPending ? "Обновление…" : "Обновить пароль"}
+                {passwordMutation.isPending ? t("settings.updating") : t("settings.updatePassword")}
               </Button>
             </form>
           </CardContent>

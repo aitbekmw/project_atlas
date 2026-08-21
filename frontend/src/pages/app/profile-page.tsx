@@ -17,11 +17,13 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { AvatarEditor } from "@/components/users/avatar-editor";
 import { UserCard } from "@/components/users/user-card";
 import { useAuth } from "@/context/auth-context";
+import { useI18n } from "@/i18n/locale-context";
+import { roleKey } from "@/i18n/status";
 import { queryKeys } from "@/lib/query-keys";
 import { formatDateTime, fullName, getErrorMessage } from "@/lib/utils";
-import { ROLE_LABEL } from "@/types/api";
 
 export function ProfilePage() {
+  const { t } = useI18n();
   const { applyUser, refreshUser } = useAuth();
   const queryClient = useQueryClient();
   const meQuery = useQuery({
@@ -44,7 +46,7 @@ export function ProfilePage() {
   const deleteMutation = useMutation({
     mutationFn: deleteReview,
     onSuccess: async () => {
-      toast.success("Отзыв удалён");
+      toast.success(t("profile.reviewDeleted"));
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: queryKeys.reviews }),
         queryClient.invalidateQueries({ queryKey: queryKeys.userReviews(user?.id ?? 0) }),
@@ -60,7 +62,7 @@ export function ProfilePage() {
   if (meQuery.isLoading) {
     return (
       <div>
-        <PageHeader title="Профиль" description="Публичные данные аккаунта и отзывы" />
+        <PageHeader title={t("profile.title")} description={t("profile.hint")} />
         <div className="grid gap-6 lg:grid-cols-[20rem_1fr]">
           <Skeleton className="h-40 rounded-xl" />
           <Skeleton className="h-64 rounded-xl" />
@@ -72,7 +74,7 @@ export function ProfilePage() {
   if (meQuery.isError || !user) {
     return (
       <div>
-        <PageHeader title="Профиль" description="Публичные данные аккаунта и отзывы" />
+        <PageHeader title={t("profile.title")} description={t("profile.hint")} />
         <ErrorState error={meQuery.error} onRetry={() => void meQuery.refetch()} />
       </div>
     );
@@ -80,14 +82,14 @@ export function ProfilePage() {
 
   return (
     <div>
-      <PageHeader title="Профиль" description="Публичные данные аккаунта и отзывы" />
+      <PageHeader title={t("profile.title")} description={t("profile.hint")} />
       <div className="grid gap-6 lg:grid-cols-[20rem_1fr]">
         <div className="grid gap-6 self-start">
           <UserCard user={user} />
           <Card>
             <CardContent className="p-5">
-              <h2 className="text-lg font-semibold">Фото профиля</h2>
-              <p className="mt-1 text-sm text-muted-foreground">POST и DELETE /users/me/avatar</p>
+              <h2 className="text-lg font-semibold">{t("profile.photo")}</h2>
+              <p className="mt-1 text-sm text-muted-foreground">{t("profile.photoHint")}</p>
               <div className="mt-4">
                 <AvatarEditor
                   user={user}
@@ -101,43 +103,42 @@ export function ProfilePage() {
           </Card>
           <Card>
             <CardContent className="grid gap-3 p-5 text-sm">
-              <h2 className="text-lg font-semibold">Данные аккаунта</h2>
-              <p className="text-muted-foreground">GET /users/me</p>
+              <h2 className="text-lg font-semibold">{t("profile.account")}</h2>
               <div>
-                <p className="text-muted-foreground">Email</p>
+                <p className="text-muted-foreground">{t("auth.email")}</p>
                 <p className="mt-0.5 font-medium">{user.email}</p>
               </div>
               <div>
-                <p className="text-muted-foreground">Телефон</p>
-                <p className="mt-0.5 font-medium">{user.phone || "Не указан"}</p>
+                <p className="text-muted-foreground">{t("auth.phone")}</p>
+                <p className="mt-0.5 font-medium">{user.phone || t("common.notSpecified")}</p>
               </div>
               <div>
-                <p className="text-muted-foreground">Роль</p>
-                <p className="mt-0.5 font-medium">{ROLE_LABEL[user.role]}</p>
+                <p className="text-muted-foreground">{t("auth.role")}</p>
+                <p className="mt-0.5 font-medium">{t(roleKey(user.role))}</p>
               </div>
               <div className="flex flex-wrap gap-2">
                 {user.is_verified ? (
-                  <Badge variant="success">подтверждён</Badge>
+                  <Badge variant="success">{t("common.confirmed")}</Badge>
                 ) : (
-                  <Badge variant="secondary">не подтверждён</Badge>
+                  <Badge variant="secondary">{t("common.unconfirmed")}</Badge>
                 )}
                 {user.is_active ? (
-                  <Badge variant="secondary">активен</Badge>
+                  <Badge variant="secondary">{t("common.active")}</Badge>
                 ) : (
-                  <Badge variant="danger">неактивен</Badge>
+                  <Badge variant="danger">{t("common.inactive")}</Badge>
                 )}
                 {user.is_online ? (
-                  <Badge variant="success">онлайн</Badge>
+                  <Badge variant="success">{t("common.online")}</Badge>
                 ) : (
-                  <Badge variant="outline">офлайн</Badge>
+                  <Badge variant="outline">{t("common.offline")}</Badge>
                 )}
               </div>
               <div>
-                <p className="text-muted-foreground">Был в сети</p>
+                <p className="text-muted-foreground">{t("profile.lastSeen")}</p>
                 <p className="mt-0.5 font-medium">{formatDateTime(user.last_seen)}</p>
               </div>
               <Button asChild variant="outline" className="mt-2">
-                <Link to="/app/settings">Редактировать профиль</Link>
+                <Link to="/app/settings">{t("profile.edit")}</Link>
               </Button>
             </CardContent>
           </Card>
@@ -145,8 +146,7 @@ export function ProfilePage() {
         <div className="grid gap-6">
           <Card>
             <CardContent className="p-6">
-              <h2 className="text-xl font-semibold">Отзывы обо мне</h2>
-              <p className="mt-1 text-sm text-muted-foreground">GET /reviews/user/{user.id}</p>
+              <h2 className="text-xl font-semibold">{t("profile.reviewsAbout")}</h2>
               {receivedQuery.isLoading ? (
                 <div className="mt-4">
                   <ReviewListSkeleton count={2} />
@@ -165,8 +165,8 @@ export function ProfilePage() {
               (receivedQuery.data?.length ?? 0) === 0 ? (
                 <div className="mt-4">
                   <EmptyState
-                    title="Отзывов пока нет"
-                    description="Оценки появятся, когда по вам оставят отзыв после завершённого заказа."
+                    title={t("profile.noReviews")}
+                    description={t("profile.noReviewsHint")}
                     className="border-dashed"
                   />
                 </div>
@@ -188,9 +188,9 @@ export function ProfilePage() {
           </Card>
           <Card>
             <CardContent className="p-6">
-              <h2 className="text-xl font-semibold">Мои отзывы</h2>
+              <h2 className="text-xl font-semibold">{t("profile.myReviews")}</h2>
               <p className="mt-1 text-sm text-muted-foreground">
-                Удалить можно только свой отзыв (DELETE /reviews/{"{id}"}).
+                {t("profile.myReviewsHint")}
               </p>
               {givenQuery.isLoading ? (
                 <div className="mt-4">
@@ -203,7 +203,7 @@ export function ProfilePage() {
                 </div>
               ) : null}
               {!givenQuery.isLoading && !givenQuery.isError && given.length === 0 ? (
-                <p className="mt-4 text-sm text-muted-foreground">Вы ещё не оставляли отзывы.</p>
+                <p className="mt-4 text-sm text-muted-foreground">{t("profile.noGiven")}</p>
               ) : null}
               <div className="mt-4 grid gap-3">
                 {given.map((review) => (
@@ -249,6 +249,7 @@ function ProfileReviewRow({
   onDelete?: () => void;
   deleting?: boolean;
 }) {
+  const { t } = useI18n();
   const authorQuery = useQuery({
     queryKey: queryKeys.user(fromUserId),
     queryFn: () => getUser(fromUserId),
@@ -271,12 +272,12 @@ function ProfileReviewRow({
       rating={rating}
       comment={comment}
       createdAt={createdAt}
-      author={authorQuery.data ? fullName(authorQuery.data) : `Пользователь #${fromUserId}`}
+      author={authorQuery.data ? fullName(authorQuery.data) : t("common.userFallback", { id: fromUserId })}
       recipient={
         toUserId
           ? recipientQuery.data
             ? fullName(recipientQuery.data)
-            : `Пользователь #${toUserId}`
+            : t("common.userFallback", { id: toUserId })
           : undefined
       }
       jobId={jobId}

@@ -11,21 +11,23 @@ import { ErrorState } from "@/components/states/error-state";
 import { JobListSkeleton } from "@/components/states/loading-state";
 import { Button } from "@/components/ui/button";
 import { queryKeys } from "@/lib/query-keys";
+import { useI18n } from "@/i18n/locale-context";
 import { getErrorMessage } from "@/lib/utils";
 
 export function MyJobsPage() {
+  const { t } = useI18n();
   const queryClient = useQueryClient();
   const jobsQuery = useQuery({ queryKey: queryKeys.myJobs, queryFn: getMyJobs });
   const categoriesQuery = useQuery({
     queryKey: queryKeys.categories,
     queryFn: listCategories,
   });
-  const names = categoryMap(categoriesQuery.data ?? []);
+  const names = categoryMap(categoriesQuery.data ?? [], t);
 
   const completeMutation = useMutation({
     mutationFn: completeJob,
     onSuccess: async () => {
-      toast.success("Заказ завершён");
+      toast.success(t("job.completedToast"));
       await queryClient.invalidateQueries({ queryKey: queryKeys.myJobs });
     },
     onError: (error) => toast.error(getErrorMessage(error)),
@@ -33,7 +35,7 @@ export function MyJobsPage() {
   const cancelMutation = useMutation({
     mutationFn: cancelJob,
     onSuccess: async () => {
-      toast.success("Заказ отменён");
+      toast.success(t("job.cancelledToast"));
       await queryClient.invalidateQueries({ queryKey: queryKeys.myJobs });
     },
     onError: (error) => toast.error(getErrorMessage(error)),
@@ -41,7 +43,7 @@ export function MyJobsPage() {
   const deleteMutation = useMutation({
     mutationFn: deleteJob,
     onSuccess: async () => {
-      toast.success("Заказ удалён");
+      toast.success(t("job.deletedToast"));
       await queryClient.invalidateQueries({ queryKey: queryKeys.myJobs });
     },
     onError: (error) => toast.error(getErrorMessage(error)),
@@ -50,11 +52,11 @@ export function MyJobsPage() {
   return (
     <div>
       <PageHeader
-        title="Мои заказы"
-        description="Все задачи, которые вы опубликовали"
+        title={t("myJobs.title")}
+        description={t("myJobs.hint")}
         action={
           <Button asChild>
-            <Link to="/app/jobs/new">Разместить заказ</Link>
+            <Link to="/app/jobs/new">{t("nav.placeOrder")}</Link>
           </Button>
         }
       />
@@ -65,11 +67,11 @@ export function MyJobsPage() {
       {!jobsQuery.isLoading && !jobsQuery.isError && jobsQuery.data?.length === 0 ? (
         <EmptyState
           icon="jobs"
-          title="Пока нет заказов"
-          description="Опубликуйте первую задачу — исполнители начнут откликаться."
+          title={t("myJobs.empty")}
+          description={t("myJobs.emptyHint")}
           action={
             <Button asChild>
-              <Link to="/app/jobs/new">Разместить заказ</Link>
+              <Link to="/app/jobs/new">{t("nav.placeOrder")}</Link>
             </Button>
           }
         />
@@ -84,11 +86,11 @@ export function MyJobsPage() {
             />
             <div className="flex flex-wrap gap-2 lg:flex-col">
               <Button asChild variant="outline" size="sm">
-                <Link to={`/jobs/${job.id}`}>Открыть</Link>
+                <Link to={`/jobs/${job.id}`}>{t("common.open")}</Link>
               </Button>
               {job.status !== "COMPLETED" && job.status !== "CANCELLED" ? (
                 <Button size="sm" onClick={() => completeMutation.mutate(job.id)}>
-                  Завершить
+                  {t("job.complete")}
                 </Button>
               ) : null}
               {job.status !== "COMPLETED" && job.status !== "CANCELLED" ? (
@@ -97,12 +99,12 @@ export function MyJobsPage() {
                   variant="outline"
                   onClick={() => cancelMutation.mutate(job.id)}
                 >
-                  Отменить
+                  {t("common.cancel")}
                 </Button>
               ) : null}
               {job.status === "COMPLETED" ? (
                 <Button asChild size="sm" variant="outline">
-                  <Link to={`/jobs/${job.id}`}>Отзыв</Link>
+                  <Link to={`/jobs/${job.id}`}>{t("job.review")}</Link>
                 </Button>
               ) : null}
               <Button
@@ -110,7 +112,7 @@ export function MyJobsPage() {
                 variant="ghost"
                 onClick={() => deleteMutation.mutate(job.id)}
               >
-                Удалить
+                {t("common.delete")}
               </Button>
             </div>
           </div>

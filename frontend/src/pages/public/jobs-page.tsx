@@ -105,7 +105,7 @@ export function JobsPage({ embedded = false }: { embedded?: boolean }) {
     queryKey: queryKeys.categories,
     queryFn: listCategories,
   });
-  const names = categoryMap(categoriesQuery.data ?? []);
+  const names = categoryMap(categoriesQuery.data ?? [], t);
   const jobs = jobsQuery.data ?? [];
   const selected = jobs.find((job) => job.id === activeJobId) ?? jobs[0];
   const hasNextPage = jobs.length === PAGE_SIZE;
@@ -140,7 +140,7 @@ export function JobsPage({ embedded = false }: { embedded?: boolean }) {
           <option value="">{t("category.all")}</option>
           {(categoriesQuery.data ?? []).map((category) => (
             <option key={category.id} value={category.id}>
-              {category.name}
+              {names[category.id] ?? category.name}
             </option>
           ))}
         </select>
@@ -154,7 +154,7 @@ export function JobsPage({ embedded = false }: { embedded?: boolean }) {
       </div>
       {when ? (
         <p className="mb-4 text-sm text-muted-foreground">
-          Когда: {when} — это поле только для интерфейса, API его не фильтрует.
+          {t("jobs.whenHint", { when })}
         </p>
       ) : null}
       {jobsQuery.isLoading ? <JobFeedSkeleton /> : null}
@@ -164,11 +164,11 @@ export function JobsPage({ embedded = false }: { embedded?: boolean }) {
       {!jobsQuery.isLoading && !jobsQuery.isError && jobs.length === 0 ? (
         <EmptyState
           icon="search"
-          title="Ничего не нашли"
-          description="Измените фильтры или разместите заказ как заказчик."
+          title={t("jobs.empty")}
+          description={t("jobs.emptyHint")}
           action={
             <Button asChild>
-              <Link to="/app/jobs/new">Разместить заказ</Link>
+              <Link to="/app/jobs/new">{t("nav.placeOrder")}</Link>
             </Button>
           }
         />
@@ -204,15 +204,15 @@ export function JobsPage({ embedded = false }: { embedded?: boolean }) {
               disabled={page <= 1 || jobsQuery.isFetching}
               onClick={() => patchParams({ page: String(page - 1) }, false)}
             >
-              Назад
+              {t("jobs.prev")}
             </Button>
-            <p className="text-sm text-muted-foreground">Страница {page}</p>
+            <p className="text-sm text-muted-foreground">{t("jobs.page", { page })}</p>
             <Button
               variant="outline"
               disabled={!hasNextPage || jobsQuery.isFetching}
               onClick={() => patchParams({ page: String(page + 1) }, false)}
             >
-              Вперёд
+              {t("jobs.next")}
             </Button>
           </div>
         </>

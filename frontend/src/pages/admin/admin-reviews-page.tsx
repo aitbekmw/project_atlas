@@ -9,10 +9,12 @@ import { ReviewCard } from "@/components/marketplace/review-card";
 import { EmptyState } from "@/components/states/empty-state";
 import { ErrorState } from "@/components/states/error-state";
 import { ReviewListSkeleton } from "@/components/states/loading-state";
+import { useI18n } from "@/i18n/locale-context";
 import { queryKeys } from "@/lib/query-keys";
 import { fullName, getErrorMessage } from "@/lib/utils";
 
 export function AdminReviewsPage() {
+  const { t } = useI18n();
   const queryClient = useQueryClient();
   const reviewsQuery = useQuery({
     queryKey: queryKeys.reviews,
@@ -21,7 +23,7 @@ export function AdminReviewsPage() {
   const deleteMutation = useMutation({
     mutationFn: deleteReview,
     onSuccess: async () => {
-      toast.success("Отзыв удалён");
+      toast.success(t("profile.reviewDeleted"));
       await queryClient.invalidateQueries({ queryKey: queryKeys.reviews });
       await queryClient.invalidateQueries({ queryKey: ["user-reviews"] });
     },
@@ -30,13 +32,13 @@ export function AdminReviewsPage() {
 
   return (
     <div>
-      <PageHeader title="Отзывы" description="Модерация: DELETE /reviews/{id} доступен автору и admin" />
+      <PageHeader title={t("admin.reviewsTitle")} description={t("admin.reviewsHint")} />
       {reviewsQuery.isLoading ? <ReviewListSkeleton /> : null}
       {reviewsQuery.isError ? (
         <ErrorState error={reviewsQuery.error} onRetry={() => void reviewsQuery.refetch()} />
       ) : null}
       {!reviewsQuery.isLoading && !reviewsQuery.isError && reviewsQuery.data?.length === 0 ? (
-        <EmptyState title="Отзывов нет" description="Когда появятся оценки, они отобразятся здесь." />
+        <EmptyState title={t("admin.reviewsEmpty")} description={t("admin.reviewsEmptyHint")} />
       ) : null}
       <div className="grid gap-3">
         {(reviewsQuery.data ?? []).map((review) => (
@@ -76,6 +78,7 @@ function AdminReviewRow({
   deleting: boolean;
   onDelete: () => void;
 }) {
+  const { t } = useI18n();
   const fromQuery = useQuery({
     queryKey: queryKeys.user(fromUserId),
     queryFn: () => getUser(fromUserId),
@@ -97,8 +100,8 @@ function AdminReviewRow({
       rating={rating}
       comment={comment}
       createdAt={createdAt}
-      author={fromQuery.data ? fullName(fromQuery.data) : `Пользователь #${fromUserId}`}
-      recipient={toQuery.data ? fullName(toQuery.data) : `Пользователь #${toUserId}`}
+      author={fromQuery.data ? fullName(fromQuery.data) : t("common.userFallback", { id: fromUserId })}
+      recipient={toQuery.data ? fullName(toQuery.data) : t("common.userFallback", { id: toUserId })}
       jobId={jobId}
       jobTitle={jobQuery.data?.title}
       onDelete={onDelete}

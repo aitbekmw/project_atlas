@@ -23,6 +23,7 @@ import { ErrorState } from "@/components/states/error-state";
 import { ApplicationListSkeleton } from "@/components/states/loading-state";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/context/auth-context";
+import { useI18n } from "@/i18n/locale-context";
 import { queryKeys } from "@/lib/query-keys";
 import { fullName, getErrorMessage } from "@/lib/utils";
 import type { Application, Job } from "@/types/api";
@@ -42,6 +43,7 @@ async function invalidateApplicationQueries(
 }
 
 export function ApplicationsPage() {
+  const { t } = useI18n();
   const { user } = useAuth();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -82,7 +84,7 @@ export function ApplicationsPage() {
   const acceptMutation = useMutation({
     mutationFn: acceptApplication,
     onSuccess: async () => {
-      toast.success("Отклик принят");
+      toast.success(t("app.accepted"));
       await invalidateApplicationQueries(queryClient);
     },
     onError: (error) => toast.error(getErrorMessage(error)),
@@ -90,7 +92,7 @@ export function ApplicationsPage() {
   const rejectMutation = useMutation({
     mutationFn: rejectApplication,
     onSuccess: async () => {
-      toast.success("Отклик отклонён");
+      toast.success(t("app.rejected"));
       await invalidateApplicationQueries(queryClient);
     },
     onError: (error) => toast.error(getErrorMessage(error)),
@@ -98,7 +100,7 @@ export function ApplicationsPage() {
   const withdrawMutation = useMutation({
     mutationFn: withdrawApplication,
     onSuccess: async () => {
-      toast.success("Отклик отозван");
+      toast.success(t("app.withdrawn"));
       await invalidateApplicationQueries(queryClient);
     },
     onError: (error) => toast.error(getErrorMessage(error)),
@@ -129,13 +131,13 @@ export function ApplicationsPage() {
   return (
     <div>
       <PageHeader
-        title={isWorker ? "Мои отклики" : isAdmin ? "Все отклики" : "Отклики"}
+        title={isWorker ? t("app.titleWorker") : isAdmin ? t("app.titleAdmin") : t("app.titleCustomer")}
         description={
           isWorker
-            ? "Заявки, которые вы отправили. Статусы: PENDING, ACCEPTED, REJECTED."
+            ? t("app.hintWorker")
             : isAdmin
-              ? "Все отклики платформы из GET /applications"
-              : "Отклики исполнителей на ваши заказы"
+              ? t("app.hintAdmin")
+              : t("app.hintCustomer")
         }
       />
       {isLoading ? <ApplicationListSkeleton /> : null}
@@ -145,21 +147,21 @@ export function ApplicationsPage() {
       {!isLoading && !isError && applications.length === 0 ? (
         <EmptyState
           icon="inbox"
-          title="Откликов пока нет"
+          title={t("app.empty")}
           description={
             isWorker
-              ? "Найдите заказ и отправьте заявку."
-              : "Когда исполнители откликнутся, они появятся здесь."
+              ? t("app.emptyWorker")
+              : t("app.emptyCustomer")
           }
           action={
             isWorker ? (
               <Button asChild>
-                <Link to="/app/search">Найти заказы</Link>
+                <Link to="/app/search">{t("nav.searchJobs")}</Link>
               </Button>
             ) : (
               <Button asChild variant="outline">
                 <Link to={isAdmin ? "/app/admin/jobs" : "/app/jobs"}>
-                  {isAdmin ? "Все заказы" : "Мои заказы"}
+                  {isAdmin ? t("landing.allJobs") : t("nav.myJobs")}
                 </Link>
               </Button>
             )
@@ -210,6 +212,7 @@ function ApplicationItem({
   onWithdraw: () => void;
   onChat: (job: Job) => void;
 }) {
+  const { t } = useI18n();
   const jobQuery = useQuery({
     queryKey: queryKeys.job(application.job_id),
     queryFn: () => getJob(application.job_id),
@@ -222,7 +225,7 @@ function ApplicationItem({
     retry: false,
   });
   const job = jobQuery.data;
-  const workerName = workerQuery.data ? fullName(workerQuery.data) : `Пользователь #${application.worker_id}`;
+  const workerName = workerQuery.data ? fullName(workerQuery.data) : t("common.userFallback", { id: application.worker_id });
   const isMine = application.worker_id === currentUserId;
   const isPending = application.status === "PENDING";
   const isAccepted = application.status === "ACCEPTED";

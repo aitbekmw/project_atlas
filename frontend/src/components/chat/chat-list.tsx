@@ -4,6 +4,7 @@ import { NavLink } from "react-router-dom";
 import { getJob } from "@/api/jobs";
 import { getUser } from "@/api/users";
 import { EmptyState } from "@/components/states/empty-state";
+import { useI18n } from "@/i18n/locale-context";
 import { queryKeys } from "@/lib/query-keys";
 import { cn, formatDateTime, fullName } from "@/lib/utils";
 import type { Conversation } from "@/types/api";
@@ -15,12 +16,13 @@ interface ChatListProps {
 }
 
 export function ChatList({ conversations, activeId, currentUserId }: ChatListProps) {
+  const { t } = useI18n();
   if (conversations.length === 0) {
     return (
       <EmptyState
         icon="chat"
-        title="Пока нет диалогов"
-        description="Диалог появляется, когда заказчик принимает отклик и открывает чат."
+        title={t("chat.empty")}
+        description={t("chat.emptyHint")}
         className="h-full rounded-none border-0"
       />
     );
@@ -49,6 +51,7 @@ function ConversationRow({
   activeId?: number;
   currentUserId: number;
 }) {
+  const { t } = useI18n();
   const peerId =
     conversation.customer_id === currentUserId
       ? conversation.worker_id
@@ -66,8 +69,8 @@ function ConversationRow({
   const peerName = peerQuery.data
     ? fullName(peerQuery.data)
     : conversation.customer_id === currentUserId
-      ? `Исполнитель #${conversation.worker_id}`
-      : `Заказчик #${conversation.customer_id}`;
+      ? t("common.workerFallback", { id: conversation.worker_id })
+      : t("common.customerFallback", { id: conversation.customer_id });
 
   return (
     <NavLink
@@ -78,7 +81,7 @@ function ConversationRow({
       )}
     >
       <p className="truncate text-sm font-semibold">
-        {jobQuery.data?.title ?? `Заказ #${conversation.job_id}`}
+        {jobQuery.data?.title ?? t("common.jobFallback", { id: conversation.job_id })}
       </p>
       <p className="mt-1 truncate text-xs text-muted-foreground">{peerName}</p>
       <p className="mt-2 text-[11px] text-muted-foreground">

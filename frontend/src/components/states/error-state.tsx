@@ -1,7 +1,7 @@
 import { AlertCircle } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { useI18n } from "@/i18n/locale-context";
+import { useI18n, type TranslateFn } from "@/i18n/locale-context";
 import { getErrorMessage, getHttpStatus } from "@/lib/utils";
 
 interface ErrorStateProps {
@@ -13,53 +13,32 @@ interface ErrorStateProps {
 
 const KNOWN_STATUSES = new Set([401, 403, 404, 500]);
 
-function copyForStatus(status?: number): { title: string; description: string } {
+function copyForStatus(
+  t: TranslateFn,
+  status?: number,
+): { title: string; description: string } {
   if (status === 401) {
-    return {
-      title: "Нужна авторизация",
-      description: "Войдите в аккаунт, чтобы продолжить.",
-    };
+    return { title: t("error.authRequired"), description: t("error.authRequiredHint") };
   }
   if (status === 403) {
-    return {
-      title: "Нет доступа",
-      description: "У вашей роли нет прав на это действие.",
-    };
+    return { title: t("error.forbidden"), description: t("error.forbiddenHint") };
   }
   if (status === 404) {
-    return {
-      title: "Не найдено",
-      description: "Запись не существует или была удалена.",
-    };
+    return { title: t("error.notFound"), description: t("error.notFoundHint") };
   }
   if (status === 400) {
-    return {
-      title: "Запрос отклонён",
-      description: "Сервер не принял это действие.",
-    };
+    return { title: t("error.badRequest"), description: t("error.badRequestHint") };
   }
   if (status === 409) {
-    return {
-      title: "Конфликт",
-      description: "Это действие конфликтует с текущим состоянием данных.",
-    };
+    return { title: t("error.conflict"), description: t("error.conflictHint") };
   }
   if (status === 422) {
-    return {
-      title: "Данные не прошли проверку",
-      description: "Проверьте поля запроса и попробуйте снова.",
-    };
+    return { title: t("error.validation"), description: t("error.validationHint") };
   }
   if (status === 500) {
-    return {
-      title: "Ошибка сервера",
-      description: "Atlas API вернул ошибку. Попробуйте позже.",
-    };
+    return { title: t("error.server"), description: t("error.serverHint") };
   }
-  return {
-    title: "Не удалось загрузить данные",
-    description: "Проверьте соединение с сервером Atlas API и попробуйте снова.",
-  };
+  return { title: t("error.loadFailed"), description: t("error.network") };
 }
 
 export function ErrorState({
@@ -70,7 +49,7 @@ export function ErrorState({
 }: ErrorStateProps) {
   const { t } = useI18n();
   const status = getHttpStatus(error);
-  const fallback = copyForStatus(status);
+  const fallback = copyForStatus(t, status);
   const detail = error ? getErrorMessage(error) : undefined;
   const useDetail =
     Boolean(detail) &&

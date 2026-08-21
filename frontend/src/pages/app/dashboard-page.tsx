@@ -65,11 +65,11 @@ export function DashboardPage() {
   if (user?.role === "admin") {
     return (
       <div>
-        <PageHeader title={t("dashboard.admin")} description="Обзор платформы Atlas" />
+        <PageHeader title={t("dashboard.admin")} description={t("dashboard.adminHint")} />
         <div className="grid gap-4 sm:grid-cols-3">
-          <Stat label="Заказы" value={allJobs.data?.length ?? 0} />
-          <Stat label="Отклики" value={applications.data?.length ?? 0} />
-          <Stat label="Отзывы" value={reviews.data?.length ?? 0} />
+          <Stat label={t("dashboard.statJobs")} value={allJobs.data?.length ?? 0} />
+          <Stat label={t("dashboard.statApplications")} value={applications.data?.length ?? 0} />
+          <Stat label={t("dashboard.statReviews")} value={reviews.data?.length ?? 0} />
         </div>
         <div className="mt-6 flex flex-wrap gap-3">
           <Button asChild>
@@ -87,8 +87,8 @@ export function DashboardPage() {
     return (
       <div>
         <PageHeader
-          title={`Здравствуйте, ${user.first_name}`}
-          description="Управляйте заказами, откликами и сообщениями"
+          title={t("dashboard.helloName", { name: user.first_name })}
+          description={t("dashboard.customerHint")}
           action={
             <Button asChild>
               <Link to="/app/jobs/new">{t("nav.placeOrder")}</Link>
@@ -96,9 +96,9 @@ export function DashboardPage() {
           }
         />
         <div className="grid gap-4 sm:grid-cols-3">
-          <Stat label="Мои заказы" value={myJobs.data?.length ?? 0} />
-          <Stat label="Отклики" value={applications.data?.length ?? 0} />
-          <Stat label="Отзывы" value={aboutMe.data?.length ?? 0} />
+          <Stat label={t("dashboard.statMyJobs")} value={myJobs.data?.length ?? 0} />
+          <Stat label={t("dashboard.statApplications")} value={applications.data?.length ?? 0} />
+          <Stat label={t("dashboard.statReviews")} value={aboutMe.data?.length ?? 0} />
         </div>
       </div>
     );
@@ -107,8 +107,8 @@ export function DashboardPage() {
   return (
     <div>
       <PageHeader
-        title={`Здравствуйте, ${user?.first_name ?? ""}`}
-        description="Находите заказы и отслеживайте отклики"
+        title={t("dashboard.helloName", { name: user?.first_name ?? "" })}
+        description={t("dashboard.workerHint")}
         action={
           <Button asChild>
             <Link to="/app/search">{t("nav.searchJobs")}</Link>
@@ -116,9 +116,9 @@ export function DashboardPage() {
         }
       />
       <div className="grid gap-4 sm:grid-cols-3">
-        <Stat label="Мои отклики" value={myApplications.data?.length ?? 0} />
-        <Stat label="Открытые заказы" value={openJobs.data?.length ?? 0} />
-        <Stat label="Отзывы" value={aboutMe.data?.length ?? 0} />
+        <Stat label={t("dashboard.statMyApplications")} value={myApplications.data?.length ?? 0} />
+        <Stat label={t("dashboard.statOpenJobs")} value={openJobs.data?.length ?? 0} />
+        <Stat label={t("dashboard.statReviews")} value={aboutMe.data?.length ?? 0} />
       </div>
     </div>
   );

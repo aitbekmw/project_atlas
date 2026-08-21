@@ -1,0 +1,81 @@
+import type { MessageKey } from "@/i18n/messages";
+import type { Category } from "@/types/api";
+
+type Translate = (key: MessageKey, vars?: Record<string, string | number>) => string;
+
+type SystemSlug = "repair" | "delivery" | "cleaning" | "moving" | "it";
+
+const BY_ICON: Record<string, SystemSlug> = {
+  wrench: "repair",
+  hammer: "repair",
+  package: "delivery",
+  sparkles: "cleaning",
+  sparkle: "cleaning",
+  truck: "moving",
+  monitor: "it",
+};
+
+const BY_NAME: Record<string, SystemSlug> = {
+  ремонт: "repair",
+  доставка: "delivery",
+  уборка: "cleaning",
+  переезд: "moving",
+  "it и техника": "it",
+  repair: "repair",
+  delivery: "delivery",
+  cleaning: "cleaning",
+  moving: "moving",
+  "it and gadgets": "it",
+  оңдоо: "repair",
+  жеткирүү: "delivery",
+  тазалоо: "cleaning",
+  көчүү: "moving",
+  "it жана техника": "it",
+};
+
+const NAME_KEYS: Record<SystemSlug, MessageKey> = {
+  repair: "sysCategory.repair",
+  delivery: "sysCategory.delivery",
+  cleaning: "sysCategory.cleaning",
+  moving: "sysCategory.moving",
+  it: "sysCategory.it",
+};
+
+const DESC_KEYS: Record<SystemSlug, MessageKey> = {
+  repair: "sysCategory.repairDesc",
+  delivery: "sysCategory.deliveryDesc",
+  cleaning: "sysCategory.cleaningDesc",
+  moving: "sysCategory.movingDesc",
+  it: "sysCategory.itDesc",
+};
+
+function systemCategorySlug(
+  category: Pick<Category, "name" | "icon">,
+): SystemSlug | null {
+  const fromIcon = category.icon
+    ? BY_ICON[category.icon.toLowerCase().trim()]
+    : undefined;
+  if (fromIcon) {
+    return fromIcon;
+  }
+  return BY_NAME[category.name.toLowerCase().trim()] ?? null;
+}
+
+export function localizedCategoryName(
+  category: Pick<Category, "name" | "icon">,
+  t: Translate,
+): string {
+  const slug = systemCategorySlug(category);
+  return slug ? t(NAME_KEYS[slug]) : category.name;
+}
+
+export function localizedCategoryDescription(
+  category: Pick<Category, "name" | "icon" | "description">,
+  t: Translate,
+): string | null {
+  const slug = systemCategorySlug(category);
+  if (slug) {
+    return t(DESC_KEYS[slug]);
+  }
+  return category.description?.trim() ? category.description : null;
+}

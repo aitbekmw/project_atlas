@@ -4,9 +4,10 @@ import type { ReactNode } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { useI18n } from "@/i18n/locale-context";
+import { applicationStatusKey } from "@/i18n/status";
 import { formatDate, formatMoney } from "@/lib/utils";
 import type { Application, ApplicationStatus, Job } from "@/types/api";
-import { APPLICATION_STATUS_LABEL } from "@/types/api";
 
 const variant: Record<ApplicationStatus, "warning" | "success" | "danger"> = {
   PENDING: "warning",
@@ -27,6 +28,7 @@ export function ApplicationCard({
   workerName,
   actions,
 }: ApplicationCardProps) {
+  const { t } = useI18n();
   return (
     <Card>
       <CardContent className="flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between">
@@ -35,10 +37,12 @@ export function ApplicationCard({
             to={`/jobs/${application.job_id}`}
             className="font-semibold hover:text-primary"
           >
-            {job?.title ?? `Заказ #${application.job_id}`}
+            {job?.title ?? t("common.jobFallback", { id: application.job_id })}
           </Link>
           <p className="mt-1 text-sm text-muted-foreground">
-            {workerName ? `Исполнитель: ${workerName}` : `Отклик #${application.id}`}
+            {workerName
+              ? t("app.workerLabel", { name: workerName })
+              : t("app.fallback", { id: application.id })}
             {" · "}
             {formatDate(application.created_at)}
           </p>
@@ -49,7 +53,7 @@ export function ApplicationCard({
             </p>
           ) : null}
           <Badge className="mt-3" variant={variant[application.status]}>
-            {APPLICATION_STATUS_LABEL[application.status]}
+            {t(applicationStatusKey(application.status))}
           </Badge>
         </div>
         {actions ? <div className="flex flex-wrap gap-2">{actions}</div> : null}
@@ -71,26 +75,27 @@ export function ApplicationActions({
   onWithdraw?: () => void;
   busy?: boolean;
 }) {
+  const { t } = useI18n();
   return (
     <>
       {onAccept ? (
         <Button size="sm" disabled={busy} onClick={onAccept}>
-          Принять
+          {t("app.accept")}
         </Button>
       ) : null}
       {onReject ? (
         <Button size="sm" variant="outline" disabled={busy} onClick={onReject}>
-          Отклонить
+          {t("app.reject")}
         </Button>
       ) : null}
       {onChat ? (
         <Button size="sm" variant="outline" disabled={busy} onClick={onChat}>
-          Чат
+          {t("app.chat")}
         </Button>
       ) : null}
       {onWithdraw ? (
         <Button size="sm" variant="ghost" disabled={busy} onClick={onWithdraw}>
-          Отозвать
+          {t("app.withdraw")}
         </Button>
       ) : null}
     </>
