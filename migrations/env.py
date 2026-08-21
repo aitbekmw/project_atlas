@@ -3,7 +3,7 @@ from logging.config import fileConfig
 from alembic import context
 from sqlalchemy import create_engine, pool
 
-from app.core.config import settings
+from app.core.config import normalize_sync_database_url, settings
 from app.db.base import Base
 
 # this is the Alembic Config object, which provides
@@ -27,9 +27,7 @@ target_metadata = Base.metadata
 
 def get_sync_database_url() -> str:
     """Return the application database URL with a driver Alembic can use."""
-    return settings.DATABASE_URL.replace(
-        "postgresql+asyncpg://", "postgresql+psycopg2://", 1
-    )
+    return normalize_sync_database_url(settings.DATABASE_URL)
 
 
 # other values from the config, defined by the needs of env.py,

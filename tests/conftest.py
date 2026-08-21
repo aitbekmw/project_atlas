@@ -12,7 +12,7 @@ from sqlalchemy.ext.asyncio import (
     create_async_engine,
 )
 
-from app.core.config import settings
+from app.core.config import normalize_async_database_url, settings
 from app.db.base import Base
 from app.db.session import get_db
 from app.main import app
@@ -21,6 +21,9 @@ from app.models.enum import UserRole
 from app.models.user import User
 
 TEST_DATABASE_URL = settings.TEST_DATABASE_URL
+if not TEST_DATABASE_URL:
+    raise RuntimeError("TEST_DATABASE_URL must be set to run tests")
+TEST_DATABASE_URL = normalize_async_database_url(TEST_DATABASE_URL)
 
 engine = create_async_engine(
     TEST_DATABASE_URL,
