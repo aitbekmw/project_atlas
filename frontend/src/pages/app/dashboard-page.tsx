@@ -8,6 +8,7 @@ import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useAuth } from "@/context/auth-context";
+import { useI18n } from "@/i18n/locale-context";
 import { queryKeys } from "@/lib/query-keys";
 
 function Stat({ label, value }: { label: string; value: number }) {
@@ -22,6 +23,7 @@ function Stat({ label, value }: { label: string; value: number }) {
 }
 
 export function DashboardPage() {
+  const { t } = useI18n();
   const { user } = useAuth();
 
   const myJobs = useQuery({
@@ -63,7 +65,7 @@ export function DashboardPage() {
   if (user?.role === "admin") {
     return (
       <div>
-        <PageHeader title="Админ-панель" description="Обзор платформы Atlas" />
+        <PageHeader title={t("dashboard.admin")} description="Обзор платформы Atlas" />
         <div className="grid gap-4 sm:grid-cols-3">
           <Stat label="Заказы" value={allJobs.data?.length ?? 0} />
           <Stat label="Отклики" value={applications.data?.length ?? 0} />
@@ -71,10 +73,10 @@ export function DashboardPage() {
         </div>
         <div className="mt-6 flex flex-wrap gap-3">
           <Button asChild>
-            <Link to="/app/admin/categories">Категории</Link>
+            <Link to="/app/admin/categories">{t("nav.categories")}</Link>
           </Button>
           <Button asChild variant="outline">
-            <Link to="/app/admin/users">Пользователи</Link>
+            <Link to="/app/admin/users">{t("nav.users")}</Link>
           </Button>
         </div>
       </div>
@@ -89,7 +91,7 @@ export function DashboardPage() {
           description="Управляйте заказами, откликами и сообщениями"
           action={
             <Button asChild>
-              <Link to="/app/jobs/new">Разместить заказ</Link>
+              <Link to="/app/jobs/new">{t("nav.placeOrder")}</Link>
             </Button>
           }
         />
@@ -109,7 +111,7 @@ export function DashboardPage() {
         description="Находите заказы и отслеживайте отклики"
         action={
           <Button asChild>
-            <Link to="/app/search">Найти заказы</Link>
+            <Link to="/app/search">{t("nav.searchJobs")}</Link>
           </Button>
         }
       />

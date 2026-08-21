@@ -10,6 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/context/auth-context";
+import { useI18n } from "@/i18n/locale-context";
 import { getErrorMessage } from "@/lib/utils";
 
 const schema = z.object({
@@ -25,6 +26,7 @@ const schema = z.object({
 type Values = z.infer<typeof schema>;
 
 export function RegisterPage() {
+  const { t } = useI18n();
   const { register } = useAuth();
   const navigate = useNavigate();
   const form = useForm<Values>({
@@ -45,9 +47,9 @@ export function RegisterPage() {
       <Card className="w-full">
         <CardHeader className="items-center text-center">
           <Logo />
-          <CardTitle className="mt-4">Создать аккаунт</CardTitle>
+          <CardTitle className="mt-4">{t("auth.registerTitle")}</CardTitle>
           <p className="text-sm text-muted-foreground">
-            Заказчик размещает заказ, исполнитель откликается
+            {t("auth.registerSubtitle")}
           </p>
         </CardHeader>
         <CardContent>
@@ -59,7 +61,7 @@ export function RegisterPage() {
                   ...values,
                   phone: values.phone || null,
                 });
-                toast.success("Аккаунт создан");
+                toast.success(t("auth.created"));
                 navigate("/app/dashboard");
               } catch (error) {
                 const message = getErrorMessage(error);
@@ -75,7 +77,7 @@ export function RegisterPage() {
             ) : null}
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="grid gap-2">
-                <Label>Имя</Label>
+                <Label>{t("auth.firstName")}</Label>
                 <Input {...form.register("first_name")} />
                 {form.formState.errors.first_name ? (
                   <p className="text-xs text-destructive">
@@ -84,7 +86,7 @@ export function RegisterPage() {
                 ) : null}
               </div>
               <div className="grid gap-2">
-                <Label>Фамилия</Label>
+                <Label>{t("auth.lastName")}</Label>
                 <Input {...form.register("last_name")} />
                 {form.formState.errors.last_name ? (
                   <p className="text-xs text-destructive">
@@ -94,7 +96,7 @@ export function RegisterPage() {
               </div>
             </div>
             <div className="grid gap-2">
-              <Label>Username</Label>
+              <Label>{t("auth.username")}</Label>
               <Input {...form.register("username")} />
               {form.formState.errors.username ? (
                 <p className="text-xs text-destructive">
@@ -103,7 +105,7 @@ export function RegisterPage() {
               ) : null}
             </div>
             <div className="grid gap-2">
-              <Label>Email</Label>
+              <Label>{t("auth.email")}</Label>
               <Input type="email" {...form.register("email")} />
               {form.formState.errors.email ? (
                 <p className="text-xs text-destructive">
@@ -112,11 +114,11 @@ export function RegisterPage() {
               ) : null}
             </div>
             <div className="grid gap-2">
-              <Label>Телефон</Label>
+              <Label>{t("auth.phone")}</Label>
               <Input {...form.register("phone")} />
             </div>
             <div className="grid gap-2">
-              <Label>Пароль</Label>
+              <Label>{t("auth.password")}</Label>
               <Input type="password" {...form.register("password")} />
               {form.formState.errors.password ? (
                 <p className="text-xs text-destructive">
@@ -125,23 +127,23 @@ export function RegisterPage() {
               ) : null}
             </div>
             <div className="grid gap-2">
-              <Label>Роль</Label>
+              <Label>{t("auth.role")}</Label>
               <select
-                className="flex h-11 w-full rounded-xl border border-input bg-background px-3 text-sm"
+                className="flex min-h-11 w-full rounded-xl border border-input bg-background px-3 text-sm"
                 {...form.register("role")}
               >
-                <option value="worker">Исполнитель</option>
-                <option value="customer">Заказчик</option>
+                <option value="worker">{t("role.worker")}</option>
+                <option value="customer">{t("role.customer")}</option>
               </select>
             </div>
             <Button type="submit" className="h-11" disabled={form.formState.isSubmitting}>
-              {form.formState.isSubmitting ? "Создаём..." : "Зарегистрироваться"}
+              {form.formState.isSubmitting ? t("auth.creating") : t("auth.create")}
             </Button>
           </form>
           <p className="mt-4 text-center text-sm text-muted-foreground">
-            Уже есть аккаунт?{" "}
+            {t("auth.hasAccount")}{" "}
             <Link to="/login" className="font-semibold text-primary">
-              Войти
+              {t("nav.login")}
             </Link>
           </p>
         </CardContent>

@@ -70,6 +70,7 @@ class Settings(BaseSettings):
         "http://127.0.0.1:5174",
         "http://127.0.0.1:5175",
         "http://127.0.0.1:5176",
+        "https://atlas-frontend-2a9s.onrender.com",
     ]
 
     UPLOAD_DIR: str = "media"
@@ -118,6 +119,15 @@ class Settings(BaseSettings):
                 return parsed
             return [item.strip() for item in text.split(",") if item.strip()]
         return value
+
+    @field_validator("CORS_ORIGINS")
+    @classmethod
+    def include_production_frontend(cls, value: list[str]) -> list[str]:
+        production = "https://atlas-frontend-2a9s.onrender.com"
+        origins = [item.rstrip("/") for item in value]
+        if production not in origins:
+            origins.append(production)
+        return origins
 
 
 settings = Settings()

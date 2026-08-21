@@ -10,6 +10,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { PageSpinner } from "@/components/states/loading-state";
 import { AuthProvider, useAuth } from "@/context/auth-context";
+import { LocaleProvider } from "@/i18n/locale-context";
 import { AdminCategoriesPage } from "@/pages/admin/admin-categories-page";
 import { AdminJobsPage } from "@/pages/admin/admin-jobs-page";
 import { AdminReviewsPage } from "@/pages/admin/admin-reviews-page";
@@ -60,6 +61,7 @@ export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider attribute="class" defaultTheme="system" enableSystem storageKey="atlas.theme">
+        <LocaleProvider>
         <TooltipProvider delayDuration={200}>
           <AuthProvider>
             <BrowserRouter>
@@ -168,6 +170,7 @@ export default function App() {
         </BrowserRouter>
           </AuthProvider>
         </TooltipProvider>
+        </LocaleProvider>
       </ThemeProvider>
     </QueryClientProvider>
   );

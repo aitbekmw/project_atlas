@@ -1,7 +1,8 @@
+import { isAxiosError } from "axios";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 
-export function cn(...inputs: ClassValue[]) {
+export function cn(...inputs: ClassValue[]): string {
   return twMerge(clsx(inputs));
 }
 
@@ -21,6 +22,15 @@ export function getHttpStatus(error: unknown): number | undefined {
 }
 
 export function getErrorMessage(error: unknown): string {
+  if (isAxiosError(error)) {
+    if (error.code === "ECONNABORTED") {
+      return "Превышено время ожидания ответа сервера.";
+    }
+    if (!error.response) {
+      return "Нет соединения с сервером. Проверьте интернет и адрес API.";
+    }
+  }
+
   if (
     typeof error === "object" &&
     error !== null &&
@@ -45,6 +55,9 @@ export function getErrorMessage(error: unknown): string {
   }
 
   if (error instanceof Error) {
+    if (error.message === "Network Error") {
+      return "Нет соединения с сервером. Проверьте интернет и адрес API.";
+    }
     return error.message;
   }
 
@@ -81,7 +94,6 @@ const AUTH_ERROR_MESSAGES: Record<string, string> = {
   "New password must be different": "Новый пароль должен отличаться от текущего",
   "Not authenticated": "Нужна авторизация",
 };
-
 
 export function formatMoney(value: number): string {
   return new Intl.NumberFormat("ru-RU").format(value) + " сом";

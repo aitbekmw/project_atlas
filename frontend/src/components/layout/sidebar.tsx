@@ -1,17 +1,20 @@
 import { LogOut } from "lucide-react";
 import { NavLink, useNavigate } from "react-router-dom";
 
+import { LanguageSwitcher } from "@/components/layout/language-switcher";
 import { Logo } from "@/components/layout/navbar";
 import { ThemeToggle } from "@/components/layout/theme-toggle";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { UserAvatar } from "@/components/users/user-avatar";
 import { useAuth } from "@/context/auth-context";
+import { useI18n } from "@/i18n/locale-context";
 import { getNavItems } from "@/lib/navigation";
 import { cn } from "@/lib/utils";
-import { ROLE_LABEL } from "@/types/api";
+import type { MessageKey } from "@/i18n/messages";
 
 export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
+  const { t } = useI18n();
   const { user, logout } = useAuth();
   const navigate = useNavigate();
 
@@ -41,27 +44,30 @@ export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
             }
           >
             <item.icon className="h-4 w-4" />
-            {item.label}
+            {t(item.labelKey)}
           </NavLink>
         ))}
       </nav>
       <Separator />
-      <div className="flex items-center gap-3 p-4">
+      <div className="px-4 pb-2">
+        <LanguageSwitcher className="w-full" />
+      </div>
+      <div className="flex items-center gap-3 p-4 pt-2">
         <UserAvatar user={user} />
         <div className="min-w-0 flex-1">
           <p className="truncate text-sm font-semibold">
             {user.first_name} {user.last_name}
           </p>
           <p className="truncate text-xs text-muted-foreground">
-            {ROLE_LABEL[user.role]}
+            {t(`role.${user.role}` as MessageKey)}
           </p>
         </div>
         <ThemeToggle />
         <Button
           variant="ghost"
           size="icon"
-          className="rounded-full"
-          aria-label="Выйти"
+          className="h-10 w-10 rounded-full"
+          aria-label={t("nav.logout")}
           onClick={async () => {
             await logout();
             navigate("/");

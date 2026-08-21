@@ -1,9 +1,33 @@
 import { api } from "@/api/client";
 import type { Category } from "@/types/api";
 
+function isCategory(item: unknown): item is Category {
+  return (
+    typeof item === "object" &&
+    item !== null &&
+    typeof (item as Category).id === "number" &&
+    typeof (item as Category).name === "string"
+  );
+}
+
+function parseCategoryList(data: unknown): Category[] {
+  if (Array.isArray(data)) {
+    return data.filter(isCategory);
+  }
+  if (
+    typeof data === "object" &&
+    data !== null &&
+    "items" in data &&
+    Array.isArray((data as { items: unknown }).items)
+  ) {
+    return (data as { items: unknown[] }).items.filter(isCategory);
+  }
+  return [];
+}
+
 export async function listCategories(): Promise<Category[]> {
-  const { data } = await api.get<Category[]>("/categories");
-  return data;
+  const { data } = await api.get<unknown>("/categories");
+  return parseCategoryList(data);
 }
 
 export async function createCategory(payload: {

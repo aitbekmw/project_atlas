@@ -10,11 +10,13 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { UserAvatar } from "@/components/users/user-avatar";
 import { useAuth } from "@/context/auth-context";
+import { useI18n } from "@/i18n/locale-context";
+import type { MessageKey } from "@/i18n/messages";
 import { getAccountMenuItems } from "@/lib/navigation";
 import { cn, fullName } from "@/lib/utils";
-import { ROLE_LABEL } from "@/types/api";
 
 export function UserMenu({ compact = false }: { compact?: boolean }) {
+  const { t } = useI18n();
   const { user, logout } = useAuth();
   const navigate = useNavigate();
 
@@ -35,7 +37,7 @@ export function UserMenu({ compact = false }: { compact?: boolean }) {
       <DropdownMenuTrigger asChild>
         <button
           type="button"
-          aria-label="Меню профиля"
+          aria-label={t("nav.profileMenu")}
           className={cn(
             "flex items-center gap-2 rounded-full p-0.5 text-left outline-none transition-colors duration-200",
             "hover:bg-secondary focus-visible:ring-2 focus-visible:ring-ring",
@@ -44,14 +46,14 @@ export function UserMenu({ compact = false }: { compact?: boolean }) {
         >
           <UserAvatar user={user} className="h-9 w-9" />
           <span className={cn("min-w-0", compact ? "hidden" : "hidden lg:block")}>
-            <span className="block max-w-32 truncate text-sm font-semibold leading-tight">
-              {name}
-            </span>
-            <span className="block truncate text-[11px] text-muted-foreground">
-              {ROLE_LABEL[user.role]}
-            </span>
+          <span className="block max-w-32 truncate text-sm font-semibold leading-tight">
+            {name}
           </span>
-        </button>
+          <span className="block truncate text-[11px] text-muted-foreground">
+            {t(`role.${user.role}` as MessageKey)}
+          </span>
+        </span>
+      </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-64 rounded-xl p-1.5">
         <div className="flex items-center gap-3 px-2 py-2">
@@ -59,7 +61,7 @@ export function UserMenu({ compact = false }: { compact?: boolean }) {
           <div className="min-w-0">
             <p className="truncate text-sm font-semibold">{name}</p>
             <p className="truncate text-xs text-muted-foreground">@{user.username}</p>
-            <p className="mt-0.5 text-xs text-muted-foreground">{ROLE_LABEL[user.role]}</p>
+            <p className="mt-0.5 text-xs text-muted-foreground">{t(`role.${user.role}` as MessageKey)}</p>
           </div>
         </div>
         <DropdownMenuSeparator />
@@ -67,7 +69,7 @@ export function UserMenu({ compact = false }: { compact?: boolean }) {
           <DropdownMenuItem key={item.to} asChild>
             <Link to={item.to} className="cursor-pointer">
               <item.icon className="h-4 w-4" />
-              {item.label}
+              {t(item.labelKey)}
             </Link>
           </DropdownMenuItem>
         ))}
@@ -77,7 +79,7 @@ export function UserMenu({ compact = false }: { compact?: boolean }) {
           onSelect={() => void onLogout()}
         >
           <LogOut className="h-4 w-4" />
-          Выйти
+          {t("nav.logout")}
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

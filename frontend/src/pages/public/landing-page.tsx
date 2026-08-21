@@ -30,6 +30,7 @@ import { JobListSkeleton, ReviewListSkeleton } from "@/components/states/loading
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/context/auth-context";
+import { useI18n } from "@/i18n/locale-context";
 import { iconForCategory } from "@/lib/category-icons";
 import { formatRating } from "@/lib/marketplace";
 import { queryKeys } from "@/lib/query-keys";
@@ -37,6 +38,7 @@ import { fullName } from "@/lib/utils";
 import type { Job } from "@/types/api";
 
 export function LandingPage() {
+  const { t } = useI18n();
   const navigate = useNavigate();
   const { isAuthenticated, user } = useAuth();
   const [need, setNeed] = useState("");
@@ -133,12 +135,11 @@ export function LandingPage() {
         <div className="mx-auto grid max-w-6xl items-center gap-10 px-4 py-12 lg:grid-cols-[1.05fr_0.95fr] lg:py-16">
           <div>
             <h1 className="max-w-xl text-4xl font-extrabold tracking-tight sm:text-5xl">
-              Найдите помощь{" "}
-              <span className="text-primary">рядом с вами</span>
+              {t("landing.heroTitle")}{" "}
+              <span className="text-primary">{t("landing.heroAccent")}</span>
             </h1>
             <p className="mt-4 max-w-lg text-base text-muted-foreground">
-              Atlas — маркетплейс заказов. Опишите задачу, сравните исполнителей
-              и договоритесь в чате.
+              {t("landing.heroText")}
             </p>
 
             <form
@@ -148,27 +149,27 @@ export function LandingPage() {
               <Input
                 value={need}
                 onChange={(event) => setNeed(event.target.value)}
-                placeholder="Что вам нужно?"
+                placeholder={t("jobs.search")}
                 className="h-12 border-0 shadow-none focus-visible:ring-0"
-                aria-label="Что вам нужно?"
+                aria-label={t("jobs.search")}
               />
               <Input
                 value={where}
                 onChange={(event) => setWhere(event.target.value)}
-                placeholder="Где?"
+                placeholder={t("jobs.where")}
                 className="h-12 border-0 shadow-none focus-visible:ring-0"
-                aria-label="Где?"
+                aria-label={t("jobs.where")}
               />
               <Input
                 value={when}
                 onChange={(event) => setWhen(event.target.value)}
-                placeholder="Когда?"
+                placeholder={t("landing.when")}
                 className="h-12 border-0 shadow-none focus-visible:ring-0"
-                aria-label="Когда?"
+                aria-label={t("landing.when")}
               />
               <Button type="submit" size="lg" className="h-12">
                 <Search className="h-4 w-4" />
-                Найти помощь
+                {t("landing.findHelp")}
               </Button>
             </form>
 
@@ -201,13 +202,13 @@ export function LandingPage() {
       <section id="categories" className="mx-auto max-w-6xl scroll-mt-24 px-4 py-16">
         <div className="flex items-end justify-between gap-4">
           <div>
-            <h2 className="text-2xl font-bold tracking-tight">Категории</h2>
+            <h2 className="text-2xl font-bold tracking-tight">{t("landing.categories")}</h2>
             <p className="mt-1 text-sm text-muted-foreground">
-              Выберите направление и сразу перейдите к заказам
+              {t("landing.categoriesHint")}
             </p>
           </div>
           <Button asChild variant="link">
-            <Link to="/categories">Все категории</Link>
+            <Link to="/categories">{t("landing.allCategories")}</Link>
           </Button>
         </div>
         <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
@@ -228,8 +229,8 @@ export function LandingPage() {
             <div className="col-span-full">
               <EmptyState
                 icon="search"
-                title="Категорий пока нет"
-                description="Реальные категории приходят из GET /categories."
+                title={t("landing.noCategories")}
+                description={t("landing.noCategoriesHint")}
               />
             </div>
           ) : null}

@@ -11,6 +11,7 @@ from app.core.logging import setup_logging
 from app.core.middleware import LoggingMiddleware
 from app.core.minio import create_bucket
 from app.core.redis import connect_redis, disconnect_redis
+from app.services.bootstrap import ensure_default_categories
 from app.websocket.redis import start_subscriber
 from app.websocket.routes import router as websocket_router
 
@@ -19,6 +20,7 @@ from app.websocket.routes import router as websocket_router
 async def lifespan(app: FastAPI):
     if not settings.TESTING:
         create_bucket()
+        await ensure_default_categories()
         await connect_redis()
         await start_subscriber()
 

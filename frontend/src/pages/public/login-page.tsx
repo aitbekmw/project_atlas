@@ -10,6 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/context/auth-context";
+import { useI18n } from "@/i18n/locale-context";
 import { getErrorMessage } from "@/lib/utils";
 
 const schema = z.object({
@@ -20,6 +21,7 @@ const schema = z.object({
 type Values = z.infer<typeof schema>;
 
 export function LoginPage() {
+  const { t } = useI18n();
   const { login } = useAuth();
   const navigate = useNavigate();
   const form = useForm<Values>({
@@ -32,9 +34,9 @@ export function LoginPage() {
       <Card className="w-full">
         <CardHeader className="items-center text-center">
           <Logo />
-          <CardTitle className="mt-4">Войти в Atlas</CardTitle>
+          <CardTitle className="mt-4">{t("auth.loginTitle")}</CardTitle>
           <p className="text-sm text-muted-foreground">
-            Для заказчиков и исполнителей
+            {t("auth.loginSubtitle")}
           </p>
         </CardHeader>
         <CardContent>
@@ -43,7 +45,7 @@ export function LoginPage() {
             onSubmit={form.handleSubmit(async (values) => {
               try {
                 await login(values);
-                toast.success("Добро пожаловать");
+                toast.success(t("auth.welcome"));
                 navigate("/app/dashboard");
               } catch (error) {
                 const message = getErrorMessage(error);
@@ -58,7 +60,7 @@ export function LoginPage() {
               </p>
             ) : null}
             <div className="grid gap-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email">{t("auth.email")}</Label>
               <Input id="email" type="email" {...form.register("email")} />
               {form.formState.errors.email ? (
                 <p className="text-xs text-destructive">
@@ -67,7 +69,7 @@ export function LoginPage() {
               ) : null}
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="password">Пароль</Label>
+              <Label htmlFor="password">{t("auth.password")}</Label>
               <Input id="password" type="password" {...form.register("password")} />
               {form.formState.errors.password ? (
                 <p className="text-xs text-destructive">
@@ -76,13 +78,13 @@ export function LoginPage() {
               ) : null}
             </div>
             <Button type="submit" className="h-11" disabled={form.formState.isSubmitting}>
-              {form.formState.isSubmitting ? "Входим..." : "Войти"}
+              {form.formState.isSubmitting ? t("auth.signingIn") : t("auth.signIn")}
             </Button>
           </form>
           <p className="mt-4 text-center text-sm text-muted-foreground">
-            Нет аккаунта?{" "}
+            {t("auth.needAccount")}{" "}
             <Link to="/register" className="font-semibold text-primary">
-              Регистрация
+              {t("nav.register")}
             </Link>
           </p>
         </CardContent>

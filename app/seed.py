@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import asyncio
 
+from app.data.default_categories import DEFAULT_CATEGORIES
 from app.db.session import AsyncSessionLocal
 from app.models.category import Category
 from app.models.enum import UserRole
@@ -28,33 +29,7 @@ from app.services.auth import AuthService
 from app.services.category import CategoryService
 from app.services.job import JobService
 
-CATEGORIES = [
-    {
-        "name": "Ремонт",
-        "description": "Мелкий бытовой ремонт",
-        "icon": "wrench",
-    },
-    {
-        "name": "Доставка",
-        "description": "Курьер и перевозки",
-        "icon": "package",
-    },
-    {
-        "name": "Уборка",
-        "description": "Клининг квартир и офисов",
-        "icon": "sparkles",
-    },
-    {
-        "name": "Переезд",
-        "description": "Помощь с переездом",
-        "icon": "truck",
-    },
-    {
-        "name": "IT и техника",
-        "description": "Настройка и разработка",
-        "icon": "monitor",
-    },
-]
+CATEGORIES = DEFAULT_CATEGORIES
 
 CUSTOMER = UserCreate(
     username="atlas_customer",

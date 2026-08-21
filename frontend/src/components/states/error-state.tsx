@@ -1,6 +1,7 @@
 import { AlertCircle } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { useI18n } from "@/i18n/locale-context";
 import { getErrorMessage, getHttpStatus } from "@/lib/utils";
 
 interface ErrorStateProps {
@@ -67,6 +68,7 @@ export function ErrorState({
   error,
   onRetry,
 }: ErrorStateProps) {
+  const { t } = useI18n();
   const status = getHttpStatus(error);
   const fallback = copyForStatus(status);
   const detail = error ? getErrorMessage(error) : undefined;
@@ -81,8 +83,8 @@ export function ErrorState({
       <h3 className="text-lg font-semibold">{title ?? fallback.title}</h3>
       <p className="mt-1 max-w-md text-sm text-muted-foreground">{resolvedDescription}</p>
       {onRetry ? (
-        <Button className="mt-5" variant="outline" onClick={onRetry}>
-          Повторить
+        <Button className="mt-5 min-h-11" variant="outline" onClick={onRetry}>
+          {t("error.retry")}
         </Button>
       ) : null}
     </div>

@@ -13,11 +13,13 @@ import { JobFeedSkeleton } from "@/components/states/loading-state";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { queryKeys } from "@/lib/query-keys";
+import { useI18n } from "@/i18n/locale-context";
 import type { JobStatus } from "@/types/api";
 
 const PAGE_SIZE = 10;
 
 export function JobsPage({ embedded = false }: { embedded?: boolean }) {
+  const { t } = useI18n();
   const [searchParams, setSearchParams] = useSearchParams();
   const searchFromUrl = searchParams.get("search") ?? "";
   const cityFromUrl = searchParams.get("city") ?? "";
@@ -113,29 +115,29 @@ export function JobsPage({ embedded = false }: { embedded?: boolean }) {
     <div className={embedded ? "" : "mx-auto max-w-6xl px-4 py-10"}>
       {!embedded ? (
         <div className="mb-8">
-          <h1 className="text-3xl font-bold tracking-tight">Найти заказы</h1>
+          <h1 className="text-3xl font-bold tracking-tight">{t("jobs.title")}</h1>
           <p className="mt-2 text-muted-foreground">
-            Открытые задания от заказчиков. Список и фильтры совпадают с GET /jobs.
+            {t("jobs.subtitle")}
           </p>
         </div>
       ) : null}
       <div className="mb-6 grid gap-3 rounded-2xl border bg-card p-4 md:grid-cols-4">
         <Input
-          placeholder="Что вам нужно?"
+          placeholder={t("jobs.search")}
           value={searchInput}
           onChange={(event) => setSearchInput(event.target.value)}
         />
         <Input
-          placeholder="Где?"
+          placeholder={t("jobs.where")}
           value={cityInput}
           onChange={(event) => setCityInput(event.target.value)}
         />
         <select
-          className="flex h-11 w-full rounded-xl border border-input bg-background px-3 text-sm"
+          className="flex min-h-11 w-full rounded-xl border border-input bg-background px-3 text-sm"
           value={categoryId}
           onChange={(event) => patchParams({ category_id: event.target.value || null })}
         >
-          <option value="">Все категории</option>
+          <option value="">{t("category.all")}</option>
           {(categoriesQuery.data ?? []).map((category) => (
             <option key={category.id} value={category.id}>
               {category.name}
@@ -145,7 +147,7 @@ export function JobsPage({ embedded = false }: { embedded?: boolean }) {
         <Input
           type="number"
           min={0}
-          placeholder="Мин. оплата"
+          placeholder={t("jobs.minPay")}
           value={minSalary}
           onChange={(event) => patchParams({ min_salary: event.target.value || null })}
         />

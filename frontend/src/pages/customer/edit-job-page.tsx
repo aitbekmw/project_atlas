@@ -50,6 +50,9 @@ export function EditJobPage() {
         <CardContent className="p-6">
           <JobForm
             categories={categoriesQuery.data ?? []}
+            categoriesLoading={categoriesQuery.isLoading}
+            categoriesError={categoriesQuery.isError}
+            onRetryCategories={() => void categoriesQuery.refetch()}
             defaultValues={jobQuery.data}
             submitLabel="Сохранить"
             isSubmitting={mutation.isPending}

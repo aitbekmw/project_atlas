@@ -4,8 +4,10 @@ import { useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { useI18n } from "@/i18n/locale-context";
 
 export function ThemeToggle() {
+  const { t } = useI18n();
   const { resolvedTheme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
 
@@ -14,7 +16,7 @@ export function ThemeToggle() {
   }, []);
 
   const isDark = mounted && resolvedTheme === "dark";
-  const label = isDark ? "Включить светлую тему" : "Включить тёмную тему";
+  const label = isDark ? t("theme.light") : t("theme.dark");
 
   return (
     <Tooltip>

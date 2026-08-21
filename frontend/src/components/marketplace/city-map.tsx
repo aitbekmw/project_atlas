@@ -5,6 +5,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 
 import { Button } from "@/components/ui/button";
+import { useI18n } from "@/i18n/locale-context";
 import { geocodeJobs, type LngLat } from "@/lib/geocode";
 import { queryKeys } from "@/lib/query-keys";
 import { cn, formatMoney } from "@/lib/utils";
@@ -49,6 +50,7 @@ export function CityMap({
   className,
   showCards = true,
 }: CityMapProps) {
+  const { t } = useI18n();
   const selectedId = selectedJobId ?? activeId ?? null;
   const selectJob = onJobSelect ?? onSelect;
   const [mapReady, setMapReady] = useState(false);
@@ -175,7 +177,7 @@ export function CityMap({
       ) : (
         <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 px-6 text-center">
           <MapPin className="h-6 w-6 text-primary" />
-          <p className="text-sm font-medium">Карта 2GIS не настроена</p>
+          <p className="text-sm font-medium">{t("map.missing")}</p>
           <p className="max-w-sm text-xs text-muted-foreground">
             Добавьте ключ MapGL в <code>VITE_2GIS_API_KEY</code>. Координаты заказов
             backend не отдаёт — маркеры строятся геокодированием city + address.
