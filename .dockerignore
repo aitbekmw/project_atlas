@@ -4,10 +4,14 @@ __pycache__
 .idea
 .git
 .gitignore
+frontend
+.ruff_cache
 
 *.pyc
 *.pyo
 
 .env
+.env.*
+!.env.example
 
 migrations/__pycache__

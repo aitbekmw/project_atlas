@@ -1,10 +1,11 @@
 import axios, { type AxiosError, type InternalAxiosRequestConfig } from "axios";
 
+import { getApiBaseUrl } from "@/lib/env";
 import type { TokenResponse } from "@/types/api";
 
 const ACCESS_KEY = "atlas.access_token";
 const REFRESH_KEY = "atlas.refresh_token";
-const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8001";
+const API_BASE_URL = getApiBaseUrl();
 
 export const api = axios.create({
   baseURL: API_BASE_URL,

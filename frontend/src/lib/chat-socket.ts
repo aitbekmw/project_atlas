@@ -1,3 +1,4 @@
+import { getWsBaseUrl } from "@/lib/env";
 import type { Message } from "@/types/api";
 
 export type ChatSocketIncoming =
@@ -15,7 +16,7 @@ export type ChatSocketIncoming =
   | { type: "offline"; user_id: number };
 
 export function chatWebSocketUrl(conversationId: number, token: string): string {
-  const base = (import.meta.env.VITE_WS_URL || "ws://localhost:8001").replace(/\/$/, "");
+  const base = getWsBaseUrl();
   return `${base}/ws/chat/${conversationId}?token=${encodeURIComponent(token)}`;
 }
 
