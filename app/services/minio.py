@@ -1,3 +1,4 @@
+from datetime import timedelta
 from io import BytesIO
 from uuid import uuid4
 
@@ -5,7 +6,7 @@ from fastapi import UploadFile
 from minio.error import S3Error
 
 from app.core.config import settings
-from app.core.minio import minio_client
+from app.core.minio import minio_client, minio_presign_client
 
 
 class MinioService:
@@ -46,7 +47,8 @@ class MinioService:
         self,
         object_name: str,
     ) -> str:
-        return minio_client.presigned_get_object(
+        return minio_presign_client.presigned_get_object(
             settings.MINIO_BUCKET,
             object_name,
+            expires=timedelta(seconds=settings.MINIO_PRESIGN_EXPIRES_SECONDS),
         )

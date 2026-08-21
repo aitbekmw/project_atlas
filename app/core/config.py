@@ -34,9 +34,15 @@ class Settings(BaseSettings):
     CORS_ORIGINS: list[str] = [
         "http://localhost:3000",
         "http://localhost:5173",
+        "http://localhost:5174",
+        "http://localhost:5175",
+        "http://localhost:5176",
         "http://localhost",
         "http://127.0.0.1:3000",
         "http://127.0.0.1:5173",
+        "http://127.0.0.1:5174",
+        "http://127.0.0.1:5175",
+        "http://127.0.0.1:5176",
     ]
 
     # ==========================
@@ -54,6 +60,9 @@ class Settings(BaseSettings):
     MINIO_SECRET_KEY: str
     MINIO_BUCKET: str
     MINIO_SECURE: bool = False
+    # Browser-facing MinIO host for presigned URLs (not the Docker DNS name).
+    MINIO_PUBLIC_ENDPOINT: str | None = None
+    MINIO_PRESIGN_EXPIRES_SECONDS: int = 7 * 24 * 60 * 60
 
     model_config = SettingsConfigDict(
         env_file=".env",

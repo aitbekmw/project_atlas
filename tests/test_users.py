@@ -1,4 +1,8 @@
 import pytest
+from sqlalchemy import update
+
+from app.core.config import settings
+from app.models.user import User
 
 
 @pytest.mark.asyncio
@@ -127,6 +131,38 @@ async def test_get_user_by_id_success(client, auth_headers):
 
     assert data["id"] == user["id"]
     assert data["email"] == user["email"]
+
+
+@pytest.mark.asyncio
+async def test_get_me_avatar_returns_presigned_url(client, auth_headers, db):
+    me = await client.get(
+        "/users/me",
+        headers=auth_headers,
+    )
+    user_id = me.json()["id"]
+    object_name = "avatars/test-object.jpg"
+
+    await db.execute(update(User).where(User.id == user_id).values(avatar=object_name))
+    await db.commit()
+
+    response = await client.get(
+        "/users/me",
+        headers=auth_headers,
+    )
+
+    assert response.status_code == 200
+
+    avatar = response.json()["avatar"]
+    assert avatar.startswith("http")
+    assert object_name in avatar
+    assert "X-Amz-Algorithm" in avatar
+    assert f"X-Amz-Expires={settings.MINIO_PRESIGN_EXPIRES_SECONDS}" in avatar
+
+    stored = await db.get(User, user_id)
+    await db.refresh(stored)
+
+    assert stored is not None
+    assert stored.avatar == object_name
 
 
 @pytest.mark.asyncio
