@@ -1,0 +1,12 @@
+from math import asin, cos, radians, sin, sqrt
+
+
+def haversine_km(lat1: float, lng1: float, lat2: float, lng2: float) -> float:
+    """Great-circle distance in kilometres."""
+    d_lat = radians(lat2 - lat1)
+    d_lng = radians(lng2 - lng1)
+    a = (
+        sin(d_lat / 2) ** 2
+        + cos(radians(lat1)) * cos(radians(lat2)) * sin(d_lng / 2) ** 2
+    )
+    return 2 * 6371 * asin(min(1.0, sqrt(a)))

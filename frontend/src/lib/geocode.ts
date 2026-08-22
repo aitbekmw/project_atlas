@@ -18,7 +18,7 @@ function queryForJob(job: Job): string {
   return `${job.city}, ${job.address}`.replace(/\s+/g, " ").trim();
 }
 
-async function geocodeAddress(query: string, key: string): Promise<LngLat | null> {
+export async function geocodeAddress(query: string, key: string): Promise<LngLat | null> {
   const cached = cache.get(query);
   if (cached !== undefined) {
     return cached;
@@ -46,12 +46,25 @@ async function geocodeAddress(query: string, key: string): Promise<LngLat | null
   return coords;
 }
 
+export function storedJobCoords(job: Pick<Job, "latitude" | "longitude">): LngLat | null {
+  if (job.latitude == null || job.longitude == null) {
+    return null;
+  }
+  return [job.longitude, job.latitude];
+}
+
 export async function geocodeJobs(
   jobs: Job[],
   key: string,
 ): Promise<Record<number, LngLat>> {
+  const byId: Record<number, LngLat> = {};
   const unique = new Map<string, Job[]>();
   for (const job of jobs) {
+    const stored = storedJobCoords(job);
+    if (stored) {
+      byId[job.id] = stored;
+      continue;
+    }
     const query = queryForJob(job);
     const list = unique.get(query) ?? [];
     list.push(job);
@@ -65,7 +78,6 @@ export async function geocodeJobs(
     }),
   );
 
-  const byId: Record<number, LngLat> = {};
   for (const { group, coords } of resolved) {
     if (!coords) {
       continue;
@@ -75,4 +87,17 @@ export async function geocodeJobs(
     }
   }
   return byId;
+}
+
+/** Approximate distance in km between two MapGL `[lng, lat]` points. */
+export function distanceKm(from: LngLat, to: LngLat): number {
+  const toRad = (value: number) => (value * Math.PI) / 180;
+  const dLat = toRad(to[1] - from[1]);
+  const dLng = toRad(to[0] - from[0]);
+  const lat1 = toRad(from[1]);
+  const lat2 = toRad(to[1]);
+  const h =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLng / 2) ** 2;
+  return 2 * 6371 * Math.asin(Math.min(1, Math.sqrt(h)));
 }

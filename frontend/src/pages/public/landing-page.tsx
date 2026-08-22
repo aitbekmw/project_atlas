@@ -16,7 +16,7 @@ import { useMemo, useState, type FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
 import { listCategories } from "@/api/categories";
-import { listJobs } from "@/api/jobs";
+import { listJobs, listNearbyJobs } from "@/api/jobs";
 import { listReviews } from "@/api/reviews";
 import { getUser } from "@/api/users";
 import { categoryMap } from "@/components/jobs/job-card";
@@ -30,6 +30,7 @@ import { JobListSkeleton, ReviewListSkeleton } from "@/components/states/loading
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/context/auth-context";
+import { useGeolocation } from "@/hooks/use-geolocation";
 import { localizedCategoryDescription, localizedCategoryName } from "@/i18n/categories";
 import { useI18n } from "@/i18n/locale-context";
 import { iconForCategory } from "@/lib/category-icons";
@@ -46,10 +47,22 @@ export function LandingPage() {
   const [where, setWhere] = useState("");
   const [when, setWhen] = useState("");
   const [activeJobId, setActiveJobId] = useState<number | null>(null);
+  const geo = useGeolocation();
 
   const jobsQuery = useQuery({
-    queryKey: queryKeys.jobs({ size: 8, status: "OPEN" }),
-    queryFn: () => listJobs({ size: 8, status: "OPEN" }),
+    queryKey: queryKeys.jobs({ size: 30, status: "OPEN" }),
+    queryFn: () => listJobs({ size: 30, status: "OPEN" }),
+  });
+  const nearbyQuery = useQuery({
+    queryKey: queryKeys.nearbyJobs(geo.coords?.[1] ?? 0, geo.coords?.[0] ?? 0, 12),
+    queryFn: () =>
+      listNearbyJobs({
+        lat: geo.coords![1],
+        lng: geo.coords![0],
+        radius_km: 12,
+        size: 30,
+      }),
+    enabled: geo.status === "granted" && geo.coords != null,
   });
   const categoriesQuery = useQuery({
     queryKey: queryKeys.categories,
@@ -65,9 +78,11 @@ export function LandingPage() {
   const categories = apiCategories;
   const names = categoryMap(apiCategories, t);
   const jobs: Job[] = jobsQuery.data ?? [];
-  const nearby = jobs.slice(0, 4);
+  const nearbyJobs = nearbyQuery.data ?? [];
+  const mapJobs = nearbyJobs.length > 0 ? nearbyJobs : jobs.slice(0, 12);
+  const nearby = (nearbyJobs.length > 0 ? nearbyJobs : jobs).slice(0, 6);
   const popular = jobs.slice(0, 6);
-  const selected = nearby.find((job) => job.id === activeJobId) ?? nearby[0];
+  const selected = mapJobs.find((job) => job.id === activeJobId) ?? mapJobs[0];
 
   const chips = useMemo(
     () => categories.slice(0, 5).map((item) => localizedCategoryName(item, t)),
@@ -134,8 +149,8 @@ export function LandingPage() {
     <div className="overflow-x-hidden">
       <section className="relative border-b bg-surface">
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,rgb(22_119_255_/_0.12),transparent_55%)] dark:bg-[radial-gradient(ellipse_at_top_left,rgb(22_119_255_/_0.18),transparent_50%)]" />
-        <div className="relative mx-auto grid max-w-6xl items-stretch gap-8 px-4 py-10 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)] lg:gap-12 lg:py-16">
-          <div className="min-w-0">
+        <div className="relative mx-auto grid max-w-6xl items-stretch gap-6 px-4 py-10 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)] lg:grid-rows-[auto_auto_1fr] lg:gap-x-10 lg:gap-y-6 lg:py-16">
+          <div className="order-1 min-w-0 lg:col-start-1 lg:row-start-1">
             <p className="inline-flex items-center gap-1.5 rounded-full border bg-card px-3 py-1 text-xs font-medium text-muted-foreground">
               <MapPin className="h-3.5 w-3.5 text-primary" />
               {t("landing.location")}
@@ -146,10 +161,11 @@ export function LandingPage() {
             <p className="mt-4 max-w-lg text-base leading-relaxed text-muted-foreground sm:text-lg">
               {t("landing.heroText")}
             </p>
+          </div>
 
             <form
               onSubmit={onSearch}
-              className="mt-8 grid gap-3 rounded-2xl border bg-card p-3 soft-shadow-lg sm:p-4 lg:grid-cols-[1.3fr_0.85fr_0.75fr_auto]"
+              className="order-2 grid min-w-0 gap-3 rounded-2xl border bg-card p-3 soft-shadow-lg sm:p-4 lg:col-start-1 lg:row-start-2 lg:grid-cols-[1.3fr_0.85fr_0.75fr_auto]"
             >
               <label className="grid min-w-0 gap-1">
                 <span className="px-1 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
@@ -193,7 +209,8 @@ export function LandingPage() {
               </Button>
             </form>
 
-            <div className="mt-5 flex flex-wrap gap-2">
+          <div className="order-3 min-w-0 lg:col-start-1 lg:row-start-3">
+            <div className="flex flex-wrap gap-2">
               {chips.map((chip) => (
                 <button
                   key={chip}
@@ -208,7 +225,6 @@ export function LandingPage() {
                 </button>
               ))}
             </div>
-
             <ul className="mt-6 grid gap-2 sm:grid-cols-2">
               {[
                 { icon: FolderTree, key: "landing.trustCategories" as const },
@@ -228,10 +244,15 @@ export function LandingPage() {
           </div>
 
           <CityMap
-            jobs={nearby}
+            jobs={mapJobs}
             selectedJobId={selected?.id}
             onJobSelect={(job) => setActiveJobId(job.id)}
-            className="h-[240px] min-h-[240px] w-full max-w-full sm:h-[320px] lg:h-auto lg:min-h-[460px]"
+            categoryNames={names}
+            userLocation={geo.coords}
+            showOverlay
+            showFooter
+            showCards={false}
+            className="order-4 h-[240px] min-h-[240px] w-full max-w-full sm:h-[280px] lg:col-start-2 lg:row-span-3 lg:row-start-1 lg:h-auto lg:min-h-[520px]"
           />
         </div>
       </section>
@@ -316,7 +337,26 @@ export function LandingPage() {
               <Link to="/jobs">{t("landing.allJobs")}</Link>
             </Button>
           </div>
-          {jobsQuery.isLoading ? <JobListSkeleton /> : null}
+          {geo.status !== "granted" ? (
+            <div className="mt-5 flex flex-col gap-3 rounded-2xl border bg-card p-4 sm:flex-row sm:items-center sm:justify-between">
+              <p className="text-sm text-muted-foreground">
+                {geo.status === "denied"
+                  ? t("landing.locationDenied")
+                  : geo.status === "unavailable"
+                    ? t("landing.locationUnavailable")
+                    : t("landing.locationPrompt")}
+              </p>
+              <Button
+                type="button"
+                className="min-h-11 shrink-0"
+                disabled={geo.status === "pending"}
+                onClick={() => geo.request()}
+              >
+                {geo.status === "pending" ? t("landing.locating") : t("landing.showNearby")}
+              </Button>
+            </div>
+          ) : null}
+          {jobsQuery.isLoading || nearbyQuery.isLoading ? <JobListSkeleton /> : null}
           {jobsQuery.isError ? (
             <ErrorState
               error={jobsQuery.error}
@@ -341,8 +381,12 @@ export function LandingPage() {
                 jobs={nearby}
                 selectedJobId={selected?.id}
                 onJobSelect={(job) => setActiveJobId(job.id)}
-                className="min-h-[420px]"
-                showCards={false}
+                categoryNames={names}
+                userLocation={geo.coords}
+                showOverlay
+                showFooter={false}
+                showCards
+                className="h-[260px] min-h-[240px] w-full max-w-full lg:h-auto lg:min-h-[420px]"
               />
               <div className="grid gap-3">
                 {nearby.map((job) => (
@@ -353,6 +397,7 @@ export function LandingPage() {
                       href={jobHref(job)}
                       layout="list"
                       active={selected?.id === job.id}
+                      distanceKm={job.distance_km}
                     />
                   </div>
                 ))}
@@ -379,14 +424,14 @@ export function LandingPage() {
           />
         ) : null}
         {popular.length > 0 ? (
-          <div className="mt-6 flex snap-x gap-4 overflow-x-auto pb-2">
+          <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {popular.map((job) => (
               <MarketplaceJobCard
                 key={job.id}
                 job={job}
                 categoryName={names[job.category_id]}
                 href={jobHref(job)}
-                layout="horizontal"
+                layout="tile"
               />
             ))}
           </div>

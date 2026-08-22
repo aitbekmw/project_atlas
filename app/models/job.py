@@ -1,10 +1,10 @@
 from datetime import datetime
 
-from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String, Text, func
+from sqlalchemy import Boolean, DateTime, Float, ForeignKey, Integer, String, Text, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
-from app.models.enum import JobStatus
+from app.models.enum import JobStatus, PaymentMethod
 
 
 class Job(Base):
@@ -31,6 +31,12 @@ class Job(Base):
         nullable=False,
     )
 
+    payment_method: Mapped[str] = mapped_column(
+        String(20),
+        default=PaymentMethod.AGREEMENT.value,
+        nullable=False,
+    )
+
     city: Mapped[str] = mapped_column(
         String(100),
         nullable=False,
@@ -40,6 +46,10 @@ class Job(Base):
         String(255),
         nullable=False,
     )
+
+    latitude: Mapped[float | None] = mapped_column(Float, nullable=True)
+    longitude: Mapped[float | None] = mapped_column(Float, nullable=True)
+    image_key: Mapped[str | None] = mapped_column(String(500), nullable=True)
 
     status: Mapped[str] = mapped_column(
         String(20),

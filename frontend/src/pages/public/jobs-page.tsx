@@ -14,7 +14,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { queryKeys } from "@/lib/query-keys";
 import { useI18n } from "@/i18n/locale-context";
-import type { JobStatus } from "@/types/api";
+import { paymentMethodKey } from "@/i18n/status";
+import { isPaymentMethod, PAYMENT_METHODS, type JobStatus } from "@/types/api";
 
 const PAGE_SIZE = 10;
 
@@ -25,6 +26,8 @@ export function JobsPage({ embedded = false }: { embedded?: boolean }) {
   const cityFromUrl = searchParams.get("city") ?? "";
   const categoryId = searchParams.get("category_id") ?? "";
   const minSalary = searchParams.get("min_salary") ?? "";
+  const paymentFromUrl = searchParams.get("payment_method") ?? "";
+  const paymentMethod = isPaymentMethod(paymentFromUrl) ? paymentFromUrl : "";
   const when = searchParams.get("when") ?? "";
   const page = Math.max(1, Number.parseInt(searchParams.get("page") ?? "1", 10) || 1);
 
@@ -91,9 +94,10 @@ export function JobsPage({ embedded = false }: { embedded?: boolean }) {
       city: cityFromUrl || undefined,
       category_id: Number.isFinite(categoryIdNumber) && categoryId ? categoryIdNumber : undefined,
       min_salary: Number.isFinite(minSalaryNumber) && minSalary ? minSalaryNumber : undefined,
+      payment_method: paymentMethod || undefined,
       status: "OPEN" as JobStatus,
     }),
-    [page, searchFromUrl, cityFromUrl, categoryId, categoryIdNumber, minSalary, minSalaryNumber],
+    [page, searchFromUrl, cityFromUrl, categoryId, categoryIdNumber, minSalary, minSalaryNumber, paymentMethod],
   );
 
   const jobsQuery = useQuery({
@@ -121,7 +125,7 @@ export function JobsPage({ embedded = false }: { embedded?: boolean }) {
           </p>
         </div>
       ) : null}
-      <div className="mb-6 grid gap-3 rounded-2xl border bg-card p-4 md:grid-cols-4">
+      <div className="mb-6 grid gap-3 rounded-2xl border bg-card p-4 sm:grid-cols-2 lg:grid-cols-5">
         <Input
           placeholder={t("jobs.search")}
           value={searchInput}
@@ -141,6 +145,18 @@ export function JobsPage({ embedded = false }: { embedded?: boolean }) {
           {(categoriesQuery.data ?? []).map((category) => (
             <option key={category.id} value={category.id}>
               {names[category.id] ?? category.name}
+            </option>
+          ))}
+        </select>
+        <select
+          className="flex min-h-11 w-full rounded-xl border border-input bg-background px-3 text-sm"
+          value={paymentMethod}
+          onChange={(event) => patchParams({ payment_method: event.target.value || null })}
+        >
+          <option value="">{t("jobs.allPayments")}</option>
+          {PAYMENT_METHODS.map((method) => (
+            <option key={method} value={method}>
+              {t(paymentMethodKey(method))}
             </option>
           ))}
         </select>

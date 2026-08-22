@@ -85,6 +85,7 @@ const skipHardcoded = new Set([
   path.join(srcRoot, "i18n", "categories.ts"),
   path.join(srcRoot, "lib", "category-icons.ts"),
   path.join(srcRoot, "lib", "marketplace.ts"),
+  path.join(srcRoot, "lib", "auth-form.ts"),
 ]);
 const skipHardcodedDirs = ["mocks"];
 const cyrillic = /[А-Яа-яЁёӨөҮүҢңІі]/;

@@ -85,6 +85,20 @@ class Settings(BaseSettings):
     MINIO_PUBLIC_ENDPOINT: str | None = None
     MINIO_PRESIGN_EXPIRES_SECONDS: int = 7 * 24 * 60 * 60
 
+    SMTP_HOST: str | None = None
+    SMTP_PORT: int = 587
+    SMTP_USERNAME: str | None = None
+    SMTP_PASSWORD: str | None = None
+    SMTP_FROM_EMAIL: str | None = None
+    SMTP_USE_TLS: bool = True
+    EMAIL_VERIFICATION_EXPIRE_MINUTES: int = 10
+    EMAIL_RESEND_SECONDS: int = 60
+    ENVIRONMENT: str = "development"
+
+    GOOGLE_CLIENT_ID: str | None = None
+    GOOGLE_CLIENT_SECRET: str | None = None
+    GOOGLE_REDIRECT_URI: str | None = None
+
     model_config = SettingsConfigDict(
         env_file=".env",
         case_sensitive=True,
@@ -128,6 +142,18 @@ class Settings(BaseSettings):
         if production not in origins:
             origins.append(production)
         return origins
+
+    @field_validator(
+        "GOOGLE_CLIENT_ID",
+        "GOOGLE_CLIENT_SECRET",
+        "GOOGLE_REDIRECT_URI",
+        mode="before",
+    )
+    @classmethod
+    def empty_google_env(cls, value: object) -> object:
+        if isinstance(value, str) and not value.strip():
+            return None
+        return value
 
 
 settings = Settings()

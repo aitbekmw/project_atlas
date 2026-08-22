@@ -53,7 +53,7 @@ function isAuthUrl(url?: string): boolean {
   if (!url) {
     return false;
   }
-  return /\/auth\/(login|register|refresh|token|logout)(?:\?|$)/.test(url);
+  return /\/auth\/(login|register|refresh|token|logout|google\/)/.test(url);
 }
 
 api.interceptors.request.use((config) => {

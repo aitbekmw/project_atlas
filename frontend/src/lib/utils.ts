@@ -49,7 +49,7 @@ export function getHttpStatus(error: unknown): number | undefined {
 
 const AUTH_ERROR_KEYS: Record<string, MessageKey> = {
   "Invalid email or password": "error.invalidCredentials",
-  "Email already exists": "error.emailExists",
+  "Email already exists": "auth.emailAlreadyExists",
   "Username already exists": "error.usernameExists",
   "Invalid refresh token": "error.sessionExpired",
   "You have already applied": "error.alreadyApplied",
@@ -70,8 +70,20 @@ const AUTH_ERROR_KEYS: Record<string, MessageKey> = {
   "You can review only after the job is completed by its participants":
     "error.reviewParticipants",
   "You can delete only your own reviews": "error.deleteOwnReview",
-  "Unsupported file type": "error.unsupportedFile",
+  "Unsupported file type": "error.unsupportedImage",
   "File too large": "error.fileTooLarge",
+  "Email is not verified": "auth.emailNotVerified",
+  "Invalid verification code": "error.invalidCode",
+  "Verification code expired": "error.codeExpired",
+  "Please wait before requesting a new code": "error.resendTooSoon",
+  "Email is already verified": "error.emailAlreadyVerified",
+  "Password does not meet requirements": "error.weakPassword",
+  "Invalid phone number": "error.invalidPhone",
+  "Google sign-in is not configured": "auth.googleNotConfigured",
+  "Google authentication failed": "auth.googleFailed",
+  "Google sign-in was cancelled": "auth.googleCancelled",
+  "Google has not verified this email": "auth.googleEmailNotVerified",
+  "Complete your Atlas profile": "completeProfile.missingCode",
   "User not found": "error.userNotFound",
   "Current password is incorrect": "error.wrongPassword",
   "New password must be different": "error.passwordSame",
@@ -82,6 +94,26 @@ function looksTechnical(text: string): boolean {
   return /GET \/|POST \/|DELETE \/|PATCH \/|FastAPI|endpoint|ECONNABORTED|Network Error|Request failed|status code/i.test(
     text,
   );
+}
+
+export function getRetryAfter(error: unknown): number | undefined {
+  if (
+    typeof error === "object" &&
+    error !== null &&
+    "response" in error &&
+    typeof error.response === "object" &&
+    error.response !== null &&
+    "data" in error.response &&
+    typeof error.response.data === "object" &&
+    error.response.data !== null &&
+    "retry_after" in error.response.data
+  ) {
+    const value = error.response.data.retry_after;
+    if (typeof value === "number" && Number.isFinite(value) && value > 0) {
+      return Math.ceil(value);
+    }
+  }
+  return undefined;
 }
 
 export function getErrorMessage(error: unknown): string {
@@ -109,6 +141,9 @@ export function getErrorMessage(error: unknown): string {
     if (typeof detail === "string") {
       const key = AUTH_ERROR_KEYS[detail];
       if (key) {
+        if (key === "error.resendTooSoon") {
+          return tr(key, { seconds: getRetryAfter(error) ?? 60 });
+        }
         return tr(key);
       }
       if (looksTechnical(detail)) {
@@ -135,6 +170,21 @@ export function getErrorMessage(error: unknown): string {
 
 export function formatMoney(value: number): string {
   return `${new Intl.NumberFormat(BCP47[activeLocale]).format(value)} ${tr("common.som")}`;
+}
+
+export function formatMoneyKgs(value: number): string {
+  return `${new Intl.NumberFormat(BCP47[activeLocale]).format(value)} ${tr("common.kgs")}`;
+}
+
+export function formatDistanceKm(km: number): string {
+  if (km < 1) {
+    return tr("map.m", { value: Math.round(km * 1000) });
+  }
+  const value = new Intl.NumberFormat(BCP47[activeLocale], {
+    minimumFractionDigits: 1,
+    maximumFractionDigits: 1,
+  }).format(km);
+  return tr("map.km", { value });
 }
 
 export function formatDate(value?: string | null): string {

@@ -1,7 +1,13 @@
 from fastapi import UploadFile
 
-from app.core.exceptions import IncorrectPassword, SamePassword, UserNotFound
+from app.core.exceptions import (
+    IncorrectPassword,
+    SamePassword,
+    UserNotFound,
+    WeakPassword,
+)
 from app.core.security import hash_password, verify_password
+from app.core.validators import validate_password_strength
 from app.models.user import User
 from app.repositories.user import UserRepository
 from app.schemas.user import UserUpdate
@@ -57,6 +63,11 @@ class UserService:
             user.hashed_password,
         ):
             raise SamePassword()
+
+        try:
+            validate_password_strength(new_password, user.email)
+        except ValueError as orig:
+            raise WeakPassword() from orig
 
         hashed_password = hash_password(new_password)
 

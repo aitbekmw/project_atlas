@@ -37,12 +37,11 @@ function normalizeLoginPayload(payload: LoginPayload): LoginPayload {
 
 function normalizeRegisterPayload(payload: RegisterPayload): RegisterPayload {
   return {
-    username: payload.username.trim(),
     email: payload.email.trim().toLowerCase(),
     password: payload.password,
     first_name: payload.first_name.trim(),
     last_name: payload.last_name.trim(),
-    phone: payload.phone?.trim() ? payload.phone.trim() : null,
+    phone: payload.phone.trim(),
     role: payload.role,
   };
 }
@@ -96,13 +95,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [applyUser]);
 
   const register = useCallback(async (payload: RegisterPayload) => {
-    const body = normalizeRegisterPayload(payload);
-    await registerRequest(body);
-    await loginRequest({ email: body.email, password: body.password });
-    const me = await getMe();
-    applyUser(me);
-    return me;
-  }, [applyUser]);
+    const user = await registerRequest(normalizeRegisterPayload(payload));
+    return user;
+  }, []);
 
   const logout = useCallback(async () => {
     await logoutRequest(getRefreshToken());

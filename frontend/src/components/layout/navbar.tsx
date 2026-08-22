@@ -1,5 +1,5 @@
 import { Menu } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, NavLink, useNavigate } from "react-router-dom";
 
 import { LanguageSwitcher } from "@/components/layout/language-switcher";
@@ -81,6 +81,20 @@ export function Navbar() {
   const { isAuthenticated, user, logout } = useAuth();
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
+
+  useEffect(() => {
+    if (open) {
+      const previous = document.body.style.overflow;
+      document.body.style.overflow = "hidden";
+      return () => {
+        document.body.style.overflow = previous;
+        document.body.style.removeProperty("pointer-events");
+      };
+    }
+    document.body.style.removeProperty("overflow");
+    document.body.style.removeProperty("pointer-events");
+    return undefined;
+  }, [open]);
   const publicLinks = usePublicLinks();
   const createOrderTo =
     isAuthenticated && (user?.role === "customer" || user?.role === "admin")
@@ -99,14 +113,14 @@ export function Navbar() {
   }
 
   return (
-    <header className="sticky top-0 z-50 border-b bg-background/90 backdrop-blur">
+    <header className="sticky top-0 z-50 border-b bg-background/90 pt-[env(safe-area-inset-top,0px)] backdrop-blur">
       <div className="mx-auto flex h-[72px] max-w-6xl min-w-0 items-center justify-between gap-2 overflow-x-hidden px-4 sm:gap-3">
         <Logo />
 
         <NavLinks className="hidden lg:flex" />
 
         <div className="flex min-w-0 shrink-0 items-center gap-1 sm:gap-2">
-          <LanguageSwitcher />
+          <LanguageSwitcher className="hidden lg:inline-flex" />
           <ThemeToggle />
           {isAuthenticated && user ? (
             <UserMenu />
@@ -138,9 +152,6 @@ export function Navbar() {
       <Sheet open={open} onOpenChange={setOpen}>
         <SheetContent side="left" className="p-6">
           <Logo />
-          <div className="mt-6">
-            <LanguageSwitcher />
-          </div>
           <div className="mt-8 flex flex-col gap-1">
             {publicLinks.map((link) =>
               link.to.includes("#") ? (
@@ -207,6 +218,8 @@ export function Navbar() {
                 {t("nav.logout")}
               </Button>
             ) : null}
+            <div className="my-3 h-px bg-border" />
+            <LanguageSwitcher variant="panel" />
           </div>
         </SheetContent>
       </Sheet>

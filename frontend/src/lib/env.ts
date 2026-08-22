@@ -2,15 +2,24 @@ function trimSlash(value: string): string {
   return value.replace(/\/$/, "");
 }
 
+function isAbsoluteUrl(value: string): boolean {
+  return /^https?:\/\//i.test(value);
+}
+
+/**
+ * Same-origin `/api` by default (Vite proxy or nginx).
+ * Set VITE_API_URL to an absolute URL only when the API is on another host.
+ */
 export function getApiBaseUrl(): string {
   const fromEnv = import.meta.env.VITE_API_URL?.trim();
-  if (fromEnv) {
+  if (fromEnv && isAbsoluteUrl(fromEnv)) {
     return trimSlash(fromEnv);
   }
-  if (import.meta.env.DEV) {
-    return "http://localhost:8001";
+  if (fromEnv) {
+    const path = fromEnv.startsWith("/") ? fromEnv : `/${fromEnv}`;
+    return trimSlash(path) || "/api";
   }
-  throw new Error("VITE_API_URL must be set for production builds");
+  return "/api";
 }
 
 export function getWsBaseUrl(): string {
@@ -18,12 +27,18 @@ export function getWsBaseUrl(): string {
   if (fromEnv) {
     return trimSlash(fromEnv);
   }
-  const api = getApiBaseUrl();
-  if (api.startsWith("https://")) {
-    return `wss://${api.slice("https://".length)}`;
+
+  if (typeof window !== "undefined" && window.location?.host) {
+    const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+    return `${protocol}//${window.location.host}`;
   }
-  if (api.startsWith("http://")) {
+
+  const api = getApiBaseUrl();
+  if (isAbsoluteUrl(api)) {
+    if (api.startsWith("https://")) {
+      return `wss://${api.slice("https://".length)}`;
+    }
     return `ws://${api.slice("http://".length)}`;
   }
-  return api;
+  return "";
 }

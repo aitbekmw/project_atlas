@@ -25,11 +25,16 @@ import { EditJobPage } from "@/pages/customer/edit-job-page";
 import { MyJobsPage } from "@/pages/customer/my-jobs-page";
 import { CategoriesPage } from "@/pages/public/categories-page";
 import { JobDetailsPage } from "@/pages/public/job-details-page";
+import { ForgotPasswordPage } from "@/pages/public/forgot-password-page";
+import { GoogleCompletePage } from "@/pages/public/google-complete-page";
+import { CompleteProfilePage } from "@/pages/public/complete-profile-page";
+import { TermsPage, PrivacyPage } from "@/pages/public/legal-pages";
 import { JobsPage } from "@/pages/public/jobs-page";
 import { LandingPage } from "@/pages/public/landing-page";
 import { LoginPage } from "@/pages/public/login-page";
 import { NotFoundPage } from "@/pages/public/not-found-page";
 import { RegisterPage } from "@/pages/public/register-page";
+import { VerifyEmailPage } from "@/pages/public/verify-email-page";
 import { ReviewsPage } from "@/pages/public/reviews-page";
 import { JobsSearchPage } from "@/pages/worker/jobs-search-page";
 
@@ -84,6 +89,40 @@ export default function App() {
                   </GuestRoute>
                 }
               />
+              <Route
+                path="/verify-email"
+                element={
+                  <GuestRoute>
+                    <VerifyEmailPage />
+                  </GuestRoute>
+                }
+              />
+              <Route
+                path="/forgot-password"
+                element={
+                  <GuestRoute>
+                    <ForgotPasswordPage />
+                  </GuestRoute>
+                }
+              />
+              <Route
+                path="/complete-profile"
+                element={
+                  <GuestRoute>
+                    <CompleteProfilePage />
+                  </GuestRoute>
+                }
+              />
+              <Route
+                path="/auth/google/complete"
+                element={
+                  <GuestRoute>
+                    <GoogleCompletePage />
+                  </GuestRoute>
+                }
+              />
+              <Route path="/terms" element={<TermsPage />} />
+              <Route path="/privacy" element={<PrivacyPage />} />
               <Route path="/jobs" element={<JobsPage />} />
               <Route path="/jobs/:jobId" element={<JobDetailsPage />} />
               <Route path="/categories" element={<CategoriesPage />} />

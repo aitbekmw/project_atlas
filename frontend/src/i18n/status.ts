@@ -1,5 +1,5 @@
 import type { MessageKey } from "@/i18n/messages";
-import type { ApplicationStatus, JobStatus, UserRole } from "@/types/api";
+import type { ApplicationStatus, JobStatus, PaymentMethod, UserRole } from "@/types/api";
 
 export function jobStatusKey(status: JobStatus): MessageKey {
   switch (status) {
@@ -22,6 +22,19 @@ export function applicationStatusKey(status: ApplicationStatus): MessageKey {
       return "appStatus.accepted";
     case "REJECTED":
       return "appStatus.rejected";
+  }
+}
+
+export function paymentMethodKey(method?: PaymentMethod | string | null): MessageKey {
+  switch (method) {
+    case "CASH":
+      return "payment.cash";
+    case "QR":
+      return "payment.qr";
+    case "AGREEMENT":
+      return "payment.agreement";
+    default:
+      return "payment.agreement";
   }
 }
 

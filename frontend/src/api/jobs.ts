@@ -9,6 +9,7 @@ export async function listJobs(filters: JobFilters = {}): Promise<Job[]> {
   if (filters.city) params.city = filters.city;
   if (filters.category_id != null) params.category_id = filters.category_id;
   if (filters.min_salary != null) params.min_salary = filters.min_salary;
+  if (filters.payment_method) params.payment_method = filters.payment_method;
   if (filters.status) params.status = filters.status;
   const { data } = await api.get<Job[]>("/jobs", { params });
   return data;
@@ -16,6 +17,16 @@ export async function listJobs(filters: JobFilters = {}): Promise<Job[]> {
 
 export async function getJob(jobId: number): Promise<Job> {
   const { data } = await api.get<Job>(`/jobs/${jobId}`);
+  return data;
+}
+
+export async function listNearbyJobs(params: {
+  lat: number;
+  lng: number;
+  radius_km?: number;
+  size?: number;
+}): Promise<Job[]> {
+  const { data } = await api.get<Job[]>("/jobs/nearby", { params });
   return data;
 }
 
@@ -43,6 +54,25 @@ export async function completeJob(jobId: number): Promise<Job> {
 
 export async function cancelJob(jobId: number): Promise<Job> {
   const { data } = await api.post<Job>(`/jobs/${jobId}/cancel`);
+  return data;
+}
+
+export async function uploadJobImage(jobId: number, file: File): Promise<Job> {
+  const form = new FormData();
+  form.append("file", file);
+  const { data } = await api.post<Job>(`/jobs/${jobId}/image`, form, {
+    transformRequest: [
+      (body, headers) => {
+        headers.delete("Content-Type");
+        return body;
+      },
+    ],
+  });
+  return data;
+}
+
+export async function deleteJobImage(jobId: number): Promise<Job> {
+  const { data } = await api.delete<Job>(`/jobs/${jobId}/image`);
   return data;
 }
 

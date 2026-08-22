@@ -15,6 +15,24 @@ export const JobStatus = {
 
 export type JobStatus = (typeof JobStatus)[keyof typeof JobStatus];
 
+export const PaymentMethod = {
+  CASH: "CASH",
+  QR: "QR",
+  AGREEMENT: "AGREEMENT",
+} as const;
+
+export type PaymentMethod = (typeof PaymentMethod)[keyof typeof PaymentMethod];
+
+export const PAYMENT_METHODS: PaymentMethod[] = [
+  PaymentMethod.CASH,
+  PaymentMethod.QR,
+  PaymentMethod.AGREEMENT,
+];
+
+export function isPaymentMethod(value: string): value is PaymentMethod {
+  return PAYMENT_METHODS.includes(value as PaymentMethod);
+}
+
 export const ApplicationStatus = {
   PENDING: "PENDING",
   ACCEPTED: "ACCEPTED",
@@ -46,13 +64,13 @@ export interface TokenResponse {
 }
 
 export interface RegisterPayload {
-  username: string;
   email: string;
   password: string;
   first_name: string;
   last_name: string;
-  phone?: string | null;
+  phone: string;
   role: "customer" | "worker";
+  username?: string;
 }
 
 export interface LoginPayload {
@@ -84,6 +102,7 @@ export interface Job {
   title: string;
   description: string;
   salary: number;
+  payment_method: PaymentMethod;
   city: string;
   address: string;
   category_id: number;
@@ -91,15 +110,22 @@ export interface Job {
   is_active: boolean;
   status: JobStatus;
   created_at: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  image_url: string | null;
+  distance_km?: number;
 }
 
 export interface JobPayload {
   title: string;
   description: string;
   salary: number;
+  payment_method: PaymentMethod;
   city: string;
   address: string;
   category_id: number;
+  latitude?: number | null;
+  longitude?: number | null;
 }
 
 export interface JobFilters {
@@ -109,6 +135,7 @@ export interface JobFilters {
   city?: string;
   category_id?: number;
   min_salary?: number;
+  payment_method?: PaymentMethod;
   status?: JobStatus;
 }
 

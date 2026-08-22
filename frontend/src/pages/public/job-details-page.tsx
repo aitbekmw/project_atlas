@@ -24,7 +24,7 @@ import { ApplicationListSkeleton, JobDetailsSkeleton } from "@/components/states
 import { useAuth } from "@/context/auth-context";
 import { localizedCategoryName } from "@/i18n/categories";
 import { useI18n } from "@/i18n/locale-context";
-import { applicationStatusKey, jobStatusKey } from "@/i18n/status";
+import { applicationStatusKey, jobStatusKey, paymentMethodKey } from "@/i18n/status";
 import { formatRating } from "@/lib/marketplace";
 import { queryKeys } from "@/lib/query-keys";
 import { formatDate, formatMoney, fullName, getErrorMessage } from "@/lib/utils";
@@ -183,6 +183,7 @@ export function JobDetailsPage() {
                 : t("common.categoryFallback", { id: job.category_id })}
             </Badge>
             <Badge variant={statusVariant[job.status]}>{t(jobStatusKey(job.status))}</Badge>
+            <Badge variant="outline">{t(paymentMethodKey(job.payment_method))}</Badge>
           </div>
           <h1 className="mt-3 text-3xl font-bold tracking-tight">{job.title}</h1>
           <p className="mt-3 flex items-center gap-2 text-muted-foreground">
@@ -200,6 +201,13 @@ export function JobDetailsPage() {
               <p className="mt-3 whitespace-pre-wrap text-sm leading-6 text-muted-foreground">
                 {job.description}
               </p>
+              {job.image_url ? (
+                <img
+                  src={job.image_url}
+                  alt=""
+                  className="mt-4 w-full rounded-2xl border object-cover"
+                />
+              ) : null}
             </CardContent>
           </Card>
 
@@ -311,6 +319,9 @@ export function JobDetailsPage() {
             <CardContent className="p-6">
               <p className="text-sm text-muted-foreground">{t("job.pay")}</p>
               <p className="mt-1 text-3xl font-bold text-primary">{formatMoney(job.salary)}</p>
+              <p className="mt-2 text-sm text-muted-foreground">
+                {t("job.payment")}: {t(paymentMethodKey(job.payment_method))}
+              </p>
               <div className="mt-6 flex flex-col gap-3">
                 {user?.role === "worker" && job.status === "OPEN" && !isOwner ? (
                   <Button

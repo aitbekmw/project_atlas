@@ -10,21 +10,36 @@ from app.core.exceptions import (
     ConversationAlreadyExists,
     ConversationNotFound,
     EmailAlreadyExists,
+    EmailAlreadyVerified,
+    EmailNotVerified,
+    GoogleAuthFailed,
+    GoogleCancelled,
+    GoogleEmailNotVerified,
+    GoogleNotConfigured,
     IncorrectPassword,
     InvalidCredentials,
     InvalidFile,
+    InvalidOAuthCode,
+    InvalidOAuthState,
+    InvalidPhone,
     InvalidRefreshToken,
+    InvalidVerificationCode,
     JobNotCompleted,
     JobNotFound,
     JobNotOpen,
     MessageNotFound,
     PermissionDenied,
+    ProfileIncomplete,
+    ResendTooSoon,
     ReviewAlreadyExists,
     ReviewNotFound,
     SamePassword,
     SelfReviewNotAllowed,
+    SmtpNotConfigured,
     UsernameAlreadyExists,
     UserNotFound,
+    VerificationCodeExpired,
+    WeakPassword,
 )
 
 EXCEPTION_MAP: dict[type[AtlasException], tuple[int, str]] = {
@@ -74,6 +89,66 @@ EXCEPTION_MAP: dict[type[AtlasException], tuple[int, str]] = {
         status.HTTP_401_UNAUTHORIZED,
         "Invalid or expired refresh token",
     ),
+    EmailNotVerified: (
+        status.HTTP_403_FORBIDDEN,
+        "Email is not verified",
+    ),
+    InvalidVerificationCode: (
+        status.HTTP_400_BAD_REQUEST,
+        "Invalid verification code",
+    ),
+    VerificationCodeExpired: (
+        status.HTTP_400_BAD_REQUEST,
+        "Verification code expired",
+    ),
+    ResendTooSoon: (
+        status.HTTP_429_TOO_MANY_REQUESTS,
+        "Please wait before requesting a new code",
+    ),
+    EmailAlreadyVerified: (
+        status.HTTP_400_BAD_REQUEST,
+        "Email is already verified",
+    ),
+    WeakPassword: (
+        status.HTTP_400_BAD_REQUEST,
+        "Password does not meet requirements",
+    ),
+    InvalidPhone: (
+        status.HTTP_400_BAD_REQUEST,
+        "Invalid phone number",
+    ),
+    SmtpNotConfigured: (
+        status.HTTP_503_SERVICE_UNAVAILABLE,
+        "Email delivery is not configured",
+    ),
+    GoogleNotConfigured: (
+        status.HTTP_503_SERVICE_UNAVAILABLE,
+        "Google sign-in is not configured",
+    ),
+    GoogleAuthFailed: (
+        status.HTTP_400_BAD_REQUEST,
+        "Google authentication failed",
+    ),
+    GoogleCancelled: (
+        status.HTTP_400_BAD_REQUEST,
+        "Google sign-in was cancelled",
+    ),
+    GoogleEmailNotVerified: (
+        status.HTTP_400_BAD_REQUEST,
+        "Google has not verified this email",
+    ),
+    InvalidOAuthState: (
+        status.HTTP_400_BAD_REQUEST,
+        "Google authentication failed",
+    ),
+    InvalidOAuthCode: (
+        status.HTTP_400_BAD_REQUEST,
+        "Google authentication failed",
+    ),
+    ProfileIncomplete: (
+        status.HTTP_400_BAD_REQUEST,
+        "Complete your Atlas profile",
+    ),
 }
 
 
@@ -89,7 +164,21 @@ def _make_handler(status_code: int, detail: str):
 
 def register_exception_handlers(app: FastAPI) -> None:
     for exc_class, (status_code, detail) in EXCEPTION_MAP.items():
+        if exc_class is ResendTooSoon:
+            continue
         app.add_exception_handler(
             exc_class,
             _make_handler(status_code, detail),
         )
+
+    async def resend_too_soon_handler(_request: Request, exc: ResendTooSoon):
+        retry_after = getattr(exc, "retry_after", 60)
+        return JSONResponse(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            content={
+                "detail": "Please wait before requesting a new code",
+                "retry_after": retry_after,
+            },
+        )
+
+    app.add_exception_handler(ResendTooSoon, resend_too_soon_handler)

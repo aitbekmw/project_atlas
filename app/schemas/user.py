@@ -8,8 +8,14 @@ from pydantic import (
     Field,
     field_serializer,
     field_validator,
+    model_validator,
 )
 
+from app.core.validators import (
+    normalize_person_name,
+    normalize_phone,
+    validate_password_strength,
+)
 from app.models.enum import UserRole
 from app.services.minio import MinioService
 
@@ -49,9 +55,44 @@ class UserBase(BaseModel):
         return normalize_atlas_email(value)
 
 
-class UserCreate(UserBase):
-    password: str = Field(min_length=8)
+class UserCreate(BaseModel):
+    username: str | None = Field(default=None, min_length=3, max_length=50)
+    email: str = Field(min_length=3, max_length=255)
+    first_name: str = Field(min_length=2, max_length=100)
+    last_name: str = Field(min_length=2, max_length=100)
+    phone: str = Field(min_length=8, max_length=30)
+    password: str = Field(min_length=8, max_length=128)
     role: str = UserRole.WORKER.value
+
+    @field_validator("username", mode="before")
+    @classmethod
+    def empty_username(cls, value: object) -> object:
+        if value is None:
+            return None
+        if isinstance(value, str) and not value.strip():
+            return None
+        return value
+
+    @field_validator("email")
+    @classmethod
+    def validate_email_value(cls, value: str) -> str:
+        return normalize_atlas_email(value)
+
+    @field_validator("first_name", "last_name")
+    @classmethod
+    def validate_name(cls, value: str) -> str:
+        return normalize_person_name(value)
+
+    @field_validator("phone")
+    @classmethod
+    def validate_phone(cls, value: str) -> str:
+        return normalize_phone(value)
+
+    @field_validator("password")
+    @classmethod
+    def validate_password(cls, value: str) -> str:
+        validate_password_strength(value)
+        return value
 
     @field_validator("role")
     @classmethod
@@ -65,6 +106,11 @@ class UserCreate(UserBase):
             raise ValueError("Role must be worker or customer")
 
         return value
+
+    @model_validator(mode="after")
+    def password_not_from_email(self):
+        validate_password_strength(self.password, self.email)
+        return self
 
 
 class UserLogin(BaseModel):
@@ -82,6 +128,13 @@ class UserUpdate(BaseModel):
     last_name: str | None = Field(default=None, min_length=1, max_length=100)
     phone: str | None = Field(default=None, max_length=30)
     avatar: str | None = None
+
+    @field_validator("phone")
+    @classmethod
+    def validate_phone(cls, value: str | None) -> str | None:
+        if value is None or not str(value).strip():
+            return None
+        return normalize_phone(value)
 
 
 class UserResponse(UserBase):

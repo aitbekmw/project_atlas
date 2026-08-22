@@ -19,13 +19,12 @@ async def ensure_default_categories() -> None:
     async with AsyncSessionLocal() as session:
         repo = CategoryRepository(session)
         existing = await repo.get_all()
-        if existing:
-            return
+        existing_names = {item.name for item in existing}
 
         service = CategoryService(repo)
         created = 0
         for item in DEFAULT_CATEGORIES:
-            if await repo.get_by_name(item["name"]):
+            if item["name"] in existing_names or await repo.get_by_name(item["name"]):
                 continue
             try:
                 await service.create(CategoryCreate(**item))

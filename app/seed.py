@@ -1,9 +1,9 @@
-"""Idempotent E2E seed for the local Atlas PostgreSQL database.
+"""Idempotent development seed. Not run on API startup.
 
-Creates real Category / User / Job / Application rows through existing
-services. Does not delete data and does not invent coordinates.
+Creates categories, demo users, ~30 Bishkek jobs with coordinates,
+applications, completed jobs and reviews through existing services.
 
-Run inside the API container:
+Does not target production automatically. Run only against a local/dev database:
 
     PYTHONPATH=/app python app/seed.py
 """
@@ -13,206 +13,169 @@ from __future__ import annotations
 import asyncio
 
 from app.data.default_categories import DEFAULT_CATEGORIES
+from app.data.demo_marketplace import DEMO_JOBS, DEMO_REVIEWS, DEMO_USERS
 from app.db.session import AsyncSessionLocal
 from app.models.category import Category
-from app.models.enum import UserRole
 from app.models.user import User
 from app.repositories.application import ApplicationRepository
 from app.repositories.category import CategoryRepository
 from app.repositories.job import JobRepository
+from app.repositories.review import ReviewRepository
 from app.schemas.application import ApplicationCreate
 from app.schemas.category import CategoryCreate
 from app.schemas.job import JobCreate
+from app.schemas.review import ReviewCreate
 from app.schemas.user import UserCreate
 from app.services.application import ApplicationService
 from app.services.auth import AuthService
 from app.services.category import CategoryService
 from app.services.job import JobService
-
-CATEGORIES = DEFAULT_CATEGORIES
-
-CUSTOMER = UserCreate(
-    username="atlas_customer",
-    email="atlas.customer@test.local",
-    password="AtlasTest123!",
-    first_name="Atlas",
-    last_name="Customer",
-    phone="+996700000001",
-    role=UserRole.CUSTOMER.value,
-)
-
-WORKER = UserCreate(
-    username="atlas_worker",
-    email="atlas.worker@test.local",
-    password="AtlasTest123!",
-    first_name="Atlas",
-    last_name="Worker",
-    phone="+996700000002",
-    role=UserRole.WORKER.value,
-)
-
-JOBS = [
-    {
-        "title": "Собрать шкаф IKEA",
-        "description": "Нужно собрать шкаф IKEA дома.",
-        "city": "Бишкек",
-        "address": "проспект Чуй, 100",
-        "salary": 3500,
-        "category": "Ремонт",
-        "apply": False,
-    },
-    {
-        "title": "Генеральная уборка квартиры",
-        "description": "Нужна генеральная уборка двухкомнатной квартиры.",
-        "city": "Бишкек",
-        "address": "улица Киевская, 120",
-        "salary": 4500,
-        "category": "Уборка",
-        "apply": True,
-    },
-    {
-        "title": "Доставка документов",
-        "description": "Нужно доставить документы по Бишкеку.",
-        "city": "Бишкек",
-        "address": "улица Манаса, 50",
-        "salary": 1200,
-        "category": "Доставка",
-        "apply": True,
-    },
-    {
-        "title": "Помощь с переездом",
-        "description": "Нужно перенести мебель в новую квартиру.",
-        "city": "Бишкек",
-        "address": "улица Исанова, 80",
-        "salary": 5000,
-        "category": "Переезд",
-        "apply": False,
-    },
-]
+from app.services.review import ReviewService
 
 
 async def get_or_register(auth: AuthService, data: UserCreate) -> tuple[User, bool]:
     existing = await auth.user_repo.get_by_email(data.email)
     if existing is None:
         existing = await auth.user_repo.get_by_username(data.username)
-
     if existing is not None:
         return existing, False
-
     return await auth.register(data), True
+
+
+async def ensure_verified(user: User, db) -> None:
+    if user.is_verified:
+        return
+    user.is_verified = True
+    await db.commit()
 
 
 async def seed() -> dict:
     async with AsyncSessionLocal() as db:
         category_service = CategoryService(CategoryRepository(db))
         auth_service = AuthService(db)
-        job_service = JobService(JobRepository(db), CategoryRepository(db))
-        application_service = ApplicationService(
-            ApplicationRepository(db),
-            JobRepository(db),
-        )
         job_repo = JobRepository(db)
+        job_service = JobService(job_repo, CategoryRepository(db))
         application_repo = ApplicationRepository(db)
+        application_service = ApplicationService(application_repo, job_repo)
+        review_service = ReviewService(
+            ReviewRepository(db),
+            job_repo,
+            application_repo,
+        )
 
         categories: dict[str, Category] = {}
         created_categories: list[str] = []
-        for item in CATEGORIES:
+        for item in DEFAULT_CATEGORIES:
             category = await category_service.repo.get_by_name(item["name"])
             if category is None:
                 category = await category_service.create(CategoryCreate(**item))
                 created_categories.append(category.name)
             categories[category.name] = category
 
-        customer, customer_created = await get_or_register(auth_service, CUSTOMER)
-        worker, worker_created = await get_or_register(auth_service, WORKER)
+        users: dict[str, User] = {}
+        created_users: list[str] = []
+        for item in DEMO_USERS:
+            user, created = await get_or_register(
+                auth_service,
+                UserCreate(
+                    username=item["username"],
+                    email=item["email"],
+                    password=item["password"],
+                    first_name=item["first_name"],
+                    last_name=item["last_name"],
+                    phone=item["phone"],
+                    role=item["role"],
+                ),
+            )
+            await ensure_verified(user, db)
+            users[item["username"]] = user
+            if created:
+                created_users.append(item["username"])
 
-        owned = await job_repo.get_by_owner(customer.id)
-        jobs_by_title = {job.title: job for job in owned}
+        jobs_by_title: dict[str, object] = {}
         created_jobs: list[str] = []
-        jobs = []
-        for item in JOBS:
-            category = categories[item["category"]]
-            job = jobs_by_title.get(item["title"])
-            if job is None:
+        for item in DEMO_JOBS:
+            owner = users[item["customer"]]
+            owned = await job_repo.get_by_owner(owner.id)
+            existing = next((job for job in owned if job.title == item["title"]), None)
+            if existing is None:
                 job = await job_service.create(
                     JobCreate(
                         title=item["title"],
                         description=item["description"],
                         salary=item["salary"],
+                        payment_method=item["payment_method"],
                         city=item["city"],
                         address=item["address"],
-                        category_id=category.id,
+                        category_id=categories[item["category"]].id,
+                        latitude=item["lat"],
+                        longitude=item["lng"],
                     ),
-                    customer.id,
+                    owner.id,
                 )
                 created_jobs.append(job.title)
-            jobs.append((job, item["apply"]))
+            else:
+                job = existing
+                if job.latitude is None or job.longitude is None:
+                    job.latitude = item["lat"]
+                    job.longitude = item["lng"]
+                    await job_repo.update()
+            jobs_by_title[job.title] = job
 
-        created_applications: list[int] = []
-        applications = []
-        for job, should_apply in jobs:
-            existing = await application_repo.get_by_worker_and_job(
-                worker.id,
-                job.id,
+            if item["complete"] and item["worker"] and job.status != "COMPLETED":
+                worker = users[item["worker"]]
+                application = await application_repo.get_by_worker_and_job(
+                    worker.id,
+                    job.id,
+                )
+                if application is None:
+                    application = await application_service.create(
+                        ApplicationCreate(job_id=job.id),
+                        worker.id,
+                    )
+                if application.status != "ACCEPTED":
+                    await application_service.accept(application.id, owner)
+                if job.status != "COMPLETED":
+                    await job_service.complete(job.id, owner)
+
+        created_reviews: list[int] = []
+        for item in DEMO_REVIEWS:
+            job = jobs_by_title[item["job"]]
+            from_user = users[item["from_user"]]
+            to_user = users[item["to_user"]]
+            existing = await review_service.repo.get_by_job_and_author(
+                job.id, from_user.id
             )
             if existing is not None:
-                applications.append(existing)
                 continue
-            if not should_apply:
-                continue
-            application = await application_service.create(
-                ApplicationCreate(job_id=job.id),
-                worker.id,
+            review = await review_service.create(
+                ReviewCreate(
+                    job_id=job.id,
+                    to_user_id=to_user.id,
+                    rating=item["rating"],
+                    comment=item["comment"],
+                ),
+                from_user.id,
             )
-            created_applications.append(application.id)
-            applications.append(application)
+            created_reviews.append(review.id)
 
+        open_jobs = [item["title"] for item in DEMO_JOBS if not item["complete"]]
         return {
-            "categories": [
-                {"id": category.id, "name": category.name}
-                for category in categories.values()
-            ],
             "created_categories": created_categories,
-            "customer": {
-                "id": customer.id,
-                "username": customer.username,
-                "email": customer.email,
-                "created": customer_created,
-            },
-            "worker": {
-                "id": worker.id,
-                "username": worker.username,
-                "email": worker.email,
-                "created": worker_created,
-            },
-            "jobs": [
-                {
-                    "id": job.id,
-                    "title": job.title,
-                    "status": job.status,
-                    "category": next(
-                        item["category"] for item in JOBS if item["title"] == job.title
-                    ),
-                }
-                for job, _ in jobs
-            ],
+            "categories": len(categories),
+            "created_users": created_users,
+            "users": len(users),
             "created_jobs": created_jobs,
-            "applications": [
-                {
-                    "id": application.id,
-                    "job_id": application.job_id,
-                    "worker_id": application.worker_id,
-                    "status": application.status,
-                }
-                for application in applications
-            ],
-            "created_applications": created_applications,
+            "jobs": len(jobs_by_title),
+            "open_jobs": len(open_jobs),
+            "created_reviews": created_reviews,
+            "note": "Development seed only. Do not run against production.",
         }
 
 
 def main() -> None:
     summary = asyncio.run(seed())
-    print("Atlas E2E seed complete")
+    print("Atlas development seed complete")
     for key, value in summary.items():
         print(f"{key}: {value}")
 

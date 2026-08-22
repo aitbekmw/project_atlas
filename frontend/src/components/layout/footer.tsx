@@ -18,8 +18,8 @@ export function Footer() {
   ];
   const companyLinks: { to: string; labelKey: MessageKey }[] = [
     { to: "/reviews", labelKey: "nav.reviews" },
-    { to: "/login", labelKey: "nav.login" },
-    { to: "/register", labelKey: "nav.register" },
+    { to: "/terms", labelKey: "legal.termsTitle" },
+    { to: "/privacy", labelKey: "legal.privacyTitle" },
   ];
 
   return (

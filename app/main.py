@@ -10,6 +10,7 @@ from app.core.handlers import register_exception_handlers
 from app.core.logging import setup_logging
 from app.core.middleware import LoggingMiddleware
 from app.core.minio import create_bucket
+from app.core.origins import CORS_ORIGIN_REGEX
 from app.core.redis import connect_redis, disconnect_redis
 from app.services.bootstrap import ensure_default_categories
 from app.websocket.redis import start_subscriber
@@ -42,7 +43,7 @@ app.add_middleware(LoggingMiddleware)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.CORS_ORIGINS,
-    allow_origin_regex=r"http://(localhost|127\.0\.0\.1):\d+",
+    allow_origin_regex=CORS_ORIGIN_REGEX,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

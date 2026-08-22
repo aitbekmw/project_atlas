@@ -24,4 +24,29 @@ DEFAULT_CATEGORIES = [
         "description": "Настройка и разработка",
         "icon": "monitor",
     },
+    {
+        "name": "Электрика",
+        "description": "Электромонтаж и ремонт проводки",
+        "icon": "zap",
+    },
+    {
+        "name": "Сантехника",
+        "description": "Сантехнические работы",
+        "icon": "droplet",
+    },
+    {
+        "name": "Курьер",
+        "description": "Срочная доставка по городу",
+        "icon": "bike",
+    },
+    {
+        "name": "Мебель",
+        "description": "Сборка и ремонт мебели",
+        "icon": "sofa",
+    },
+    {
+        "name": "Репетиторство",
+        "description": "Обучение и подготовка",
+        "icon": "book",
+    },
 ]

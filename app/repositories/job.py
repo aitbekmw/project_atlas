@@ -41,6 +41,17 @@ class JobRepository:
         result = await self.db.execute(select(Job).where(Job.id == job_id))
         return result.scalar_one_or_none()
 
+    async def get_open_with_coords(self):
+        result = await self.db.execute(
+            select(Job).where(
+                Job.is_active.is_(True),
+                Job.status == "OPEN",
+                Job.latitude.is_not(None),
+                Job.longitude.is_not(None),
+            )
+        )
+        return result.scalars().all()
+
     async def get_by_owner(self, owner_id: int):
         result = await self.db.execute(
             select(Job).where(Job.owner_id == owner_id).order_by(desc(Job.created_at))
@@ -53,6 +64,7 @@ class JobRepository:
         city: str | None = None,
         category_id: int | None = None,
         min_salary: int | None = None,
+        payment_method: str | None = None,
         status: str | None = None,
         is_active: bool | None = True,
         page: int = 1,
@@ -81,6 +93,9 @@ class JobRepository:
 
         if min_salary is not None:
             filters.append(Job.salary >= min_salary)
+
+        if payment_method is not None:
+            filters.append(Job.payment_method == payment_method)
 
         if status is not None:
             filters.append(Job.status == status)

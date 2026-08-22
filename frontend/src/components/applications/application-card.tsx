@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useI18n } from "@/i18n/locale-context";
-import { applicationStatusKey } from "@/i18n/status";
+import { applicationStatusKey, paymentMethodKey } from "@/i18n/status";
 import { formatDate, formatMoney } from "@/lib/utils";
 import type { Application, ApplicationStatus, Job } from "@/types/api";
 
@@ -49,6 +49,7 @@ export function ApplicationCard({
           {job ? (
             <p className="mt-1 text-sm text-muted-foreground">
               {formatMoney(job.salary)}
+              {` · ${t(paymentMethodKey(job.payment_method))}`}
               {job.city ? ` · ${job.city}` : ""}
             </p>
           ) : null}

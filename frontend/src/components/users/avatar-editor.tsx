@@ -6,7 +6,6 @@ import { deleteAvatar, uploadAvatar } from "@/api/users";
 import { UserAvatar } from "@/components/users/user-avatar";
 import { Button } from "@/components/ui/button";
 import {
-  AVATAR_ACCEPT,
   isAllowedAvatarType,
   MAX_AVATAR_BYTES,
   resolveAvatarSrc,
@@ -90,7 +89,7 @@ export function AvatarEditor({ user, onUpdated }: AvatarEditorProps) {
           <input
             ref={inputRef}
             type="file"
-            accept={AVATAR_ACCEPT}
+            accept="image/*"
             className="hidden"
             onChange={onFileChange}
           />

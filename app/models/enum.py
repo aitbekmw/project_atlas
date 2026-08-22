@@ -14,6 +14,17 @@ class JobStatus(str, Enum):
     CANCELLED = "CANCELLED"
 
 
+class PaymentMethod(str, Enum):
+    """How the customer plans to pay.
+
+    QR is reserved for a future electronic payment flow.
+    """
+
+    CASH = "CASH"
+    QR = "QR"
+    AGREEMENT = "AGREEMENT"
+
+
 class ApplicationStatus(str, Enum):
     PENDING = "PENDING"
     ACCEPTED = "ACCEPTED"

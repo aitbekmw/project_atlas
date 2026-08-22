@@ -1,157 +1,301 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useMemo } from "react";
-import { useForm } from "react-hook-form";
+import { useMemo, useState } from "react";
+import { Controller, useForm } from "react-hook-form";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { z } from "zod";
 
+import { AuthDivider, GoogleAuthButton } from "@/components/auth/google-auth-button";
 import { Logo } from "@/components/layout/navbar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { PasswordInput } from "@/components/ui/password-input";
 import { useAuth } from "@/context/auth-context";
 import { useI18n } from "@/i18n/locale-context";
-import { getErrorMessage } from "@/lib/utils";
+import { formatKgPhone, isKgPhone, isPersonName, isStrongPassword } from "@/lib/auth-form";
+import { cn, getErrorMessage, getHttpStatus } from "@/lib/utils";
 
 type Values = {
   first_name: string;
   last_name: string;
-  username: string;
   email: string;
-  phone?: string;
+  phone: string;
   password: string;
+  confirm_password: string;
   role: "customer" | "worker";
 };
 
 export function RegisterPage() {
   const { t } = useI18n();
+  const { register: registerAccount } = useAuth();
+  const navigate = useNavigate();
+  const [emailTaken, setEmailTaken] = useState(false);
+
   const schema = useMemo(
     () =>
-      z.object({
-        first_name: z.string().trim().min(1, t("auth.nameRequired")).max(100),
-        last_name: z.string().trim().min(1, t("auth.lastNameRequired")).max(100),
-        username: z.string().trim().min(3, t("auth.usernameMin")).max(50, t("auth.usernameMax")),
-        email: z.string().email(t("auth.emailInvalid")),
-        phone: z.string().max(30).optional(),
-        password: z.string().min(8, t("auth.passwordMin")),
-        role: z.enum(["customer", "worker"]),
-      }),
+      z
+        .object({
+          first_name: z
+            .string()
+            .trim()
+            .min(2, t("register.nameInvalid"))
+            .refine(isPersonName, t("register.nameInvalid")),
+          last_name: z
+            .string()
+            .trim()
+            .min(2, t("register.nameInvalid"))
+            .refine(isPersonName, t("register.nameInvalid")),
+          email: z.string().trim().email(t("auth.emailInvalid")),
+          phone: z.string().refine(isKgPhone, t("register.phoneInvalid")),
+          password: z.string(),
+          confirm_password: z.string(),
+          role: z.enum(["customer", "worker"]),
+        })
+        .superRefine((values, ctx) => {
+          if (!isStrongPassword(values.password, values.email)) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              path: ["password"],
+              message: t("register.passwordWeak"),
+            });
+          }
+          if (values.password !== values.confirm_password) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              path: ["confirm_password"],
+              message: t("auth.passwordMismatch"),
+            });
+          }
+        }),
     [t],
   );
-  const { register } = useAuth();
-  const navigate = useNavigate();
+
   const form = useForm<Values>({
     resolver: zodResolver(schema),
     defaultValues: {
       first_name: "",
       last_name: "",
-      username: "",
       email: "",
-      phone: "",
+      phone: "+996 ",
       password: "",
-      role: "worker",
+      confirm_password: "",
+      role: "customer",
     },
   });
 
   return (
-    <div className="mx-auto flex min-h-[calc(100svh-4rem)] max-w-lg items-center px-4 py-12">
-      <Card className="w-full">
+    <div className="mx-auto w-full max-w-lg overflow-x-hidden px-4 py-8 pb-[max(2rem,env(safe-area-inset-bottom))] sm:py-12">
+      <Card className="w-full min-w-0">
         <CardHeader className="items-center text-center">
           <Logo />
-          <CardTitle className="mt-4">{t("auth.registerTitle")}</CardTitle>
-          <p className="text-sm text-muted-foreground">
-            {t("auth.registerSubtitle")}
-          </p>
+          <CardTitle className="mt-4">{t("register.title")}</CardTitle>
+          <p className="text-sm text-muted-foreground">{t("register.subtitle")}</p>
         </CardHeader>
         <CardContent>
           <form
             className="grid gap-4"
             onSubmit={form.handleSubmit(async (values) => {
+              setEmailTaken(false);
               try {
-                await register({
-                  ...values,
-                  phone: values.phone || null,
+                await registerAccount({
+                  first_name: values.first_name,
+                  last_name: values.last_name,
+                  email: values.email,
+                  phone: values.phone,
+                  password: values.password,
+                  role: values.role,
                 });
                 toast.success(t("auth.created"));
-                navigate("/app/dashboard");
+                navigate(`/verify-email?email=${encodeURIComponent(values.email.trim().toLowerCase())}`);
               } catch (error) {
                 const message = getErrorMessage(error);
+                if (
+                  getHttpStatus(error) === 400 &&
+                  (message === t("error.emailExists") || message === t("auth.emailAlreadyExists"))
+                ) {
+                  setEmailTaken(true);
+                }
                 form.setError("root", { message });
                 toast.error(message);
               }
             })}
           >
             {form.formState.errors.root ? (
-              <p className="rounded-xl bg-destructive/10 px-3 py-2 text-sm text-destructive">
-                {form.formState.errors.root.message}
-              </p>
+              <div className="rounded-xl bg-destructive/10 px-3 py-2 text-sm text-destructive">
+                <p>{form.formState.errors.root.message}</p>
+                {emailTaken ? (
+                  <div className="mt-3 flex min-w-0 flex-col gap-2 sm:flex-row">
+                    <Button asChild variant="outline" className="min-h-11 flex-1">
+                      <Link to="/login">{t("auth.signIn")}</Link>
+                    </Button>
+                    <Button asChild variant="outline" className="min-h-11 flex-1">
+                      <Link to="/forgot-password">{t("auth.restorePassword")}</Link>
+                    </Button>
+                  </div>
+                ) : null}
+              </div>
             ) : null}
+
             <div className="grid gap-4 sm:grid-cols-2">
-              <div className="grid gap-2">
-                <Label>{t("auth.firstName")}</Label>
-                <Input {...form.register("first_name")} />
+              <div className="grid min-w-0 gap-2">
+                <Label htmlFor="first_name">{t("register.firstName")} *</Label>
+                <Input
+                  id="first_name"
+                  autoComplete="given-name"
+                  placeholder={t("register.placeholderFirstName")}
+                  {...form.register("first_name")}
+                />
                 {form.formState.errors.first_name ? (
-                  <p className="text-xs text-destructive">
-                    {form.formState.errors.first_name.message}
-                  </p>
+                  <p className="text-xs text-destructive">{form.formState.errors.first_name.message}</p>
                 ) : null}
               </div>
-              <div className="grid gap-2">
-                <Label>{t("auth.lastName")}</Label>
-                <Input {...form.register("last_name")} />
+              <div className="grid min-w-0 gap-2">
+                <Label htmlFor="last_name">{t("register.lastName")} *</Label>
+                <Input
+                  id="last_name"
+                  autoComplete="family-name"
+                  placeholder={t("register.placeholderLastName")}
+                  {...form.register("last_name")}
+                />
                 {form.formState.errors.last_name ? (
-                  <p className="text-xs text-destructive">
-                    {form.formState.errors.last_name.message}
-                  </p>
+                  <p className="text-xs text-destructive">{form.formState.errors.last_name.message}</p>
                 ) : null}
               </div>
             </div>
-            <div className="grid gap-2">
-              <Label>{t("auth.username")}</Label>
-              <Input {...form.register("username")} />
-              {form.formState.errors.username ? (
-                <p className="text-xs text-destructive">
-                  {form.formState.errors.username.message}
-                </p>
-              ) : null}
-            </div>
-            <div className="grid gap-2">
-              <Label>{t("auth.email")}</Label>
-              <Input type="email" {...form.register("email")} />
+
+            <div className="grid min-w-0 gap-2">
+              <Label htmlFor="email">{t("register.email")} *</Label>
+              <Input
+                id="email"
+                type="email"
+                inputMode="email"
+                autoComplete="email"
+                placeholder={t("register.placeholderEmail")}
+                {...form.register("email")}
+              />
               {form.formState.errors.email ? (
-                <p className="text-xs text-destructive">
-                  {form.formState.errors.email.message}
-                </p>
+                <p className="text-xs text-destructive">{form.formState.errors.email.message}</p>
               ) : null}
             </div>
-            <div className="grid gap-2">
-              <Label>{t("auth.phone")}</Label>
-              <Input {...form.register("phone")} />
+
+            <div className="grid min-w-0 gap-2">
+              <Label htmlFor="phone">{t("register.phone")} *</Label>
+              <Controller
+                control={form.control}
+                name="phone"
+                render={({ field }) => (
+                  <Input
+                    id="phone"
+                    type="tel"
+                    inputMode="tel"
+                    autoComplete="tel"
+                    placeholder={t("register.placeholderPhone")}
+                    value={field.value}
+                    onChange={(event) => field.onChange(formatKgPhone(event.target.value))}
+                    onBlur={field.onBlur}
+                    name={field.name}
+                    ref={field.ref}
+                  />
+                )}
+              />
+              {form.formState.errors.phone ? (
+                <p className="text-xs text-destructive">{form.formState.errors.phone.message}</p>
+              ) : null}
             </div>
-            <div className="grid gap-2">
-              <Label>{t("auth.password")}</Label>
-              <Input type="password" {...form.register("password")} />
+
+            <div className="grid min-w-0 gap-2">
+              <Label htmlFor="password">{t("register.password")} *</Label>
+              <PasswordInput
+                id="password"
+                autoComplete="new-password"
+                placeholder={t("register.placeholderPassword")}
+                showLabel={t("register.showPassword")}
+                hideLabel={t("register.hidePassword")}
+                {...form.register("password")}
+              />
+              <p className="text-xs leading-5 text-muted-foreground">{t("register.passwordRequirements")}</p>
               {form.formState.errors.password ? (
-                <p className="text-xs text-destructive">
-                  {form.formState.errors.password.message}
-                </p>
+                <p className="text-xs text-destructive">{form.formState.errors.password.message}</p>
               ) : null}
             </div>
-            <div className="grid gap-2">
-              <Label>{t("auth.role")}</Label>
-              <select
-                className="flex min-h-11 w-full rounded-xl border border-input bg-background px-3 text-sm"
-                {...form.register("role")}
-              >
-                <option value="worker">{t("role.worker")}</option>
-                <option value="customer">{t("role.customer")}</option>
-              </select>
+
+            <div className="grid min-w-0 gap-2">
+              <Label htmlFor="confirm_password">{t("register.confirmPassword")} *</Label>
+              <PasswordInput
+                id="confirm_password"
+                autoComplete="new-password"
+                placeholder={t("register.placeholderConfirmPassword")}
+                showLabel={t("register.showPassword")}
+                hideLabel={t("register.hidePassword")}
+                {...form.register("confirm_password")}
+              />
+              {form.formState.errors.confirm_password ? (
+                <p className="text-xs text-destructive">{form.formState.errors.confirm_password.message}</p>
+              ) : null}
             </div>
-            <Button type="submit" className="h-11" disabled={form.formState.isSubmitting}>
-              {form.formState.isSubmitting ? t("auth.creating") : t("auth.create")}
+
+            <fieldset className="grid min-w-0 gap-2">
+              <legend className="text-sm font-medium">{t("register.role")} *</legend>
+              <div className="grid gap-2">
+                {(["customer", "worker"] as const).map((role) => {
+                  const selected = form.watch("role") === role;
+                  return (
+                    <label
+                      key={role}
+                      className={cn(
+                        "flex min-h-14 cursor-pointer items-start gap-3 rounded-xl border px-3 py-3",
+                        selected ? "border-primary bg-primary/5" : "border-input",
+                      )}
+                    >
+                      <input
+                        type="radio"
+                        className="mt-1"
+                        value={role}
+                        {...form.register("role")}
+                      />
+                      <span className="min-w-0">
+                        <span className="block text-sm font-semibold">
+                          {role === "customer" ? t("register.customer") : t("register.worker")}
+                        </span>
+                        <span className="mt-1 block text-xs leading-5 text-muted-foreground">
+                          {role === "customer"
+                            ? t("register.customerDescription")
+                            : t("register.workerDescription")}
+                        </span>
+                      </span>
+                    </label>
+                  );
+                })}
+              </div>
+            </fieldset>
+
+            <p className="text-xs leading-5 text-muted-foreground">{t("register.nextStep")}</p>
+            {import.meta.env.DEV ? (
+              <p className="text-xs leading-5 text-muted-foreground">{t("register.devHint")}</p>
+            ) : null}
+
+            <p className="text-xs leading-5 text-muted-foreground">
+              {t("register.terms")}{" "}
+              <Link to="/terms" className="font-semibold text-primary underline-offset-4 hover:underline">
+                {t("legal.termsLink")}
+              </Link>{" "}
+              {t("register.termsAnd")}{" "}
+              <Link to="/privacy" className="font-semibold text-primary underline-offset-4 hover:underline">
+                {t("legal.privacyLink")}
+              </Link>
+              .
+            </p>
+
+            <Button type="submit" className="h-12 w-full" disabled={form.formState.isSubmitting}>
+              {form.formState.isSubmitting ? t("auth.creating") : t("register.submit")}
             </Button>
           </form>
+          <div className="mt-4 grid gap-3">
+            <AuthDivider />
+            <GoogleAuthButton />
+          </div>
           <p className="mt-4 text-center text-sm text-muted-foreground">
             {t("auth.hasAccount")}{" "}
             <Link to="/login" className="font-semibold text-primary">

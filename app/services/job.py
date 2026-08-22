@@ -1,10 +1,14 @@
+from fastapi import UploadFile
+
 from app.core.exceptions import CategoryNotFound, JobNotFound, PermissionDenied
-from app.models.enum import JobStatus, UserRole
+from app.core.geo import haversine_km
+from app.models.enum import JobStatus, PaymentMethod, UserRole
 from app.models.job import Job
 from app.models.user import User
 from app.repositories.category import CategoryRepository
 from app.repositories.job import JobRepository
-from app.schemas.job import JobCreate, JobUpdate
+from app.schemas.job import JobCreate, JobNearbyResponse, JobResponse, JobUpdate
+from app.services.minio import MinioService
 
 
 class JobService:
@@ -15,6 +19,7 @@ class JobService:
     ):
         self.repo = repo
         self.category_repo = category_repo
+        self.minio_service = MinioService()
 
     def _ensure_owner_or_admin(self, job: Job, user: User) -> None:
         if job.owner_id != user.id and user.role != UserRole.ADMIN.value:
@@ -37,10 +42,13 @@ class JobService:
             title=data.title,
             description=data.description,
             salary=data.salary,
+            payment_method=data.payment_method.value,
             city=data.city,
             address=data.address,
             category_id=data.category_id,
             owner_id=owner_id,
+            latitude=data.latitude,
+            longitude=data.longitude,
         )
 
         return await self.repo.create(job)
@@ -64,6 +72,7 @@ class JobService:
         city: str | None = None,
         category_id: int | None = None,
         min_salary: int | None = None,
+        payment_method: str | None = None,
         status: str | None = None,
         page: int = 1,
         size: int = 10,
@@ -73,6 +82,7 @@ class JobService:
             city=city,
             category_id=category_id,
             min_salary=min_salary,
+            payment_method=payment_method,
             status=status,
             is_active=True,
             page=page,
@@ -98,6 +108,12 @@ class JobService:
         self._ensure_owner_or_admin(job, user)
 
         payload = data.model_dump(exclude_unset=True)
+
+        if "payment_method" in payload and payload["payment_method"] is not None:
+            method = payload["payment_method"]
+            payload["payment_method"] = (
+                method.value if isinstance(method, PaymentMethod) else method
+            )
 
         if "category_id" in payload:
             await self._ensure_category(payload["category_id"])
@@ -156,3 +172,50 @@ class JobService:
         self._ensure_owner_or_admin(job, user)
 
         await self.repo.delete(job)
+
+    async def get_nearby(
+        self,
+        lat: float,
+        lng: float,
+        radius_km: float = 10,
+        size: int = 30,
+    ) -> list[JobNearbyResponse]:
+        jobs = await self.repo.get_open_with_coords()
+        scored: list[tuple[float, Job]] = []
+        for job in jobs:
+            if job.latitude is None or job.longitude is None:
+                continue
+            distance = haversine_km(lat, lng, job.latitude, job.longitude)
+            if distance <= radius_km:
+                scored.append((distance, job))
+        scored.sort(key=lambda item: item[0])
+        nearby: list[JobNearbyResponse] = []
+        for distance, job in scored[:size]:
+            data = JobResponse.model_validate(job).model_dump()
+            data.pop("image_url", None)
+            nearby.append(
+                JobNearbyResponse(
+                    **data,
+                    image_key=job.image_key,
+                    distance_km=round(distance, 1),
+                )
+            )
+        return nearby
+
+    async def upload_image(self, job_id: int, user: User, file: UploadFile) -> Job:
+        job = await self.get_by_id(job_id)
+        self._ensure_owner_or_admin(job, user)
+        if job.image_key:
+            self.minio_service.delete_file(job.image_key)
+        job.image_key = await self.minio_service.upload_file(file, "jobs")
+        await self.repo.update()
+        return job
+
+    async def delete_image(self, job_id: int, user: User) -> Job:
+        job = await self.get_by_id(job_id)
+        self._ensure_owner_or_admin(job, user)
+        if job.image_key:
+            self.minio_service.delete_file(job.image_key)
+            job.image_key = None
+            await self.repo.update()
+        return job

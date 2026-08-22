@@ -19,6 +19,9 @@ from app.main import app
 from app.models.category import Category
 from app.models.enum import UserRole
 from app.models.user import User
+from app.services.email import TEST_EMAIL_CODES
+
+TEST_PASSWORD = "AtlasTest1!"
 
 TEST_DATABASE_URL = settings.TEST_DATABASE_URL
 if not TEST_DATABASE_URL:
@@ -73,6 +76,16 @@ async def client():
     app.dependency_overrides.clear()
 
 
+async def verify_registered_email(client, email: str):
+    code = TEST_EMAIL_CODES[email.lower()]
+    response = await client.post(
+        "/auth/verify-email",
+        json={"email": email, "code": code},
+    )
+    assert response.status_code == 200, response.text
+    return response
+
+
 @pytest_asyncio.fixture
 async def auth_headers(client):
     unique = uuid.uuid4().hex[:8]
@@ -80,7 +93,7 @@ async def auth_headers(client):
     user_data = {
         "username": f"user_{unique}",
         "email": f"{unique}@test.com",
-        "password": "12345678",
+        "password": TEST_PASSWORD,
         "first_name": "Test",
         "last_name": "User",
         "phone": "+996700000000",
@@ -92,6 +105,7 @@ async def auth_headers(client):
     )
 
     assert response.status_code == 201
+    await verify_registered_email(client, user_data["email"])
 
     response = await client.post(
         "/auth/login",
@@ -148,7 +162,7 @@ async def customer_headers(client):
     user_data = {
         "username": f"customer_{unique}",
         "email": f"{unique}@test.com",
-        "password": "12345678",
+        "password": TEST_PASSWORD,
         "first_name": "Test",
         "last_name": "Customer",
         "phone": "+996700000000",
@@ -161,6 +175,7 @@ async def customer_headers(client):
     )
 
     assert response.status_code == 201
+    await verify_registered_email(client, user_data["email"])
 
     # Логин
     response = await client.post(
@@ -185,7 +200,7 @@ async def admin_headers(client, db):
     user_data = {
         "username": f"admin_{unique}",
         "email": f"admin_{unique}@test.com",
-        "password": "12345678",
+        "password": TEST_PASSWORD,
         "first_name": "Test",
         "last_name": "Admin",
         "phone": "+996700000000",
@@ -197,6 +212,7 @@ async def admin_headers(client, db):
     )
 
     assert response.status_code == 201
+    await verify_registered_email(client, user_data["email"])
 
     await db.execute(
         update(User)

@@ -3,9 +3,9 @@ import uuid
 import pytest
 from sqlalchemy import update
 
-from app.models.enum import JobStatus, UserRole
+from app.models.enum import JobStatus, PaymentMethod, UserRole
 from app.models.user import User
-from tests.conftest import TestingSessionLocal
+from tests.conftest import TestingSessionLocal, verify_registered_email
 
 # ==========================================================
 # CREATE
@@ -39,6 +39,7 @@ async def test_create_job_success(client, customer_headers, category):
     assert data["city"] == payload["city"]
     assert data["address"] == payload["address"]
     assert data["category_id"] == payload["category_id"]
+    assert data["payment_method"] == PaymentMethod.AGREEMENT.value
 
 
 @pytest.mark.asyncio
@@ -246,7 +247,7 @@ async def test_update_job_not_owner(client, customer_headers, category):
     second_user = {
         "username": f"user_{unique}",
         "email": f"{unique}@test.com",
-        "password": "12345678",
+        "password": "AtlasTest1!",
         "first_name": "Test",
         "last_name": "User",
         "phone": "+996700000000",
@@ -258,6 +259,7 @@ async def test_update_job_not_owner(client, customer_headers, category):
     )
 
     assert response.status_code == 201
+    await verify_registered_email(client, second_user["email"])
 
     async with TestingSessionLocal() as session:
         await session.execute(
@@ -367,7 +369,7 @@ async def test_delete_job_not_owner(client, customer_headers, category):
     second_user = {
         "username": f"user_{unique}",
         "email": f"{unique}@test.com",
-        "password": "12345678",
+        "password": "AtlasTest1!",
         "first_name": "Test",
         "last_name": "User",
         "phone": "+996700000000",
@@ -379,6 +381,7 @@ async def test_delete_job_not_owner(client, customer_headers, category):
     )
 
     assert response.status_code == 201
+    await verify_registered_email(client, second_user["email"])
 
     async with TestingSessionLocal() as session:
         await session.execute(
@@ -478,13 +481,14 @@ async def test_complete_job_not_owner(client, customer_headers, category):
     second_user = {
         "username": f"user_{unique}",
         "email": f"{unique}@test.com",
-        "password": "12345678",
+        "password": "AtlasTest1!",
         "first_name": "Test",
         "last_name": "User",
         "phone": "+996700000000",
     }
 
     await client.post("/auth/register", json=second_user)
+    await verify_registered_email(client, second_user["email"])
 
     async with TestingSessionLocal() as session:
         await session.execute(
@@ -652,3 +656,162 @@ async def test_cancel_job_success(client, customer_headers, category):
 
     assert data["status"] == JobStatus.CANCELLED.value
     assert data["is_active"] is False
+
+
+@pytest.mark.asyncio
+async def test_create_job_with_payment_method(client, customer_headers, category):
+    payload = {
+        "title": "Courier",
+        "description": "Deliver documents",
+        "salary": 1500,
+        "payment_method": PaymentMethod.QR.value,
+        "city": "Bishkek",
+        "address": "Manas",
+        "category_id": category.id,
+    }
+
+    response = await client.post(
+        "/jobs",
+        json=payload,
+        headers=customer_headers,
+    )
+
+    assert response.status_code == 201
+    assert response.json()["payment_method"] == PaymentMethod.QR.value
+
+
+@pytest.mark.asyncio
+async def test_create_job_rejects_card_payment(client, customer_headers, category):
+    payload = {
+        "title": "Courier",
+        "description": "Deliver documents",
+        "salary": 1500,
+        "payment_method": "CARD",
+        "city": "Bishkek",
+        "address": "Manas",
+        "category_id": category.id,
+    }
+
+    response = await client.post(
+        "/jobs",
+        json=payload,
+        headers=customer_headers,
+    )
+
+    assert response.status_code == 422
+
+
+@pytest.mark.asyncio
+async def test_update_job_payment_method(client, customer_headers, category):
+    payload = {
+        "title": "Courier",
+        "description": "Deliver documents",
+        "salary": 1500,
+        "payment_method": PaymentMethod.CASH.value,
+        "city": "Bishkek",
+        "address": "Manas",
+        "category_id": category.id,
+    }
+    created = await client.post("/jobs", json=payload, headers=customer_headers)
+    job_id = created.json()["id"]
+
+    response = await client.put(
+        f"/jobs/{job_id}",
+        json={"payment_method": PaymentMethod.AGREEMENT.value},
+        headers=customer_headers,
+    )
+
+    assert response.status_code == 200
+    assert response.json()["payment_method"] == PaymentMethod.AGREEMENT.value
+
+
+@pytest.mark.asyncio
+async def test_search_job_by_payment_method(client, customer_headers, category):
+    cash_payload = {
+        "title": "Cash job",
+        "description": "Pay in cash",
+        "salary": 2000,
+        "payment_method": PaymentMethod.CASH.value,
+        "city": "Bishkek",
+        "address": "Manas",
+        "category_id": category.id,
+    }
+    qr_payload = {
+        "title": "QR job",
+        "description": "Pay by QR",
+        "salary": 2000,
+        "payment_method": PaymentMethod.QR.value,
+        "city": "Bishkek",
+        "address": "Manas",
+        "category_id": category.id,
+    }
+    await client.post("/jobs", json=cash_payload, headers=customer_headers)
+    await client.post("/jobs", json=qr_payload, headers=customer_headers)
+
+    response = await client.get("/jobs?payment_method=QR")
+
+    assert response.status_code == 200
+    jobs = response.json()
+    assert len(jobs) == 1
+    assert jobs[0]["title"] == "QR job"
+    assert jobs[0]["payment_method"] == PaymentMethod.QR.value
+
+
+@pytest.mark.asyncio
+async def test_nearby_jobs_sorted_by_distance(client, customer_headers, category):
+    close = {
+        "title": "Close job",
+        "description": "Near Ala-Too",
+        "salary": 1500,
+        "city": "Bishkek",
+        "address": "Chuy 100",
+        "category_id": category.id,
+        "latitude": 42.8766,
+        "longitude": 74.6068,
+    }
+    far = {
+        "title": "Far job",
+        "description": "South district",
+        "salary": 1500,
+        "city": "Bishkek",
+        "address": "12 mkr",
+        "category_id": category.id,
+        "latitude": 42.8460,
+        "longitude": 74.5840,
+    }
+    await client.post("/jobs", json=close, headers=customer_headers)
+    await client.post("/jobs", json=far, headers=customer_headers)
+
+    response = await client.get(
+        "/jobs/nearby",
+        params={"lat": 42.8765, "lng": 74.6070, "radius_km": 10},
+    )
+    assert response.status_code == 200
+    jobs = response.json()
+    assert [item["title"] for item in jobs] == ["Close job", "Far job"]
+    assert jobs[0]["distance_km"] < jobs[1]["distance_km"]
+    assert "latitude" in jobs[0]
+    assert "longitude" in jobs[0]
+
+
+@pytest.mark.asyncio
+async def test_create_job_with_coordinates(client, customer_headers, category):
+    response = await client.post(
+        "/jobs",
+        json={
+            "title": "Geo job",
+            "description": "Has coordinates",
+            "salary": 1200,
+            "city": "Bishkek",
+            "address": "Manas 10",
+            "category_id": category.id,
+            "latitude": 42.87,
+            "longitude": 74.59,
+        },
+        headers=customer_headers,
+    )
+    assert response.status_code == 201
+    data = response.json()
+    assert data["latitude"] == 42.87
+    assert data["longitude"] == 74.59
+    assert data["image_url"] is None

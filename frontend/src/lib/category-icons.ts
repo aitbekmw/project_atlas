@@ -1,10 +1,15 @@
 import {
+  Bike,
+  BookOpen,
   Briefcase,
   Hammer,
   Monitor,
   Package,
+  Sofa,
   Sparkles,
   Truck,
+  Droplets,
+  Zap,
   type LucideIcon,
 } from "lucide-react";
 
@@ -18,6 +23,11 @@ const categoryIcons: Record<string, LucideIcon> = {
   sparkle: Sparkles,
   truck: Truck,
   monitor: Monitor,
+  zap: Zap,
+  droplet: Droplets,
+  bike: Bike,
+  sofa: Sofa,
+  book: BookOpen,
   ремонт: Hammer,
   доставка: Package,
   уборка: Sparkles,

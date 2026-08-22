@@ -88,3 +88,64 @@ class InvalidRefreshToken(AtlasException):
 
 class InvalidFile(AtlasException):
     pass
+
+
+class EmailNotVerified(AtlasException):
+    pass
+
+
+class InvalidVerificationCode(AtlasException):
+    pass
+
+
+class VerificationCodeExpired(AtlasException):
+    pass
+
+
+class ResendTooSoon(AtlasException):
+    def __init__(self, retry_after: int = 60):
+        self.retry_after = retry_after
+
+
+class EmailAlreadyVerified(AtlasException):
+    pass
+
+
+class WeakPassword(AtlasException):
+    pass
+
+
+class InvalidPhone(AtlasException):
+    pass
+
+
+class SmtpNotConfigured(AtlasException):
+    pass
+
+
+class GoogleNotConfigured(AtlasException):
+    pass
+
+
+class GoogleAuthFailed(AtlasException):
+    pass
+
+
+class GoogleCancelled(AtlasException):
+    pass
+
+
+class GoogleEmailNotVerified(AtlasException):
+    pass
+
+
+class InvalidOAuthState(AtlasException):
+    pass
+
+
+class InvalidOAuthCode(AtlasException):
+    pass
+
+
+class ProfileIncomplete(AtlasException):
+    pass

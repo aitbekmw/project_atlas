@@ -3,7 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
 
 import { listCategories } from "@/api/categories";
-import { getJob, updateJob } from "@/api/jobs";
+import { getJob, updateJob, uploadJobImage } from "@/api/jobs";
 import { JobForm } from "@/components/jobs/job-form";
 import { PageHeader } from "@/components/layout/page-header";
 import { Card, CardContent } from "@/components/ui/card";
@@ -30,7 +30,19 @@ export function EditJobPage() {
     queryFn: listCategories,
   });
   const mutation = useMutation({
-    mutationFn: (values: JobPayload) => updateJob(id, values),
+    mutationFn: async ({
+      payload,
+      image,
+    }: {
+      payload: JobPayload;
+      image: File | null;
+    }) => {
+      const job = await updateJob(id, payload);
+      if (image) {
+        await uploadJobImage(id, image);
+      }
+      return job;
+    },
     onSuccess: () => {
       toast.success(t("job.updated"));
       navigate("/app/jobs");
@@ -56,10 +68,11 @@ export function EditJobPage() {
             categoriesError={categoriesQuery.isError}
             onRetryCategories={() => void categoriesQuery.refetch()}
             defaultValues={jobQuery.data}
+            existingImageUrl={jobQuery.data.image_url}
             submitLabel={t("common.save")}
             isSubmitting={mutation.isPending}
-            onSubmit={async (values) => {
-              await mutation.mutateAsync(values);
+            onSubmit={async (values, image) => {
+              await mutation.mutateAsync({ payload: values, image });
             }}
           />
         </CardContent>

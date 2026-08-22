@@ -15,4 +15,6 @@ export const queryKeys = {
   userReviews: (userId: number) => ["user-reviews", userId] as const,
   jobCoords: (jobs: Array<{ id: number; city: string; address: string }>) =>
     ["job-coords", jobs.map((job) => `${job.id}:${job.city}:${job.address}`)] as const,
+  nearbyJobs: (lat: number, lng: number, radiusKm: number) =>
+    ["jobs-nearby", lat, lng, radiusKm] as const,
 };

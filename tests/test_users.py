@@ -41,8 +41,8 @@ async def test_get_me_invalid_token(client):
 @pytest.mark.asyncio
 async def test_change_password_success(client, auth_headers):
     payload = {
-        "current_password": "12345678",
-        "new_password": "87654321",
+        "current_password": "AtlasTest1!",
+        "new_password": "AtlasNew1!",
     }
 
     response = await client.patch(
@@ -59,7 +59,7 @@ async def test_change_password_success(client, auth_headers):
 async def test_change_password_wrong_current_password(client, auth_headers):
     payload = {
         "current_password": "wrong_password",
-        "new_password": "87654321",
+        "new_password": "AtlasNew1!",
     }
 
     response = await client.patch(
@@ -75,8 +75,8 @@ async def test_change_password_wrong_current_password(client, auth_headers):
 @pytest.mark.asyncio
 async def test_change_password_same_password(client, auth_headers):
     payload = {
-        "current_password": "12345678",
-        "new_password": "12345678",
+        "current_password": "AtlasTest1!",
+        "new_password": "AtlasTest1!",
     }
 
     response = await client.patch(

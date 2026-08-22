@@ -1,15 +1,17 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useMemo, type ReactNode } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
+import { ImagePicker } from "@/components/jobs/image-picker";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { localizedCategoryName } from "@/i18n/categories";
 import { useI18n } from "@/i18n/locale-context";
-import type { Category, JobPayload } from "@/types/api";
+import { paymentMethodKey } from "@/i18n/status";
+import { PAYMENT_METHODS, type Category, type JobPayload } from "@/types/api";
 
 interface JobFormProps {
   categories: Category[];
@@ -19,7 +21,8 @@ interface JobFormProps {
   defaultValues?: Partial<JobPayload>;
   submitLabel: string;
   isSubmitting?: boolean;
-  onSubmit: (values: JobPayload) => Promise<void> | void;
+  onSubmit: (values: JobPayload, image: File | null) => Promise<void> | void;
+  existingImageUrl?: string | null;
 }
 
 export function JobForm({
@@ -31,8 +34,15 @@ export function JobForm({
   submitLabel,
   isSubmitting,
   onSubmit,
+  existingImageUrl = null,
 }: JobFormProps) {
   const { t } = useI18n();
+  const [image, setImage] = useState<File | null>(null);
+  const [coords, setCoords] = useState<{ latitude: number; longitude: number } | null>(
+    defaultValues?.latitude != null && defaultValues?.longitude != null
+      ? { latitude: defaultValues.latitude, longitude: defaultValues.longitude }
+      : null,
+  );
   const activeCategories = categories.filter((item) => item.is_active !== false);
   const schema = useMemo(
     () =>
@@ -40,6 +50,10 @@ export function JobForm({
         title: z.string().min(1, t("job.titleRequired")).max(255, t("job.titleMax")),
         description: z.string().min(1, t("job.descriptionRequired")),
         salary: z.coerce.number().min(0, t("job.salaryNegative")),
+        payment_method: z.enum(["CASH", "QR", "AGREEMENT"], {
+          required_error: t("job.paymentRequired"),
+          invalid_type_error: t("job.paymentRequired"),
+        }),
         city: z.string().min(1, t("job.cityRequired")).max(100, t("job.cityMax")),
         address: z.string().min(1, t("job.addressRequired")).max(255, t("job.addressMax")),
         category_id: z.coerce.number().min(1, t("job.categoryRequired")),
@@ -55,6 +69,7 @@ export function JobForm({
       title: defaultValues?.title ?? "",
       description: defaultValues?.description ?? "",
       salary: defaultValues?.salary ?? 0,
+      payment_method: defaultValues?.payment_method ?? "CASH",
       city: defaultValues?.city ?? "Бишкек",
       address: defaultValues?.address ?? "",
       category_id: defaultValues?.category_id ?? 0,
@@ -73,7 +88,14 @@ export function JobForm({
     <form
       className="grid gap-5"
       onSubmit={form.handleSubmit(async (values) => {
-        await onSubmit(values);
+        await onSubmit(
+          {
+            ...values,
+            latitude: coords?.latitude ?? null,
+            longitude: coords?.longitude ?? null,
+          },
+          image,
+        );
       })}
     >
       <Field label={t("job.title")} error={form.formState.errors.title?.message}>
@@ -92,6 +114,18 @@ export function JobForm({
       <div className="grid gap-5 sm:grid-cols-2">
         <Field label={t("job.salary")} error={form.formState.errors.salary?.message}>
           <Input type="number" min={0} {...form.register("salary")} />
+        </Field>
+        <Field label={t("job.payment")} error={form.formState.errors.payment_method?.message}>
+          <select
+            className="flex min-h-10 w-full rounded-md border border-input bg-card px-3 text-sm"
+            {...form.register("payment_method")}
+          >
+            {PAYMENT_METHODS.map((method) => (
+              <option key={method} value={method}>
+                {t(paymentMethodKey(method))}
+              </option>
+            ))}
+          </select>
         </Field>
         <Field label={t("job.category")} error={form.formState.errors.category_id?.message}>
           <select
@@ -125,6 +159,36 @@ export function JobForm({
           <Input maxLength={255} {...form.register("address")} />
         </Field>
       </div>
+      <Field label={t("upload.photo")}>
+        <ImagePicker
+          file={image}
+          previewUrl={image ? null : existingImageUrl}
+          onFile={setImage}
+        />
+      </Field>
+      <Button
+        type="button"
+        variant="outline"
+        className="min-h-11 w-full sm:w-auto"
+        onClick={() => {
+          if (!navigator.geolocation) {
+            return;
+          }
+          navigator.geolocation.getCurrentPosition((position) => {
+            setCoords({
+              latitude: position.coords.latitude,
+              longitude: position.coords.longitude,
+            });
+          });
+        }}
+      >
+        {t("job.useMyLocation")}
+      </Button>
+      {coords ? (
+        <p className="text-xs text-muted-foreground">
+          {coords.latitude.toFixed(5)}, {coords.longitude.toFixed(5)}
+        </p>
+      ) : null}
       <Button type="submit" className="min-h-11" disabled={isSubmitting || categoriesLoading}>
         {isSubmitting ? t("job.saving") : submitLabel}
       </Button>

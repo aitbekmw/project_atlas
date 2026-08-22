@@ -9,7 +9,44 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useAuth } from "@/context/auth-context";
 import { useI18n } from "@/i18n/locale-context";
+import { paymentMethodKey } from "@/i18n/status";
 import { queryKeys } from "@/lib/query-keys";
+import { formatMoney } from "@/lib/utils";
+import type { Job } from "@/types/api";
+
+function DashboardJobs({
+  title,
+  jobs,
+  href,
+}: {
+  title: string;
+  jobs: Job[];
+  href: (job: Job) => string;
+}) {
+  const { t } = useI18n();
+  if (jobs.length === 0) {
+    return null;
+  }
+  return (
+    <div className="mt-6">
+      <h2 className="text-lg font-semibold">{title}</h2>
+      <div className="mt-3 grid gap-3">
+        {jobs.slice(0, 5).map((job) => (
+          <Link
+            key={job.id}
+            to={href(job)}
+            className="rounded-2xl border bg-card px-4 py-3 transition-colors duration-200 hover:border-primary/30 hover:bg-card-hover"
+          >
+            <p className="font-semibold">{job.title}</p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              {formatMoney(job.salary)} · {t(paymentMethodKey(job.payment_method))}
+            </p>
+          </Link>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 function Stat({ label, value }: { label: string; value: number }) {
   return (
@@ -79,6 +116,11 @@ export function DashboardPage() {
             <Link to="/app/admin/users">{t("nav.users")}</Link>
           </Button>
         </div>
+        <DashboardJobs
+          title={t("dashboard.recentJobs")}
+          jobs={allJobs.data ?? []}
+          href={(job) => `/jobs/${job.id}`}
+        />
       </div>
     );
   }
@@ -100,6 +142,11 @@ export function DashboardPage() {
           <Stat label={t("dashboard.statApplications")} value={applications.data?.length ?? 0} />
           <Stat label={t("dashboard.statReviews")} value={aboutMe.data?.length ?? 0} />
         </div>
+        <DashboardJobs
+          title={t("dashboard.recentJobs")}
+          jobs={myJobs.data ?? []}
+          href={(job) => `/jobs/${job.id}`}
+        />
       </div>
     );
   }
@@ -120,6 +167,11 @@ export function DashboardPage() {
         <Stat label={t("dashboard.statOpenJobs")} value={openJobs.data?.length ?? 0} />
         <Stat label={t("dashboard.statReviews")} value={aboutMe.data?.length ?? 0} />
       </div>
+      <DashboardJobs
+        title={t("dashboard.recentOpenJobs")}
+        jobs={openJobs.data ?? []}
+        href={(job) => `/jobs/${job.id}`}
+      />
     </div>
   );
 }

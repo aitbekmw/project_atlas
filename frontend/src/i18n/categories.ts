@@ -3,7 +3,17 @@ import type { Category } from "@/types/api";
 
 type Translate = (key: MessageKey, vars?: Record<string, string | number>) => string;
 
-type SystemSlug = "repair" | "delivery" | "cleaning" | "moving" | "it";
+type SystemSlug =
+  | "repair"
+  | "delivery"
+  | "cleaning"
+  | "moving"
+  | "it"
+  | "electric"
+  | "plumbing"
+  | "courier"
+  | "furniture"
+  | "tutoring";
 
 const BY_ICON: Record<string, SystemSlug> = {
   wrench: "repair",
@@ -13,6 +23,11 @@ const BY_ICON: Record<string, SystemSlug> = {
   sparkle: "cleaning",
   truck: "moving",
   monitor: "it",
+  zap: "electric",
+  droplet: "plumbing",
+  bike: "courier",
+  sofa: "furniture",
+  book: "tutoring",
 };
 
 const BY_NAME: Record<string, SystemSlug> = {
@@ -21,16 +36,27 @@ const BY_NAME: Record<string, SystemSlug> = {
   уборка: "cleaning",
   переезд: "moving",
   "it и техника": "it",
+  электрика: "electric",
+  сантехника: "plumbing",
+  курьер: "courier",
+  мебель: "furniture",
+  репетиторство: "tutoring",
   repair: "repair",
   delivery: "delivery",
   cleaning: "cleaning",
   moving: "moving",
   "it and gadgets": "it",
+  electrical: "electric",
+  plumbing: "plumbing",
+  courier: "courier",
+  furniture: "furniture",
+  tutoring: "tutoring",
   оңдоо: "repair",
   жеткирүү: "delivery",
   тазалоо: "cleaning",
   көчүү: "moving",
   "it жана техника": "it",
+  репетиторлук: "tutoring",
 };
 
 const NAME_KEYS: Record<SystemSlug, MessageKey> = {
@@ -39,6 +65,11 @@ const NAME_KEYS: Record<SystemSlug, MessageKey> = {
   cleaning: "sysCategory.cleaning",
   moving: "sysCategory.moving",
   it: "sysCategory.it",
+  electric: "sysCategory.electric",
+  plumbing: "sysCategory.plumbing",
+  courier: "sysCategory.courier",
+  furniture: "sysCategory.furniture",
+  tutoring: "sysCategory.tutoring",
 };
 
 const DESC_KEYS: Record<SystemSlug, MessageKey> = {
@@ -47,6 +78,11 @@ const DESC_KEYS: Record<SystemSlug, MessageKey> = {
   cleaning: "sysCategory.cleaningDesc",
   moving: "sysCategory.movingDesc",
   it: "sysCategory.itDesc",
+  electric: "sysCategory.electricDesc",
+  plumbing: "sysCategory.plumbingDesc",
+  courier: "sysCategory.courierDesc",
+  furniture: "sysCategory.furnitureDesc",
+  tutoring: "sysCategory.tutoringDesc",
 };
 
 function systemCategorySlug(
