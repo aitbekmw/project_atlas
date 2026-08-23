@@ -6,6 +6,7 @@ from app.dependencies.websocket import get_websocket_user_id
 from app.repositories.conversation import ConversationRepository
 from app.repositories.job import JobRepository
 from app.repositories.message import MessageRepository
+from app.repositories.review import ReviewRepository
 from app.repositories.user import UserRepository
 from app.services.conversation import ConversationService
 from app.services.message import MessageService
@@ -33,6 +34,7 @@ async def websocket_chat(
         async with AsyncSessionLocal() as db:
             user_service = UserService(
                 UserRepository(db),
+                ReviewRepository(db),
             )
 
             user = await user_service.get_by_id(
@@ -137,6 +139,7 @@ async def websocket_chat(
                 async with AsyncSessionLocal() as db:
                     user_service = UserService(
                         UserRepository(db),
+                        ReviewRepository(db),
                     )
 
                     user = await user_service.get_by_id(

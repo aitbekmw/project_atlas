@@ -4,8 +4,54 @@ import pytest
 from sqlalchemy import update
 
 from app.models.enum import JobStatus, PaymentMethod, UserRole
+from app.models.job import Job
 from app.models.user import User
 from tests.conftest import TestingSessionLocal, verify_registered_email
+
+JOB_PAYLOAD = {
+    "title": "Complete Job",
+    "description": "Test job details",
+    "salary": 100000,
+    "city": "Bishkek",
+    "address": "Manas",
+}
+
+
+async def _create_job(client, headers, category, title="Complete Job"):
+    payload = {
+        **JOB_PAYLOAD,
+        "title": title,
+        "category_id": category.id,
+    }
+    response = await client.post("/jobs", json=payload, headers=headers)
+    assert response.status_code == 201
+    return response.json()
+
+
+async def _apply(client, job_id, worker_headers):
+    response = await client.post(
+        "/applications",
+        json={"job_id": job_id},
+        headers=worker_headers,
+    )
+    assert response.status_code == 201
+    return response.json()
+
+
+async def _accept(client, application_id, customer_headers):
+    response = await client.post(
+        f"/applications/{application_id}/accept",
+        headers=customer_headers,
+    )
+    assert response.status_code == 200
+    return response.json()
+
+
+async def _apply_and_accept(client, job_id, worker_headers, customer_headers):
+    application = await _apply(client, job_id, worker_headers)
+    await _accept(client, application["id"], customer_headers)
+    return application
+
 
 # ==========================================================
 # CREATE
@@ -46,7 +92,7 @@ async def test_create_job_success(client, customer_headers, category):
 async def test_create_job_unauthorized(client, category):
     payload = {
         "title": "Backend",
-        "description": "FastAPI",
+        "description": "FastAPI backend",
         "salary": 100000,
         "city": "Bishkek",
         "address": "Manas",
@@ -65,7 +111,7 @@ async def test_create_job_unauthorized(client, category):
 async def test_create_job_forbidden_for_worker(client, auth_headers, category):
     payload = {
         "title": "Backend",
-        "description": "FastAPI",
+        "description": "FastAPI backend",
         "salary": 100000,
         "city": "Bishkek",
         "address": "Manas",
@@ -171,7 +217,7 @@ async def test_get_job_not_found(client):
 async def test_update_job_success(client, customer_headers, category):
     payload = {
         "title": "Backend Developer",
-        "description": "FastAPI",
+        "description": "FastAPI backend",
         "salary": 100000,
         "city": "Bishkek",
         "address": "Manas 100",
@@ -225,7 +271,7 @@ async def test_update_job_not_found(client, customer_headers):
 async def test_update_job_not_owner(client, customer_headers, category):
     payload = {
         "title": "Backend",
-        "description": "FastAPI",
+        "description": "FastAPI backend",
         "salary": 100000,
         "city": "Bishkek",
         "address": "Manas",
@@ -303,7 +349,7 @@ async def test_update_job_not_owner(client, customer_headers, category):
 async def test_delete_job_success(client, customer_headers, category):
     payload = {
         "title": "Delete Job",
-        "description": "Test",
+        "description": "Test job details",
         "salary": 100000,
         "city": "Bishkek",
         "address": "Manas",
@@ -347,7 +393,7 @@ async def test_delete_job_not_found(client, customer_headers):
 async def test_delete_job_not_owner(client, customer_headers, category):
     payload = {
         "title": "Backend",
-        "description": "FastAPI",
+        "description": "FastAPI backend",
         "salary": 100000,
         "city": "Bishkek",
         "address": "Manas",
@@ -414,36 +460,17 @@ async def test_delete_job_not_owner(client, customer_headers, category):
 
 
 @pytest.mark.asyncio
-async def test_complete_job_success(client, customer_headers, category):
-    payload = {
-        "title": "Complete Job",
-        "description": "Test",
-        "salary": 100000,
-        "city": "Bishkek",
-        "address": "Manas",
-        "category_id": category.id,
-    }
+async def test_complete_job_success(client, customer_headers, auth_headers, category):
+    job = await _create_job(client, customer_headers, category)
+    await _apply_and_accept(client, job["id"], auth_headers, customer_headers)
 
     response = await client.post(
-        "/jobs",
-        json=payload,
-        headers=customer_headers,
-    )
-
-    assert response.status_code == 201
-
-    job_id = response.json()["id"]
-
-    response = await client.post(
-        f"/jobs/{job_id}/complete",
+        f"/jobs/{job['id']}/complete",
         headers=customer_headers,
     )
 
     assert response.status_code == 200
-
-    data = response.json()
-
-    assert data["status"] == JobStatus.COMPLETED.value
+    assert response.json()["status"] == JobStatus.COMPLETED.value
 
 
 @pytest.mark.asyncio
@@ -461,7 +488,7 @@ async def test_complete_job_not_found(client, customer_headers):
 async def test_complete_job_not_owner(client, customer_headers, category):
     payload = {
         "title": "Backend",
-        "description": "FastAPI",
+        "description": "FastAPI backend",
         "salary": 100000,
         "city": "Bishkek",
         "address": "Manas",
@@ -516,11 +543,225 @@ async def test_complete_job_not_owner(client, customer_headers, category):
     assert response.status_code == 403
 
 
+async def _set_job_status(job_id: int, status: str) -> None:
+    async with TestingSessionLocal() as session:
+        await session.execute(update(Job).where(Job.id == job_id).values(status=status))
+        await session.commit()
+
+
+@pytest.mark.asyncio
+async def test_complete_open_job_with_accepted_application_fails(
+    client,
+    customer_headers,
+    auth_headers,
+    category,
+):
+    job = await _create_job(client, customer_headers, category)
+    await _apply_and_accept(client, job["id"], auth_headers, customer_headers)
+    await _set_job_status(job["id"], JobStatus.OPEN.value)
+
+    response = await client.post(
+        f"/jobs/{job['id']}/complete",
+        headers=customer_headers,
+    )
+
+    assert response.status_code == 403
+    job_after = await client.get(f"/jobs/{job['id']}")
+    assert job_after.json()["status"] == JobStatus.OPEN.value
+
+
+@pytest.mark.asyncio
+async def test_complete_open_job_without_application_fails(
+    client,
+    customer_headers,
+    category,
+):
+    job = await _create_job(client, customer_headers, category)
+
+    response = await client.post(
+        f"/jobs/{job['id']}/complete",
+        headers=customer_headers,
+    )
+
+    assert response.status_code == 403
+    job_after = await client.get(f"/jobs/{job['id']}")
+    assert job_after.json()["status"] == JobStatus.OPEN.value
+
+
+@pytest.mark.asyncio
+async def test_complete_in_progress_job_as_admin(
+    client,
+    customer_headers,
+    auth_headers,
+    admin_headers,
+    category,
+):
+    job = await _create_job(client, customer_headers, category)
+    await _apply_and_accept(client, job["id"], auth_headers, customer_headers)
+
+    response = await client.post(
+        f"/jobs/{job['id']}/complete",
+        headers=admin_headers,
+    )
+
+    assert response.status_code == 200
+    assert response.json()["status"] == JobStatus.COMPLETED.value
+
+
+@pytest.mark.asyncio
+async def test_complete_in_progress_job_as_worker_forbidden(
+    client,
+    customer_headers,
+    auth_headers,
+    category,
+):
+    job = await _create_job(client, customer_headers, category)
+    await _apply_and_accept(client, job["id"], auth_headers, customer_headers)
+
+    response = await client.post(
+        f"/jobs/{job['id']}/complete",
+        headers=auth_headers,
+    )
+
+    assert response.status_code == 403
+    job_after = await client.get(f"/jobs/{job['id']}")
+    assert job_after.json()["status"] == JobStatus.IN_PROGRESS.value
+
+
+@pytest.mark.asyncio
+async def test_complete_cancelled_job_fails(
+    client,
+    customer_headers,
+    category,
+):
+    job = await _create_job(client, customer_headers, category)
+    cancelled = await client.post(
+        f"/jobs/{job['id']}/cancel",
+        headers=customer_headers,
+    )
+    assert cancelled.status_code == 200
+    assert cancelled.json()["status"] == JobStatus.CANCELLED.value
+
+    response = await client.post(
+        f"/jobs/{job['id']}/complete",
+        headers=customer_headers,
+    )
+
+    assert response.status_code == 403
+    job_after = await client.get(f"/jobs/{job['id']}")
+    assert job_after.json()["status"] == JobStatus.CANCELLED.value
+
+
+@pytest.mark.asyncio
+async def test_complete_already_completed_job_fails(
+    client,
+    customer_headers,
+    auth_headers,
+    category,
+):
+    job = await _create_job(client, customer_headers, category)
+    await _apply_and_accept(client, job["id"], auth_headers, customer_headers)
+
+    first = await client.post(
+        f"/jobs/{job['id']}/complete",
+        headers=customer_headers,
+    )
+    assert first.status_code == 200
+
+    second = await client.post(
+        f"/jobs/{job['id']}/complete",
+        headers=customer_headers,
+    )
+
+    assert second.status_code == 403
+    job_after = await client.get(f"/jobs/{job['id']}")
+    assert job_after.json()["status"] == JobStatus.COMPLETED.value
+
+
+@pytest.mark.asyncio
+async def test_complete_in_progress_without_accepted_application_fails(
+    client,
+    customer_headers,
+    auth_headers,
+    category,
+):
+    job = await _create_job(client, customer_headers, category)
+    await _apply(client, job["id"], auth_headers)
+    await _set_job_status(job["id"], JobStatus.IN_PROGRESS.value)
+
+    response = await client.post(
+        f"/jobs/{job['id']}/complete",
+        headers=customer_headers,
+    )
+
+    assert response.status_code == 403
+    job_after = await client.get(f"/jobs/{job['id']}")
+    assert job_after.json()["status"] == JobStatus.IN_PROGRESS.value
+
+
+@pytest.mark.asyncio
+async def test_review_allowed_after_complete(
+    client,
+    customer_headers,
+    auth_headers,
+    category,
+):
+    job = await _create_job(client, customer_headers, category)
+    await _apply_and_accept(client, job["id"], auth_headers, customer_headers)
+
+    complete = await client.post(
+        f"/jobs/{job['id']}/complete",
+        headers=customer_headers,
+    )
+    assert complete.status_code == 200
+
+    worker = await client.get("/users/me", headers=auth_headers)
+    review = await client.post(
+        "/reviews",
+        json={
+            "job_id": job["id"],
+            "to_user_id": worker.json()["id"],
+            "rating": 5,
+            "comment": "Excellent work!",
+        },
+        headers=customer_headers,
+    )
+
+    assert review.status_code == 201
+    assert review.json()["rating"] == 5
+
+
+@pytest.mark.asyncio
+async def test_review_rejected_before_complete(
+    client,
+    customer_headers,
+    auth_headers,
+    category,
+):
+    job = await _create_job(client, customer_headers, category)
+    await _apply_and_accept(client, job["id"], auth_headers, customer_headers)
+
+    worker = await client.get("/users/me", headers=auth_headers)
+    review = await client.post(
+        "/reviews",
+        json={
+            "job_id": job["id"],
+            "to_user_id": worker.json()["id"],
+            "rating": 5,
+            "comment": "Too early",
+        },
+        headers=customer_headers,
+    )
+
+    assert review.status_code == 400
+    assert review.json()["detail"] == "Job is not completed"
+
+
 @pytest.mark.asyncio
 async def test_search_job_by_title(client, customer_headers, category):
     payload = {
         "title": "FastAPI Developer",
-        "description": "Backend",
+        "description": "Backend Python",
         "salary": 100000,
         "city": "Bishkek",
         "address": "Manas",
@@ -547,7 +788,7 @@ async def test_search_job_by_title(client, customer_headers, category):
 async def test_search_job_by_city(client, customer_headers, category):
     payload = {
         "title": "Python",
-        "description": "Backend",
+        "description": "Backend Python",
         "salary": 100000,
         "city": "Osh",
         "address": "Lenina",
@@ -574,7 +815,7 @@ async def test_search_job_by_city(client, customer_headers, category):
 async def test_search_job_by_salary(client, customer_headers, category):
     payload = {
         "title": "Senior Python",
-        "description": "Backend",
+        "description": "Backend Python",
         "salary": 200000,
         "city": "Bishkek",
         "address": "Manas",
@@ -601,7 +842,7 @@ async def test_search_job_by_salary(client, customer_headers, category):
 async def test_search_job_by_category(client, customer_headers, category):
     payload = {
         "title": "Backend",
-        "description": "FastAPI",
+        "description": "FastAPI backend",
         "salary": 100000,
         "city": "Bishkek",
         "address": "Manas",
@@ -628,7 +869,7 @@ async def test_search_job_by_category(client, customer_headers, category):
 async def test_cancel_job_success(client, customer_headers, category):
     payload = {
         "title": "Cancel Job",
-        "description": "Test",
+        "description": "Test job details",
         "salary": 100000,
         "city": "Bishkek",
         "address": "Manas",
@@ -738,7 +979,7 @@ async def test_search_job_by_payment_method(client, customer_headers, category):
     }
     qr_payload = {
         "title": "QR job",
-        "description": "Pay by QR",
+        "description": "Pay by QR code",
         "salary": 2000,
         "payment_method": PaymentMethod.QR.value,
         "city": "Bishkek",

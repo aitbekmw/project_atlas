@@ -11,11 +11,18 @@ class ConversationRepository:
     ):
         self.db = db
 
-    async def create(
+    def add(
         self,
         conversation: Conversation,
     ):
         self.db.add(conversation)
+        return conversation
+
+    async def create(
+        self,
+        conversation: Conversation,
+    ):
+        self.add(conversation)
 
         await self.db.commit()
         await self.db.refresh(conversation)

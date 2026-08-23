@@ -284,7 +284,7 @@ async def complete_job(
     except PermissionDenied:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="You are not the owner of this job",
+            detail="Permission denied",
         )
 
 

@@ -24,10 +24,14 @@ function interpolate(template: string, vars?: Record<string, string | number>): 
   );
 }
 
+function isLocale(value: string | null): value is Locale {
+  return value === "ru" || value === "ky" || value === "en";
+}
+
 function readStoredLocale(): Locale {
   try {
     const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored === "ru" || stored === "ky" || stored === "en") {
+    if (isLocale(stored)) {
       return stored;
     }
   } catch {
@@ -36,24 +40,43 @@ function readStoredLocale(): Locale {
   return "ru";
 }
 
+function persistLocale(next: Locale): void {
+  setActiveLocale(next);
+  if (typeof document !== "undefined") {
+    document.documentElement.lang = next;
+  }
+  try {
+    localStorage.setItem(STORAGE_KEY, next);
+  } catch {
+    /* ignore quota / private mode */
+  }
+}
+
 export function LocaleProvider({ children }: { children: ReactNode }) {
   const [locale, setLocaleState] = useState<Locale>(() => {
     const initial = readStoredLocale();
-    setActiveLocale(initial);
+    persistLocale(initial);
     return initial;
   });
 
   useEffect(() => {
-    document.documentElement.lang = locale;
-    setActiveLocale(locale);
-    try {
-      localStorage.setItem(STORAGE_KEY, locale);
-    } catch {
-      /* ignore quota / private mode */
-    }
+    persistLocale(locale);
   }, [locale]);
 
+  useEffect(() => {
+    function onStorage(event: StorageEvent) {
+      if (event.key !== STORAGE_KEY || !isLocale(event.newValue)) {
+        return;
+      }
+      persistLocale(event.newValue);
+      setLocaleState(event.newValue);
+    }
+    window.addEventListener("storage", onStorage);
+    return () => window.removeEventListener("storage", onStorage);
+  }, []);
+
   const setLocale = useCallback((next: Locale) => {
+    persistLocale(next);
     setLocaleState(next);
   }, []);
 

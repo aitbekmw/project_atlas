@@ -26,23 +26,20 @@ export function JobListSkeleton() {
   );
 }
 
-export function JobFeedSkeleton() {
+export function JobFeedSkeleton({ count = 5 }: { count?: number }) {
   return (
-    <div className="grid gap-6 lg:grid-cols-[0.9fr_1.1fr]">
-      <Skeleton className="min-h-[360px] rounded-3xl" />
-      <div className="grid gap-3">
-        {Array.from({ length: 4 }).map((_, index) => (
-          <div key={index} className="rounded-2xl border bg-card p-4">
-            <div className="flex justify-between">
-              <Skeleton className="h-5 w-24" />
-              <Skeleton className="h-5 w-20" />
-            </div>
-            <Skeleton className="mt-3 h-6 w-3/4" />
-            <Skeleton className="mt-3 h-5 w-28" />
-            <Skeleton className="mt-3 h-4 w-48" />
+    <div className="grid gap-2">
+      {Array.from({ length: count }).map((_, index) => (
+        <div key={index} className="rounded-2xl border bg-card px-3 py-2.5 sm:px-3.5 sm:py-3">
+          <div className="flex justify-between gap-2">
+            <Skeleton className="h-5 w-24" />
+            <Skeleton className="h-5 w-16" />
           </div>
-        ))}
-      </div>
+          <Skeleton className="mt-1.5 h-5 w-3/4" />
+          <Skeleton className="mt-1 h-4 w-full" />
+          <Skeleton className="mt-2 h-5 w-28" />
+        </div>
+      ))}
     </div>
   );
 }

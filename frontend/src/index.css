@@ -175,9 +175,15 @@ body,
   min-height: 100svh;
 }
 
-html,
-body {
+/* Clip on html only. overflow-x on both html and body creates a scroll
+   container that breaks position:sticky for the jobs map sidebar. */
+html {
   overflow-x: clip;
+  overflow-y: scroll;
+}
+
+body {
+  overflow-x: visible;
 }
 
 body {
@@ -252,12 +258,12 @@ body {
 
 @media (min-width: 1024px) {
   :root {
-    --navbar-height: 4.5rem;
+    --navbar-height: 4rem;
   }
 }
 
 .atlas-page {
-  @apply mx-auto w-full min-w-0 max-w-6xl px-4 py-5 sm:py-8 lg:py-10;
+  @apply mx-auto w-full min-w-0 max-w-[90rem] px-4 py-4 sm:py-5 lg:py-6;
 }
 
 .atlas-page-title {
@@ -269,7 +275,7 @@ body {
 }
 
 .atlas-section {
-  @apply py-8 sm:py-12 lg:py-16;
+  @apply py-4 sm:py-5 lg:py-6;
 }
 
 .atlas-card-pad {

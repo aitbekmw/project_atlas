@@ -9,6 +9,7 @@ import { JobListSkeleton } from "@/components/states/loading-state";
 import { Button } from "@/components/ui/button";
 import { localizedCategoryDescription, localizedCategoryName } from "@/i18n/categories";
 import { useI18n } from "@/i18n/locale-context";
+import { usePageTitle } from "@/hooks/use-page-title";
 import { iconForCategory } from "@/lib/category-icons";
 import { queryKeys } from "@/lib/query-keys";
 import type { Category, Job } from "@/types/api";
@@ -19,6 +20,7 @@ function countFor(category: Category, jobs: Job[]): number {
 
 export function CategoriesPage() {
   const { t } = useI18n();
+  usePageTitle(t("seo.categories"));
   const categoriesQuery = useQuery({
     queryKey: queryKeys.categories,
     queryFn: listCategories,
@@ -33,7 +35,7 @@ export function CategoriesPage() {
 
   return (
     <div className="atlas-page">
-      <div className="mb-5 flex flex-col gap-3 sm:mb-8 sm:flex-row sm:items-end sm:justify-between">
+      <div className="mb-4 flex flex-col gap-3 sm:mb-5 sm:flex-row sm:items-end sm:justify-between">
         <div className="min-w-0">
           <h1 className="atlas-page-title">{t("categories.title")}</h1>
           <p className="atlas-page-lead">{t("categories.hint")}</p>
@@ -65,18 +67,18 @@ export function CategoriesPage() {
               <Link
                 key={category.id}
                 to={`/jobs?category_id=${category.id}`}
-                className="min-w-0 rounded-2xl border bg-card p-3.5 transition-colors duration-200 hover:border-primary/30 hover:bg-card-hover sm:p-5"
+                className="min-w-0 rounded-2xl border bg-card p-3 transition-colors duration-200 hover:border-primary/30 hover:bg-card-hover sm:p-3.5"
               >
-                <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary/10 text-primary">
-                  <Icon className="h-5 w-5" />
+                <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                  <Icon className="h-4 w-4" />
                 </span>
-                <p className="mt-3 text-sm font-semibold leading-snug break-words sm:mt-4 sm:text-base">{localizedCategoryName(category, t)}</p>
+                <p className="mt-2 text-sm font-semibold leading-snug break-words">{localizedCategoryName(category, t)}</p>
                 {categoryDescription ? (
-                  <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">
+                  <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">
                     {categoryDescription}
                   </p>
                 ) : null}
-                <p className="mt-3 text-xs text-muted-foreground">
+                <p className="mt-2 text-xs text-muted-foreground">
                   {t("jobs.jobsCount", { count: countFor(category, jobs) })}
                 </p>
               </Link>

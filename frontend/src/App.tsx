@@ -24,6 +24,7 @@ import { CreateJobPage } from "@/pages/customer/create-job-page";
 import { EditJobPage } from "@/pages/customer/edit-job-page";
 import { MyJobsPage } from "@/pages/customer/my-jobs-page";
 import { CategoriesPage } from "@/pages/public/categories-page";
+import { HowItWorksPage } from "@/pages/public/how-it-works-page";
 import { JobDetailsPage } from "@/pages/public/job-details-page";
 import { ForgotPasswordPage } from "@/pages/public/forgot-password-page";
 import { GoogleCompletePage } from "@/pages/public/google-complete-page";
@@ -36,6 +37,7 @@ import { NotFoundPage } from "@/pages/public/not-found-page";
 import { RegisterPage } from "@/pages/public/register-page";
 import { VerifyEmailPage } from "@/pages/public/verify-email-page";
 import { ReviewsPage } from "@/pages/public/reviews-page";
+import { UserProfilePage } from "@/pages/public/user-profile-page";
 import { JobsSearchPage } from "@/pages/worker/jobs-search-page";
 
 const queryClient = new QueryClient({
@@ -126,7 +128,10 @@ export default function App() {
               <Route path="/jobs" element={<JobsPage />} />
               <Route path="/jobs/:jobId" element={<JobDetailsPage />} />
               <Route path="/categories" element={<CategoriesPage />} />
+              <Route path="/how-it-works" element={<HowItWorksPage />} />
               <Route path="/reviews" element={<ReviewsPage />} />
+              <Route path="/users/:userId" element={<UserProfilePage />} />
+              <Route path="*" element={<NotFoundPage />} />
             </Route>
 
             <Route
@@ -201,9 +206,8 @@ export default function App() {
                   </ProtectedRoute>
                 }
               />
+              <Route path="*" element={<NotFoundPage />} />
             </Route>
-
-            <Route path="*" element={<NotFoundPage />} />
           </Routes>
           <Toaster />
         </BrowserRouter>

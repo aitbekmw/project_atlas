@@ -86,7 +86,7 @@ const DESC_KEYS: Record<SystemSlug, MessageKey> = {
   tutoring: "sysCategory.tutoringDesc",
 };
 
-function systemCategorySlug(
+export function systemCategorySlug(
   category: Pick<Category, "name" | "icon">,
 ): SystemSlug | null {
   const fromIcon = category.icon

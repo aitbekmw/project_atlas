@@ -1,14 +1,18 @@
 from app.core.exceptions import (
     ApplicationAlreadyExists,
     ApplicationNotFound,
+    ConversationAlreadyExists,
     JobNotFound,
     JobNotOpen,
     PermissionDenied,
 )
 from app.models.application import Application
+from app.models.conversation import Conversation
 from app.models.enum import ApplicationStatus, JobStatus, UserRole
+from app.models.job import Job
 from app.models.user import User
 from app.repositories.application import ApplicationRepository
+from app.repositories.conversation import ConversationRepository
 from app.repositories.job import JobRepository
 from app.schemas.application import ApplicationCreate, ApplicationUpdate
 
@@ -18,9 +22,11 @@ class ApplicationService:
         self,
         repo: ApplicationRepository,
         job_repo: JobRepository,
+        conversation_repo: ConversationRepository,
     ):
         self.repo = repo
         self.job_repo = job_repo
+        self.conversation_repo = conversation_repo
 
     def _is_admin(self, user: User) -> bool:
         return user.role == UserRole.ADMIN.value
@@ -143,10 +149,14 @@ class ApplicationService:
 
         job = await self.job_repo.get_by_id(application.job_id)
 
+        if not job:
+            raise JobNotFound()
+
         if job.owner_id != user.id and not self._is_admin(user):
             raise PermissionDenied()
 
         if application.status == ApplicationStatus.ACCEPTED.value:
+            await self._commit_accept(job, application)
             return application
 
         if job.status != JobStatus.OPEN.value:
@@ -162,9 +172,41 @@ class ApplicationService:
 
         job.status = JobStatus.IN_PROGRESS.value
 
-        await self.repo.update_many()
+        await self._commit_accept(job, application)
 
         return application
+
+    async def _ensure_conversation(
+        self,
+        job: Job,
+        application: Application,
+    ):
+        conversation = await self.conversation_repo.get_by_job(job.id)
+
+        if conversation is None:
+            self.conversation_repo.add(
+                Conversation(
+                    job_id=job.id,
+                    customer_id=job.owner_id,
+                    worker_id=application.worker_id,
+                )
+            )
+            return
+
+        if conversation.worker_id != application.worker_id:
+            raise ConversationAlreadyExists()
+
+    async def _commit_accept(
+        self,
+        job: Job,
+        application: Application,
+    ):
+        try:
+            await self._ensure_conversation(job, application)
+            await self.repo.update_many()
+        except Exception:
+            await self.repo.db.rollback()
+            raise
 
     async def reject(
         self,

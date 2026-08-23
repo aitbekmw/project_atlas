@@ -4,6 +4,7 @@ from app.data.default_categories import DEFAULT_CATEGORIES
 from app.data.demo_marketplace import DEMO_EMAILS, DEMO_JOBS, DEMO_REVIEWS, DEMO_USERS
 from app.models.application import Application
 from app.models.category import Category
+from app.models.conversation import Conversation
 from app.models.job import Job
 from app.models.review import Review
 from app.models.user import User
@@ -14,6 +15,7 @@ EXPECTED_OPEN_JOBS = sum(1 for item in DEMO_JOBS if not item["complete"])
 EXPECTED_APPLICATIONS = sum(
     1 for item in DEMO_JOBS if item["complete"] and item["worker"]
 )
+EXPECTED_CONVERSATIONS = EXPECTED_APPLICATIONS
 
 
 async def test_seed_creates_demo_marketplace():
@@ -25,7 +27,7 @@ async def test_seed_creates_demo_marketplace():
     assert result["open_jobs"] == EXPECTED_OPEN_JOBS
     assert result["reviews"] == len(DEMO_REVIEWS)
     assert result["applications"] == EXPECTED_APPLICATIONS
-    assert result["conversations"] == 0
+    assert result["conversations"] == EXPECTED_CONVERSATIONS
     assert result["created_users"] == [item["username"] for item in DEMO_USERS]
 
 
@@ -64,12 +66,17 @@ async def test_seed_is_idempotent():
         application_count = (
             await db.execute(select(func.count()).select_from(Application))
         ).scalar_one()
+        conversation_count = (
+            await db.execute(select(func.count()).select_from(Conversation))
+        ).scalar_one()
 
     assert job_count == len(DEMO_JOBS)
     assert review_count == len(DEMO_REVIEWS)
     assert category_count == len(DEFAULT_CATEGORIES)
     assert demo_user_count == len(DEMO_USERS)
     assert application_count == EXPECTED_APPLICATIONS
+    assert conversation_count == EXPECTED_CONVERSATIONS
+    assert second["conversations"] == first["conversations"]
 
 
 async def test_seed_does_not_send_email(monkeypatch):

@@ -1,4 +1,4 @@
-import { LOCALES, type Locale } from "@/i18n/messages";
+import { LOCALES } from "@/i18n/messages";
 import { useI18n } from "@/i18n/locale-context";
 import { Button } from "@/components/ui/button";
 import {
@@ -36,6 +36,7 @@ export function LanguageSwitcher({
                   ? "bg-secondary text-foreground"
                   : "text-muted-foreground hover:bg-secondary hover:text-foreground",
               )}
+              aria-pressed={item.id === locale}
               onClick={() => setLocale(item.id)}
             >
               {item.nativeLabel}
@@ -64,7 +65,8 @@ export function LanguageSwitcher({
           <DropdownMenuItem
             key={item.id}
             className={cn(item.id === locale && "bg-secondary font-semibold")}
-            onSelect={() => setLocale(item.id as Locale)}
+            onSelect={() => setLocale(item.id)}
+            onClick={() => setLocale(item.id)}
           >
             {item.nativeLabel}
           </DropdownMenuItem>

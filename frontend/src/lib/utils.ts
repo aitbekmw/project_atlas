@@ -168,19 +168,27 @@ export function getErrorMessage(error: unknown): string {
   return tr("error.generic");
 }
 
+function numberFormatLocale(locale: Locale): string {
+  /* ky-KG grouping is unreliable in some browsers and falls back to en-US commas. */
+  return locale === "ky" ? "ru-RU" : BCP47[locale];
+}
+
 export function formatMoney(value: number): string {
-  return `${new Intl.NumberFormat(BCP47[activeLocale]).format(value)} ${tr("common.som")}`;
+  return formatMoneyKgs(value);
 }
 
 export function formatMoneyKgs(value: number): string {
-  return `${new Intl.NumberFormat(BCP47[activeLocale]).format(value)} ${tr("common.kgs")}`;
+  const formatted = new Intl.NumberFormat(numberFormatLocale(activeLocale), {
+    maximumFractionDigits: 0,
+  }).format(value);
+  return `${formatted} ${tr("common.kgs")}`;
 }
 
 export function formatDistanceKm(km: number): string {
   if (km < 1) {
     return tr("map.m", { value: Math.round(km * 1000) });
   }
-  const value = new Intl.NumberFormat(BCP47[activeLocale], {
+  const value = new Intl.NumberFormat(numberFormatLocale(activeLocale), {
     minimumFractionDigits: 1,
     maximumFractionDigits: 1,
   }).format(km);

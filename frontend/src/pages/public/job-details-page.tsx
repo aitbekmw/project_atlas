@@ -1,12 +1,12 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { MapPin, MessageSquare, Star } from "lucide-react";
+import { MapPin, Star } from "lucide-react";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
 
 import { createApplication, getMyApplications, acceptApplication, rejectApplication } from "@/api/applications";
 import { listCategories } from "@/api/categories";
 import { createConversation, listConversations } from "@/api/conversations";
-import { cancelJob, completeJob, getJob, getJobApplications } from "@/api/jobs";
+import { cancelJob, completeJob, getJob, getJobApplications, listJobs } from "@/api/jobs";
 import { getUserReviews } from "@/api/reviews";
 import { getUser } from "@/api/users";
 import {
@@ -18,10 +18,12 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { JobReviewsSection } from "@/components/reviews/job-reviews-section";
+import { UserAvatar } from "@/components/users/user-avatar";
 import { EmptyState } from "@/components/states/empty-state";
 import { ErrorState } from "@/components/states/error-state";
 import { ApplicationListSkeleton, JobDetailsSkeleton } from "@/components/states/loading-state";
 import { useAuth } from "@/context/auth-context";
+import { usePageTitle } from "@/hooks/use-page-title";
 import { localizedCategoryName } from "@/i18n/categories";
 import { useI18n } from "@/i18n/locale-context";
 import { applicationStatusKey, jobStatusKey, paymentMethodKey } from "@/i18n/status";
@@ -82,6 +84,14 @@ export function JobDetailsPage() {
     enabled: jobIdValid && canSeeApplications,
     retry: false,
   });
+  const catalogQuery = useQuery({
+    queryKey: queryKeys.jobs({ size: 100 }),
+    queryFn: () => listJobs({ size: 100 }),
+    enabled: Boolean(jobQuery.data),
+    retry: false,
+  });
+
+  usePageTitle(jobQuery.data ? t("seo.job", { title: jobQuery.data.title }) : t("seo.jobs"));
 
   const applyMutation = useMutation({
     mutationFn: () => createApplication(id),
@@ -171,10 +181,18 @@ export function JobDetailsPage() {
       ? reviews.reduce((sum, item) => sum + item.rating, 0) / reviews.length
       : null;
   const canManageStatus = job.status !== "COMPLETED" && job.status !== "CANCELLED";
+  const ownerJobs = (catalogQuery.data ?? []).filter((item) => item.owner_id === job.owner_id);
+  const postedCount = ownerJobs.length;
+  const completedCount = ownerJobs.filter((item) => item.status === "COMPLETED").length;
+  const jobsBackTo = inApp
+    ? user?.role === "worker"
+      ? "/app/search"
+      : "/app/jobs"
+    : "/jobs";
 
   return (
     <div className={shell}>
-      <Link to="/jobs" className="text-sm text-muted-foreground hover:text-foreground">
+      <Link to={jobsBackTo} className="text-sm text-muted-foreground hover:text-foreground">
         ← {t("nav.jobs")}
       </Link>
       <div className="mt-4 grid gap-4 lg:mt-6 lg:grid-cols-[1.15fr_0.85fr] lg:gap-6">
@@ -198,8 +216,8 @@ export function JobDetailsPage() {
             {t("job.publishedAt", { date: formatDate(job.created_at) })}
           </p>
 
-          <Card className="mt-6">
-            <CardContent className="p-6">
+          <Card className="mt-4">
+            <CardContent className="p-4">
               <h2 className="text-lg font-semibold">{t("job.description")}</h2>
               <p className="mt-3 whitespace-pre-wrap text-sm leading-6 text-muted-foreground">
                 {job.description}
@@ -216,12 +234,18 @@ export function JobDetailsPage() {
 
           {ownerQuery.data ? (
             <Card className="mt-4">
-              <CardContent className="p-6">
+              <CardContent className="p-4">
                 <h2 className="text-lg font-semibold">{t("job.owner")}</h2>
-                <p className="mt-2 font-medium">
-                  {ownerQuery.data.first_name} {ownerQuery.data.last_name}
-                </p>
-                <p className="text-sm text-muted-foreground">@{ownerQuery.data.username}</p>
+                <Link
+                  to={`/users/${ownerQuery.data.id}`}
+                  className="mt-3 flex min-h-11 items-center gap-3 rounded-xl hover:text-primary"
+                >
+                  <UserAvatar user={ownerQuery.data} className="h-12 w-12" />
+                  <div className="min-w-0">
+                    <p className="truncate font-medium">{fullName(ownerQuery.data)}</p>
+                    <p className="text-sm text-muted-foreground">@{ownerQuery.data.username}</p>
+                  </div>
+                </Link>
                 <div className="mt-3 flex flex-wrap gap-4 text-sm text-muted-foreground">
                   {ownerRating != null ? (
                     <span className="inline-flex items-center gap-1">
@@ -232,20 +256,23 @@ export function JobDetailsPage() {
                     <span>{t("landing.noReviews")}</span>
                   )}
                   <span>{t("job.reviewsCount", { count: reviews.length })}</span>
-                  {applicationsQuery.data ? (
-                    <span className="inline-flex items-center gap-1">
-                      <MessageSquare className="h-4 w-4" />
-                      {t("job.applicationsCount", { count: applicationsQuery.data.length })}
-                    </span>
+                  {postedCount > 0 ? (
+                    <span>{t("job.postedCount", { count: postedCount })}</span>
+                  ) : null}
+                  {completedCount > 0 ? (
+                    <span>{t("job.completedCount", { count: completedCount })}</span>
                   ) : null}
                 </div>
+                <Button asChild variant="outline" className="mt-4 min-h-11">
+                  <Link to={`/users/${ownerQuery.data.id}`}>{t("job.viewOwner")}</Link>
+                </Button>
               </CardContent>
             </Card>
           ) : null}
 
           {canSeeApplications ? (
             <Card className="mt-4">
-              <CardContent className="p-6">
+              <CardContent className="p-4">
                 <div className="flex items-center justify-between gap-3">
                   <h2 className="text-lg font-semibold">{t("job.applications")}</h2>
                   <Button asChild variant="link" className="h-auto p-0">
@@ -319,15 +346,16 @@ export function JobDetailsPage() {
 
         <div className="space-y-4">
           <Card>
-            <CardContent className="p-6">
+            <CardContent className="p-4">
               <p className="text-sm text-muted-foreground">{t("job.pay")}</p>
               <p className="mt-1 text-2xl font-bold text-primary sm:text-3xl">{formatMoney(job.salary)}</p>
               <p className="mt-2 text-sm text-muted-foreground">
                 {t("job.payment")}: {t(paymentMethodKey(job.payment_method))}
               </p>
-              <div className="mt-6 flex flex-col gap-3">
+              <div className="mt-4 flex flex-col gap-3">
                 {user?.role === "worker" && job.status === "OPEN" && !isOwner ? (
                   <Button
+                    className="min-h-11"
                     disabled={
                       alreadyApplied ||
                       applyMutation.isPending ||

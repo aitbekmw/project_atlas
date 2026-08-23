@@ -19,6 +19,8 @@ async def test_get_me_success(client, auth_headers):
     assert "id" in data
     assert "email" in data
     assert "username" in data
+    assert data["rating"] is None
+    assert data["reviews_count"] == 0
 
 
 @pytest.mark.asyncio
@@ -131,6 +133,8 @@ async def test_get_user_by_id_success(client, auth_headers):
 
     assert data["id"] == user["id"]
     assert data["email"] == user["email"]
+    assert data["rating"] is None
+    assert data["reviews_count"] == 0
 
 
 @pytest.mark.asyncio
@@ -184,12 +188,154 @@ async def test_get_my_jobs_empty(client, auth_headers):
     assert response.json() == []
 
 
+async def _complete_job_and_review(
+    client,
+    customer_headers,
+    worker_headers,
+    category,
+    *,
+    title: str,
+    rating: int,
+    comment: str,
+):
+    job = await client.post(
+        "/jobs",
+        json={
+            "title": title,
+            "description": "Need FastAPI developer",
+            "salary": 5000,
+            "city": "Bishkek",
+            "address": "Chui 100",
+            "category_id": category.id,
+        },
+        headers=customer_headers,
+    )
+    assert job.status_code == 201
+    job_id = job.json()["id"]
+
+    application = await client.post(
+        "/applications",
+        json={"job_id": job_id},
+        headers=worker_headers,
+    )
+    assert application.status_code == 201
+
+    accepted = await client.post(
+        f"/applications/{application.json()['id']}/accept",
+        headers=customer_headers,
+    )
+    assert accepted.status_code == 200
+
+    complete = await client.post(
+        f"/jobs/{job_id}/complete",
+        headers=customer_headers,
+    )
+    assert complete.status_code == 200
+
+    worker = await client.get("/users/me", headers=worker_headers)
+    assert worker.status_code == 200
+    worker_id = worker.json()["id"]
+
+    review = await client.post(
+        "/reviews",
+        json={
+            "job_id": job_id,
+            "to_user_id": worker_id,
+            "rating": rating,
+            "comment": comment,
+        },
+        headers=customer_headers,
+    )
+    assert review.status_code == 201
+    return worker_id
+
+
 @pytest.mark.asyncio
-async def test_get_my_applications_empty(client, auth_headers):
-    response = await client.get(
-        "/users/me/applications",
-        headers=auth_headers,
+async def test_user_without_reviews_has_null_rating(
+    client,
+    auth_headers,
+):
+    me = await client.get("/users/me", headers=auth_headers)
+    assert me.status_code == 200
+    assert me.json()["rating"] is None
+    assert me.json()["reviews_count"] == 0
+
+    by_id = await client.get(f"/users/{me.json()['id']}")
+    assert by_id.status_code == 200
+    assert by_id.json()["rating"] is None
+    assert by_id.json()["reviews_count"] == 0
+
+
+@pytest.mark.asyncio
+async def test_user_rating_with_single_review(
+    client,
+    customer_headers,
+    auth_headers,
+    category,
+):
+    worker_id = await _complete_job_and_review(
+        client,
+        customer_headers,
+        auth_headers,
+        category,
+        title="Rating Job One",
+        rating=5,
+        comment="Excellent work!",
     )
 
-    assert response.status_code == 200
-    assert response.json() == []
+    me = await client.get("/users/me", headers=auth_headers)
+    assert me.status_code == 200
+    assert me.json()["id"] == worker_id
+    assert me.json()["rating"] == 5.0
+    assert me.json()["reviews_count"] == 1
+
+    by_id = await client.get(f"/users/{worker_id}")
+    assert by_id.status_code == 200
+    assert by_id.json()["rating"] == 5.0
+    assert by_id.json()["reviews_count"] == 1
+
+    reviews = await client.get(f"/reviews/user/{worker_id}")
+    assert reviews.status_code == 200
+    assert len(reviews.json()) == 1
+
+
+@pytest.mark.asyncio
+async def test_user_rating_with_multiple_reviews(
+    client,
+    customer_headers,
+    auth_headers,
+    category,
+):
+    worker_id = await _complete_job_and_review(
+        client,
+        customer_headers,
+        auth_headers,
+        category,
+        title="Rating Job First",
+        rating=5,
+        comment="Great",
+    )
+    await _complete_job_and_review(
+        client,
+        customer_headers,
+        auth_headers,
+        category,
+        title="Rating Job Second",
+        rating=4,
+        comment="Good",
+    )
+
+    me = await client.get("/users/me", headers=auth_headers)
+    assert me.status_code == 200
+    assert me.json()["id"] == worker_id
+    assert me.json()["rating"] == 4.5
+    assert me.json()["reviews_count"] == 2
+
+    by_id = await client.get(f"/users/{worker_id}")
+    assert by_id.status_code == 200
+    assert by_id.json()["rating"] == 4.5
+    assert by_id.json()["reviews_count"] == 2
+
+    reviews = await client.get(f"/reviews/user/{worker_id}")
+    assert reviews.status_code == 200
+    assert len(reviews.json()) == 2

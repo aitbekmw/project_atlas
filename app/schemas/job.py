@@ -1,9 +1,28 @@
 from datetime import datetime
 
-from pydantic import BaseModel, ConfigDict, Field, computed_field, model_validator
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    computed_field,
+    field_validator,
+    model_validator,
+)
 
 from app.models.enum import JobStatus, PaymentMethod
 from app.services.minio import MinioService
+
+
+def _normalize_title(value: object) -> object:
+    if value is None or not isinstance(value, str):
+        return value
+    return " ".join(value.split())
+
+
+def _normalize_description(value: object) -> object:
+    if value is None or not isinstance(value, str):
+        return value
+    return value.strip()
 
 
 class JobBase(BaseModel):
@@ -25,13 +44,25 @@ class JobBase(BaseModel):
 
 
 class JobCreate(JobBase):
-    pass
+    title: str = Field(min_length=5, max_length=255)
+    description: str = Field(min_length=10, max_length=2000)
+    salary: int = Field(ge=100, le=1_000_000)
+
+    @field_validator("title", mode="before")
+    @classmethod
+    def normalize_title(cls, value: object) -> object:
+        return _normalize_title(value)
+
+    @field_validator("description", mode="before")
+    @classmethod
+    def normalize_description(cls, value: object) -> object:
+        return _normalize_description(value)
 
 
 class JobUpdate(BaseModel):
-    title: str | None = Field(default=None, min_length=1, max_length=255)
-    description: str | None = Field(default=None, min_length=1)
-    salary: int | None = Field(default=None, ge=0)
+    title: str | None = Field(default=None, min_length=5, max_length=255)
+    description: str | None = Field(default=None, min_length=10, max_length=2000)
+    salary: int | None = Field(default=None, ge=100, le=1_000_000)
     payment_method: PaymentMethod | None = None
     city: str | None = Field(default=None, min_length=1, max_length=100)
     address: str | None = Field(default=None, min_length=1, max_length=255)
@@ -47,6 +78,16 @@ class JobUpdate(BaseModel):
             if (self.latitude is None) != (self.longitude is None):
                 raise ValueError("latitude and longitude must be provided together")
         return self
+
+    @field_validator("title", mode="before")
+    @classmethod
+    def normalize_title(cls, value: object) -> object:
+        return _normalize_title(value)
+
+    @field_validator("description", mode="before")
+    @classmethod
+    def normalize_description(cls, value: object) -> object:
+        return _normalize_description(value)
 
 
 class JobResponse(JobBase):

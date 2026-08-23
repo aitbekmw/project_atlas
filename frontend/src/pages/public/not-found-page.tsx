@@ -2,9 +2,11 @@ import { Link } from "react-router-dom";
 
 import { Button } from "@/components/ui/button";
 import { useI18n } from "@/i18n/locale-context";
+import { usePageTitle } from "@/hooks/use-page-title";
 
 export function NotFoundPage() {
   const { t } = useI18n();
+  usePageTitle(t("seo.notFound"));
   return (
     <div className="flex min-h-[70svh] flex-col items-center justify-center px-4 text-center">
       <p className="text-sm font-semibold text-primary">404</p>

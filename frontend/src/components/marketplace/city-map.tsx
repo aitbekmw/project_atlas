@@ -68,7 +68,7 @@ export function CityMap({
   categoryNames,
   userLocation = null,
 }: CityMapProps) {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const selectedId = selectedJobId ?? activeId ?? null;
   const selectJob = onJobSelect ?? onSelect;
   const [mapReady, setMapReady] = useState(false);
@@ -146,6 +146,7 @@ export function CityMap({
         center: EMPTY_VIEW,
         zoom: 12,
         enableTrackResize: true,
+        lang: locale === "en" ? "en" : "ru",
       });
       setMapReady(true);
     });
@@ -161,7 +162,7 @@ export function CityMap({
       mapRef.current = null;
       apiRef.current = null;
     };
-  }, []);
+  }, [locale]);
 
   useEffect(() => {
     const map = mapRef.current;
@@ -308,7 +309,9 @@ export function CityMap({
             {categoryNames?.[selected.category_id] ?? selected.city}
             {selectedDistance != null ? ` · ${formatDistanceKm(selectedDistance)}` : ""}
           </p>
-          <p className="mt-1 text-sm font-semibold leading-snug">{selected.title}</p>
+          <p className="mt-1 line-clamp-2 break-words [overflow-wrap:anywhere] text-sm font-semibold leading-snug">
+            {selected.title}
+          </p>
           <p className="mt-2 text-sm font-bold text-primary">{formatMoneyKgs(selected.salary)}</p>
           <p className="mt-1 text-xs text-muted-foreground">
             {t(paymentMethodKey(selected.payment_method))}

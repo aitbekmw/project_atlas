@@ -48,9 +48,29 @@ export function JobForm({
   const schema = useMemo(
     () =>
       z.object({
-        title: z.string().min(1, t("job.titleRequired")).max(255, t("job.titleMax")),
-        description: z.string().min(1, t("job.descriptionRequired")),
-        salary: z.coerce.number().min(0, t("job.salaryNegative")),
+        title: z
+          .string()
+          .transform((value) => value.trim().replace(/\s+/g, " "))
+          .pipe(
+            z
+              .string()
+              .min(5, t("job.titleMin"))
+              .max(255, t("job.titleMax")),
+          ),
+        description: z
+          .string()
+          .transform((value) => value.trim())
+          .pipe(
+            z
+              .string()
+              .min(10, t("job.descriptionMin"))
+              .max(2000, t("job.descriptionMax")),
+          ),
+        salary: z.coerce
+          .number()
+          .int(t("job.salaryInteger"))
+          .min(100, t("job.salaryMin"))
+          .max(1_000_000, t("job.salaryMax")),
         payment_method: z.enum(["CASH", "QR", "AGREEMENT"], {
           required_error: t("job.paymentRequired"),
           invalid_type_error: t("job.paymentRequired"),
@@ -69,7 +89,10 @@ export function JobForm({
     defaultValues: {
       title: defaultValues?.title ?? "",
       description: defaultValues?.description ?? "",
-      salary: defaultValues?.salary ?? 0,
+      salary:
+        defaultValues?.salary != null && defaultValues.salary >= 100
+          ? defaultValues.salary
+          : ("" as unknown as number),
       payment_method: defaultValues?.payment_method ?? "CASH",
       city: defaultValues?.city ?? "Бишкек",
       address: defaultValues?.address ?? "",
@@ -92,6 +115,9 @@ export function JobForm({
         await onSubmit(
           {
             ...values,
+            title: values.title.trim().replace(/\s+/g, " "),
+            description: values.description.trim(),
+            salary: Number(values.salary),
             latitude: coords?.latitude ?? null,
             longitude: coords?.longitude ?? null,
           },
@@ -102,6 +128,7 @@ export function JobForm({
       <Field label={t("job.title")} error={form.formState.errors.title?.message}>
         <Input
           placeholder={t("job.titlePlaceholder")}
+          minLength={5}
           maxLength={255}
           {...form.register("title")}
         />
@@ -109,12 +136,20 @@ export function JobForm({
       <Field label={t("job.description")} error={form.formState.errors.description?.message}>
         <Textarea
           placeholder={t("job.descriptionPlaceholder")}
+          minLength={10}
+          maxLength={2000}
           {...form.register("description")}
         />
       </Field>
       <div className="grid gap-5 sm:grid-cols-2">
         <Field label={t("job.salary")} error={form.formState.errors.salary?.message}>
-          <Input type="number" min={0} {...form.register("salary")} />
+          <Input
+            type="number"
+            min={100}
+            max={1000000}
+            step={1}
+            {...form.register("salary")}
+          />
         </Field>
         <Field label={t("job.payment")} error={form.formState.errors.payment_method?.message}>
           <Controller

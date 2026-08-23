@@ -17,7 +17,7 @@ function usePublicLinks(): { to: string; labelKey: MessageKey }[] {
   return [
     { to: "/jobs", labelKey: "nav.jobs" },
     { to: "/categories", labelKey: "nav.categories" },
-    { to: "/#how-it-works", labelKey: "nav.how" },
+    { to: "/how-it-works", labelKey: "nav.how" },
     { to: "/reviews", labelKey: "nav.reviews" },
   ];
 }
@@ -100,7 +100,7 @@ export function Navbar() {
 
   return (
     <header className="sticky top-0 z-50 w-full max-w-full border-b bg-background/90 pt-[env(safe-area-inset-top,0px)] backdrop-blur">
-      <div className="mx-auto flex h-14 w-full max-w-6xl min-w-0 items-center justify-between gap-2 overflow-x-clip px-4 sm:h-16 sm:gap-3 lg:h-[4.5rem]">
+      <div className="mx-auto flex h-14 w-full max-w-[90rem] min-w-0 items-center justify-between gap-2 overflow-x-clip px-4 sm:h-16 sm:gap-3">
         <Logo />
 
         <NavLinks className="hidden lg:flex" />
@@ -146,7 +146,7 @@ export function Navbar() {
                 <a
                   key={link.to}
                   href={link.to}
-                  className="rounded-xl px-3 py-2.5 text-sm font-medium leading-snug text-muted-foreground transition-colors duration-200 hover:bg-secondary hover:text-foreground"
+                  className="flex min-h-11 items-center rounded-xl px-3 py-2.5 text-sm font-medium leading-snug text-muted-foreground transition-colors duration-200 hover:bg-secondary hover:text-foreground"
                   onClick={close}
                 >
                   {t(link.labelKey)}
@@ -155,7 +155,7 @@ export function Navbar() {
                 <Link
                   key={link.to}
                   to={link.to}
-                  className="rounded-xl px-3 py-2.5 text-sm font-medium leading-snug text-muted-foreground transition-colors duration-200 hover:bg-secondary hover:text-foreground"
+                  className="flex min-h-11 items-center rounded-xl px-3 py-2.5 text-sm font-medium leading-snug text-muted-foreground transition-colors duration-200 hover:bg-secondary hover:text-foreground"
                   onClick={close}
                 >
                   {t(link.labelKey)}

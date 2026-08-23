@@ -5,7 +5,7 @@ import { Navbar } from "@/components/layout/navbar";
 
 export function PublicLayout() {
   return (
-    <div className="min-h-svh overflow-x-clip bg-background">
+    <div className="min-h-svh bg-background">
       <Navbar />
       <Outlet />
       <Footer />

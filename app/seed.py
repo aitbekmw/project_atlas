@@ -2,7 +2,7 @@
 
 Creates default categories, demo users, Bishkek jobs, applications and reviews.
 Does not run on API startup. Does not send email. Does not modify non-demo users.
-Does not create conversations (chat is opened by users, not by this seed).
+Conversations are created when demo applications are accepted.
 
 Uses DATABASE_URL from the environment (Render Shell uses production Postgres).
 
@@ -32,6 +32,7 @@ from app.models.review import Review
 from app.models.user import User
 from app.repositories.application import ApplicationRepository
 from app.repositories.category import CategoryRepository
+from app.repositories.conversation import ConversationRepository
 from app.repositories.job import JobRepository
 from app.repositories.review import ReviewRepository
 from app.repositories.user import UserRepository
@@ -144,9 +145,17 @@ async def seed(session_factory: SessionFactory | None = None) -> dict:
     async with factory() as db:
         category_service = CategoryService(CategoryRepository(db))
         job_repo = JobRepository(db)
-        job_service = JobService(job_repo, CategoryRepository(db))
         application_repo = ApplicationRepository(db)
-        application_service = ApplicationService(application_repo, job_repo)
+        job_service = JobService(
+            job_repo,
+            CategoryRepository(db),
+            application_repo,
+        )
+        application_service = ApplicationService(
+            application_repo,
+            job_repo,
+            ConversationRepository(db),
+        )
         review_service = ReviewService(
             ReviewRepository(db),
             job_repo,

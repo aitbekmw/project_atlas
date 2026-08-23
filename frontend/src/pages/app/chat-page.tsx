@@ -260,8 +260,10 @@ export function ChatPage() {
 
   return (
     <div className="min-w-0">
-      <PageHeader title={t("chat.title")} description={t("chat.hint")} />
-      <div className="grid min-h-[min(32rem,calc(100dvh-8rem))] overflow-hidden rounded-2xl border bg-card lg:min-h-[calc(100dvh-10rem)] lg:grid-cols-[18rem_minmax(0,1fr)]">
+      <div className={cn(conversationIdValid && "max-lg:hidden")}>
+        <PageHeader title={t("chat.title")} description={t("chat.hint")} />
+      </div>
+      <div className="grid min-h-[min(32rem,calc(100dvh-8rem))] overflow-hidden rounded-2xl border bg-card max-lg:min-h-[calc(100dvh-6rem)] lg:min-h-[calc(100dvh-10rem)] lg:grid-cols-[18rem_minmax(0,1fr)]">
         <div
           className={cn(
             "min-w-0 border-b lg:border-b-0 lg:border-r",
@@ -357,13 +359,14 @@ export function ChatPage() {
                 ) : null}
               </div>
               <form
-                className="flex gap-2 border-t p-3"
+                className="sticky bottom-0 flex gap-2 border-t bg-card p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]"
                 onSubmit={(event) => {
                   event.preventDefault();
                   submitMessage();
                 }}
               >
                 <Input
+                  className="min-h-11"
                   value={text}
                   onChange={(event) => onComposerChange(event.target.value)}
                   placeholder={
@@ -374,6 +377,7 @@ export function ChatPage() {
                 <Button
                   type="submit"
                   size="icon"
+                  className="h-11 w-11 min-h-11 min-w-11"
                   aria-label={t("chat.send")}
                   disabled={!isParticipant || !text.trim() || sendMutation.isPending}
                 >

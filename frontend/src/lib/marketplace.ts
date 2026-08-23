@@ -67,6 +67,23 @@ export function formatDistance(km: number): string {
   return `${km.toFixed(1).replace(".", ",")} км`;
 }
 
+export function averageRatingByUser(
+  reviews: Array<{ to_user_id: number; rating: number }>,
+): Record<number, number> {
+  const buckets = new Map<number, { total: number; count: number }>();
+  for (const review of reviews) {
+    const current = buckets.get(review.to_user_id) ?? { total: 0, count: 0 };
+    current.total += review.rating;
+    current.count += 1;
+    buckets.set(review.to_user_id, current);
+  }
+  const ratings: Record<number, number> = {};
+  for (const [userId, bucket] of buckets) {
+    ratings[userId] = bucket.total / bucket.count;
+  }
+  return ratings;
+}
+
 export function formatRating(value: number): string {
   return new Intl.NumberFormat(BCP47[getActiveLocale()], {
     minimumFractionDigits: 1,

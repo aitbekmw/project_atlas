@@ -32,9 +32,10 @@ ALLOWED_AVATAR_TYPES = {
     response_model=UserResponse,
 )
 async def get_me(
+    service: UserService = Depends(get_user_service),
     current_user: User = Depends(get_current_user),
 ):
-    return current_user
+    return await service.to_response(current_user)
 
 
 @router.patch(
@@ -46,10 +47,11 @@ async def update_me(
     service: UserService = Depends(get_user_service),
     current_user: User = Depends(get_current_user),
 ):
-    return await service.update(
+    user = await service.update(
         current_user,
         data,
     )
+    return await service.to_response(user)
 
 
 @router.patch(
@@ -138,10 +140,11 @@ async def upload_avatar(
 
     await file.seek(0)
 
-    return await service.upload_avatar(
+    user = await service.upload_avatar(
         current_user,
         file,
     )
+    return await service.to_response(user)
 
 
 @router.delete(
@@ -152,7 +155,8 @@ async def delete_avatar(
     service: UserService = Depends(get_user_service),
     current_user: User = Depends(get_current_user),
 ):
-    return await service.delete_avatar(current_user)
+    user = await service.delete_avatar(current_user)
+    return await service.to_response(user)
 
 
 @router.get(
@@ -164,7 +168,8 @@ async def get_user(
     service: UserService = Depends(get_user_service),
 ):
     try:
-        return await service.get_by_id(user_id)
+        user = await service.get_by_id(user_id)
+        return await service.to_response(user)
 
     except UserNotFound:
         raise HTTPException(

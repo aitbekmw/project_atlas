@@ -30,6 +30,7 @@ def get_user_service(
 ):
     return UserService(
         UserRepository(db),
+        ReviewRepository(db),
     )
 
 
@@ -39,6 +40,7 @@ def get_job_service(
     return JobService(
         JobRepository(db),
         CategoryRepository(db),
+        ApplicationRepository(db),
     )
 
 
@@ -56,6 +58,7 @@ def get_application_service(
     return ApplicationService(
         ApplicationRepository(db),
         JobRepository(db),
+        ConversationRepository(db),
     )
 
 

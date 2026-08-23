@@ -5,6 +5,7 @@ from app.core.geo import haversine_km
 from app.models.enum import JobStatus, PaymentMethod, UserRole
 from app.models.job import Job
 from app.models.user import User
+from app.repositories.application import ApplicationRepository
 from app.repositories.category import CategoryRepository
 from app.repositories.job import JobRepository
 from app.schemas.job import JobCreate, JobNearbyResponse, JobResponse, JobUpdate
@@ -16,9 +17,11 @@ class JobService:
         self,
         repo: JobRepository,
         category_repo: CategoryRepository,
+        application_repo: ApplicationRepository,
     ):
         self.repo = repo
         self.category_repo = category_repo
+        self.application_repo = application_repo
         self.minio_service = MinioService()
 
     def _ensure_owner_or_admin(self, job: Job, user: User) -> None:
@@ -134,7 +137,12 @@ class JobService:
 
         self._ensure_owner_or_admin(job, user)
 
-        if job.status == JobStatus.CANCELLED.value:
+        if job.status != JobStatus.IN_PROGRESS.value:
+            raise PermissionDenied()
+
+        accepted = await self.application_repo.get_accepted_by_job(job.id)
+
+        if not accepted:
             raise PermissionDenied()
 
         job.status = JobStatus.COMPLETED.value

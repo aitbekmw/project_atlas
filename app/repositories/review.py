@@ -1,4 +1,4 @@
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.review import Review
@@ -31,6 +31,21 @@ class ReviewRepository:
             .order_by(Review.created_at.desc())
         )
         return result.scalars().all()
+
+    async def get_rating_summary(self, user_id: int) -> tuple[float | None, int]:
+        result = await self.db.execute(
+            select(
+                func.avg(Review.rating),
+                func.count(Review.id),
+            ).where(Review.to_user_id == user_id)
+        )
+        average, count = result.one()
+        reviews_count = int(count or 0)
+
+        if reviews_count == 0 or average is None:
+            return None, 0
+
+        return round(float(average), 1), reviews_count
 
     async def get_by_job_and_author(
         self,

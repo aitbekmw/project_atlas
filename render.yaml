@@ -1,0 +1,13 @@
+# Optional Render Blueprint. If the frontend is already a Static Site in the
+# dashboard, add the same rewrite there: Source /* → Destination /index.html.
+services:
+  - type: web
+    name: atlas-frontend
+    runtime: static
+    rootDir: frontend
+    buildCommand: npm ci && npm run build
+    staticPublishPath: dist
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html

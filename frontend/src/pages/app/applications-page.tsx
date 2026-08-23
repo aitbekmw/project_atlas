@@ -12,6 +12,7 @@ import {
 } from "@/api/applications";
 import { createConversation, listConversations } from "@/api/conversations";
 import { getJob, getMyJobs } from "@/api/jobs";
+import { getUserReviews } from "@/api/reviews";
 import { getUser } from "@/api/users";
 import {
   ApplicationActions,
@@ -24,6 +25,7 @@ import { ApplicationListSkeleton } from "@/components/states/loading-state";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/context/auth-context";
 import { useI18n } from "@/i18n/locale-context";
+import { averageRating } from "@/lib/profile-stats";
 import { queryKeys } from "@/lib/query-keys";
 import { fullName, getErrorMessage } from "@/lib/utils";
 import type { Application, Job } from "@/types/api";
@@ -224,6 +226,12 @@ function ApplicationItem({
     enabled: incoming,
     retry: false,
   });
+  const workerReviewsQuery = useQuery({
+    queryKey: queryKeys.userReviews(application.worker_id),
+    queryFn: () => getUserReviews(application.worker_id),
+    enabled: incoming,
+    retry: false,
+  });
   const job = jobQuery.data;
   const workerName = workerQuery.data ? fullName(workerQuery.data) : t("common.userFallback", { id: application.worker_id });
   const isMine = application.worker_id === currentUserId;
@@ -238,6 +246,9 @@ function ApplicationItem({
       application={application}
       job={job}
       workerName={incoming ? workerName : undefined}
+      workerHref={incoming ? `/users/${application.worker_id}` : undefined}
+      workerRating={incoming ? averageRating(workerReviewsQuery.data ?? []) : null}
+      workerReviewCount={incoming ? workerReviewsQuery.data?.length : undefined}
       actions={
         <ApplicationActions
           busy={busy}

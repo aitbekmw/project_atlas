@@ -144,6 +144,8 @@ class UserResponse(UserBase):
     is_verified: bool
     is_online: bool
     last_seen: datetime | None = None
+    rating: float | None = None
+    reviews_count: int = 0
 
     model_config = ConfigDict(from_attributes=True)
 

@@ -13,7 +13,7 @@ export function Footer() {
   ];
   const workerLinks: { to: string; labelKey: MessageKey }[] = [
     { to: "/jobs", labelKey: "nav.jobs" },
-    { to: "/#how-it-works", labelKey: "nav.how" },
+    { to: "/how-it-works", labelKey: "nav.how" },
     { to: "/register", labelKey: "footer.becomeWorker" },
   ];
   const companyLinks: { to: string; labelKey: MessageKey }[] = [
@@ -24,17 +24,17 @@ export function Footer() {
 
   return (
     <footer className="border-t bg-card">
-      <div className="mx-auto grid max-w-6xl gap-8 px-4 py-8 sm:grid-cols-2 sm:py-12 lg:grid-cols-[1.4fr_1fr_1fr_1fr] lg:gap-10">
+      <div className="mx-auto grid max-w-[90rem] gap-5 px-4 py-4 sm:grid-cols-2 sm:py-5 lg:grid-cols-[1.4fr_1fr_1fr_1fr] lg:gap-6">
         <div>
           <Logo />
-          <p className="mt-4 max-w-sm text-sm leading-6 text-muted-foreground">{t("footer.tagline")}</p>
+          <p className="mt-3 max-w-sm text-sm leading-6 text-muted-foreground">{t("footer.tagline")}</p>
         </div>
         <FooterColumn title={t("footer.customers")} links={customerLinks} />
         <FooterColumn title={t("footer.workers")} links={workerLinks} />
         <FooterColumn title={t("footer.company")} links={companyLinks} />
       </div>
       <div className="border-t">
-        <div className="mx-auto flex max-w-6xl flex-col gap-2 px-4 py-5 text-xs text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
+        <div className="mx-auto flex max-w-[90rem] flex-col gap-2 px-4 py-3 text-xs text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
           <p>© {new Date().getFullYear()} Atlas</p>
           <p>{t("footer.backend")}</p>
         </div>

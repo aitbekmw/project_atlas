@@ -9,8 +9,9 @@ from app.core.exceptions import (
 from app.core.security import hash_password, verify_password
 from app.core.validators import validate_password_strength
 from app.models.user import User
+from app.repositories.review import ReviewRepository
 from app.repositories.user import UserRepository
-from app.schemas.user import UserUpdate
+from app.schemas.user import UserResponse, UserUpdate
 from app.services.minio import MinioService
 
 
@@ -18,8 +19,10 @@ class UserService:
     def __init__(
         self,
         repo: UserRepository,
+        review_repo: ReviewRepository,
     ):
         self.repo = repo
+        self.review_repo = review_repo
         self.minio_service = MinioService()
 
     async def get_by_id(
@@ -32,6 +35,15 @@ class UserService:
             raise UserNotFound()
 
         return user
+
+    async def to_response(self, user: User) -> UserResponse:
+        rating, reviews_count = await self.review_repo.get_rating_summary(user.id)
+        return UserResponse.model_validate(user).model_copy(
+            update={
+                "rating": rating,
+                "reviews_count": reviews_count,
+            }
+        )
 
     async def update(
         self,

@@ -19,6 +19,9 @@ interface ApplicationCardProps {
   application: Application;
   job?: Job;
   workerName?: string;
+  workerHref?: string;
+  workerRating?: number | null;
+  workerReviewCount?: number;
   actions?: ReactNode;
 }
 
@@ -26,6 +29,9 @@ export function ApplicationCard({
   application,
   job,
   workerName,
+  workerHref,
+  workerRating,
+  workerReviewCount,
   actions,
 }: ApplicationCardProps) {
   const { t } = useI18n();
@@ -40,12 +46,26 @@ export function ApplicationCard({
             {job?.title ?? t("common.jobFallback", { id: application.job_id })}
           </Link>
           <p className="mt-1 text-sm text-muted-foreground">
-            {workerName
-              ? t("app.workerLabel", { name: workerName })
-              : t("app.fallback", { id: application.id })}
+            {workerName ? (
+              workerHref ? (
+                <Link to={workerHref} className="hover:text-primary">
+                  {t("app.workerLabel", { name: workerName })}
+                </Link>
+              ) : (
+                t("app.workerLabel", { name: workerName })
+              )
+            ) : (
+              t("app.fallback", { id: application.id })
+            )}
             {" · "}
             {formatDate(application.created_at)}
           </p>
+          {workerRating != null ? (
+            <p className="mt-1 text-sm text-muted-foreground">
+              {t("common.rating")}: {workerRating.toFixed(1)}
+              {workerReviewCount != null ? ` · ${t("profile.reviewsCount", { count: workerReviewCount })}` : ""}
+            </p>
+          ) : null}
           {job ? (
             <p className="mt-1 text-sm text-muted-foreground">
               {formatMoney(job.salary)}
