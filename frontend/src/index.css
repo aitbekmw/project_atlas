@@ -154,10 +154,18 @@
 
 html {
   color-scheme: light;
+  scrollbar-gutter: stable;
+  scroll-padding-top: calc(var(--navbar-height) + var(--safe-top) + 0.5rem);
 }
 
 html.dark {
   color-scheme: dark;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
 }
 
 html,
@@ -169,7 +177,7 @@ body,
 
 html,
 body {
-  overflow-x: hidden;
+  overflow-x: clip;
 }
 
 body {
@@ -178,6 +186,62 @@ body {
   transition:
     background-color 180ms ease,
     color 180ms ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+@keyframes atlas-nav-in {
+  from {
+    opacity: 0;
+    transform: translateX(-0.5rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  [data-state="open"] .atlas-sheet-nav > * {
+    animation: atlas-nav-in 280ms ease both;
+  }
+
+  [data-state="open"] .atlas-sheet-nav > *:nth-child(1) {
+    animation-delay: 40ms;
+  }
+  [data-state="open"] .atlas-sheet-nav > *:nth-child(2) {
+    animation-delay: 60ms;
+  }
+  [data-state="open"] .atlas-sheet-nav > *:nth-child(3) {
+    animation-delay: 80ms;
+  }
+  [data-state="open"] .atlas-sheet-nav > *:nth-child(4) {
+    animation-delay: 100ms;
+  }
+  [data-state="open"] .atlas-sheet-nav > *:nth-child(5) {
+    animation-delay: 120ms;
+  }
+  [data-state="open"] .atlas-sheet-nav > *:nth-child(6) {
+    animation-delay: 140ms;
+  }
+  [data-state="open"] .atlas-sheet-nav > *:nth-child(7) {
+    animation-delay: 160ms;
+  }
+  [data-state="open"] .atlas-sheet-nav > *:nth-child(n + 8) {
+    animation-delay: 180ms;
+  }
 }
 
 #root {

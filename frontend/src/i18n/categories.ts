@@ -57,6 +57,7 @@ const BY_NAME: Record<string, SystemSlug> = {
   көчүү: "moving",
   "it жана техника": "it",
   репетиторлук: "tutoring",
+  эмерек: "furniture",
 };
 
 const NAME_KEYS: Record<SystemSlug, MessageKey> = {

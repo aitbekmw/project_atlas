@@ -1,12 +1,13 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMemo, useState, type ReactNode } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { z } from "zod";
 
 import { ImagePicker } from "@/components/jobs/image-picker";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { localizedCategoryName } from "@/i18n/categories";
 import { useI18n } from "@/i18n/locale-context";
@@ -116,30 +117,49 @@ export function JobForm({
           <Input type="number" min={0} {...form.register("salary")} />
         </Field>
         <Field label={t("job.payment")} error={form.formState.errors.payment_method?.message}>
-          <select
-            className="flex min-h-10 w-full rounded-md border border-input bg-card px-3 text-sm"
-            {...form.register("payment_method")}
-          >
-            {PAYMENT_METHODS.map((method) => (
-              <option key={method} value={method}>
-                {t(paymentMethodKey(method))}
-              </option>
-            ))}
-          </select>
+          <Controller
+            control={form.control}
+            name="payment_method"
+            render={({ field }) => (
+              <Select value={field.value} onValueChange={field.onChange}>
+                <SelectTrigger aria-label={t("job.payment")}>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {PAYMENT_METHODS.map((method) => (
+                    <SelectItem key={method} value={method}>
+                      {t(paymentMethodKey(method))}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+          />
         </Field>
         <Field label={t("job.category")} error={form.formState.errors.category_id?.message}>
-          <select
-            className="flex min-h-10 w-full rounded-md border border-input bg-card px-3 text-sm"
-            disabled={categoriesLoading || categoriesError || activeCategories.length === 0}
-            {...form.register("category_id", { valueAsNumber: true })}
-          >
-            <option value={0}>{categoryPlaceholder}</option>
-            {activeCategories.map((category) => (
-              <option key={category.id} value={category.id}>
-                {localizedCategoryName(category, t)}
-              </option>
-            ))}
-          </select>
+          <Controller
+            control={form.control}
+            name="category_id"
+            render={({ field }) => (
+              <Select
+                value={field.value ? String(field.value) : "0"}
+                onValueChange={(value) => field.onChange(Number(value))}
+                disabled={categoriesLoading || categoriesError || activeCategories.length === 0}
+              >
+                <SelectTrigger aria-label={t("job.category")}>
+                  <SelectValue placeholder={categoryPlaceholder} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="0">{categoryPlaceholder}</SelectItem>
+                  {activeCategories.map((category) => (
+                    <SelectItem key={category.id} value={String(category.id)}>
+                      {localizedCategoryName(category, t)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+          />
           {categoriesError && onRetryCategories ? (
             <button
               type="button"

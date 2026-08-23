@@ -12,6 +12,7 @@ import { ErrorState } from "@/components/states/error-state";
 import { JobFeedSkeleton } from "@/components/states/loading-state";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { queryKeys } from "@/lib/query-keys";
 import { useI18n } from "@/i18n/locale-context";
 import { paymentMethodKey } from "@/i18n/status";
@@ -136,30 +137,38 @@ export function JobsPage({ embedded = false }: { embedded?: boolean }) {
           value={cityInput}
           onChange={(event) => setCityInput(event.target.value)}
         />
-        <select
-          className="flex min-h-11 w-full rounded-xl border border-input bg-background px-3 text-sm"
-          value={categoryId}
-          onChange={(event) => patchParams({ category_id: event.target.value || null })}
+        <Select
+          value={categoryId || "all"}
+          onValueChange={(value) => patchParams({ category_id: value === "all" ? null : value })}
         >
-          <option value="">{t("category.all")}</option>
-          {(categoriesQuery.data ?? []).map((category) => (
-            <option key={category.id} value={category.id}>
-              {names[category.id] ?? category.name}
-            </option>
-          ))}
-        </select>
-        <select
-          className="flex min-h-11 w-full rounded-xl border border-input bg-background px-3 text-sm"
-          value={paymentMethod}
-          onChange={(event) => patchParams({ payment_method: event.target.value || null })}
+          <SelectTrigger aria-label={t("job.category")}>
+            <SelectValue placeholder={t("category.all")} />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">{t("category.all")}</SelectItem>
+            {(categoriesQuery.data ?? []).map((category) => (
+              <SelectItem key={category.id} value={String(category.id)}>
+                {names[category.id] ?? category.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Select
+          value={paymentMethod || "all"}
+          onValueChange={(value) => patchParams({ payment_method: value === "all" ? null : value })}
         >
-          <option value="">{t("jobs.allPayments")}</option>
-          {PAYMENT_METHODS.map((method) => (
-            <option key={method} value={method}>
-              {t(paymentMethodKey(method))}
-            </option>
-          ))}
-        </select>
+          <SelectTrigger aria-label={t("job.payment")}>
+            <SelectValue placeholder={t("jobs.allPayments")} />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">{t("jobs.allPayments")}</SelectItem>
+            {PAYMENT_METHODS.map((method) => (
+              <SelectItem key={method} value={method}>
+                {t(paymentMethodKey(method))}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
         <Input
           type="number"
           min={0}

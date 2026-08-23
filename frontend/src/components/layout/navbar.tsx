@@ -1,5 +1,5 @@
 import { Menu } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Link, NavLink, useNavigate } from "react-router-dom";
 
 import { LanguageSwitcher } from "@/components/layout/language-switcher";
@@ -81,20 +81,6 @@ export function Navbar() {
   const { isAuthenticated, user, logout } = useAuth();
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
-
-  useEffect(() => {
-    if (open) {
-      const previous = document.body.style.overflow;
-      document.body.style.overflow = "hidden";
-      return () => {
-        document.body.style.overflow = previous;
-        document.body.style.removeProperty("pointer-events");
-      };
-    }
-    document.body.style.removeProperty("overflow");
-    document.body.style.removeProperty("pointer-events");
-    return undefined;
-  }, [open]);
   const publicLinks = usePublicLinks();
   const createOrderTo =
     isAuthenticated && (user?.role === "customer" || user?.role === "admin")
@@ -113,8 +99,8 @@ export function Navbar() {
   }
 
   return (
-    <header className="sticky top-0 z-50 border-b bg-background/90 pt-[env(safe-area-inset-top,0px)] backdrop-blur">
-      <div className="mx-auto flex h-[72px] max-w-6xl min-w-0 items-center justify-between gap-2 overflow-x-hidden px-4 sm:gap-3">
+    <header className="sticky top-0 z-50 w-full max-w-full border-b bg-background/90 pt-[env(safe-area-inset-top,0px)] backdrop-blur">
+      <div className="mx-auto flex h-[72px] w-full max-w-6xl min-w-0 items-center justify-between gap-2 overflow-x-clip px-4 sm:gap-3">
         <Logo />
 
         <NavLinks className="hidden lg:flex" />
@@ -140,8 +126,10 @@ export function Navbar() {
           <Button
             variant="ghost"
             size="icon"
-            className="h-10 w-10 rounded-full lg:hidden"
+            className="h-11 w-11 rounded-full lg:hidden"
             aria-label={t("nav.menu")}
+            aria-expanded={open}
+            aria-controls="mobile-nav"
             onClick={() => setOpen(true)}
           >
             <Menu className="h-5 w-5" />
@@ -149,10 +137,10 @@ export function Navbar() {
         </div>
       </div>
 
-      <Sheet open={open} onOpenChange={setOpen}>
-        <SheetContent side="left" className="p-6">
+      <Sheet open={open} onOpenChange={setOpen} modal={false}>
+        <SheetContent side="left" className="p-6" id="mobile-nav">
           <Logo />
-          <div className="mt-8 flex flex-col gap-1">
+          <div className="atlas-sheet-nav mt-8 flex flex-col gap-1">
             {publicLinks.map((link) =>
               link.to.includes("#") ? (
                 <a
