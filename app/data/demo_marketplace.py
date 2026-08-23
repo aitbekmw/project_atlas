@@ -1,4 +1,4 @@
-"""Demo marketplace rows for local/dev seed only. Not auto-run in production."""
+"""Demo marketplace rows for the shared idempotent seed (local and production)."""
 
 from app.models.enum import PaymentMethod
 
@@ -76,6 +76,8 @@ DEMO_USERS = [
         "role": "worker",
     },
 ]
+
+DEMO_EMAILS = tuple(item["email"].lower() for item in DEMO_USERS)
 
 # 24 open + 6 completed. Coordinates are public Bishkek districts, slightly offset.
 DEMO_JOBS = [

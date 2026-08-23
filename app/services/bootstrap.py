@@ -14,6 +14,7 @@ async def ensure_default_categories() -> None:
     """Create marketplace categories if the table is empty.
 
     Production Postgres starts blank; GET /categories then returns [].
+    Jobs, demo users and reviews are created only by `python app/seed.py`.
     Local seed.py also uses the same names and stays idempotent.
     """
     async with AsyncSessionLocal() as session:
