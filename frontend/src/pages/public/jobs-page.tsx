@@ -117,22 +117,22 @@ export function JobsPage({ embedded = false }: { embedded?: boolean }) {
   const jobHref = (jobId: number) => (embedded ? `/app/jobs/${jobId}` : `/jobs/${jobId}`);
 
   return (
-    <div className={embedded ? "" : "mx-auto max-w-6xl px-4 py-10"}>
+    <div className={embedded ? "min-w-0" : "atlas-page"}>
       {!embedded ? (
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold tracking-tight">{t("jobs.title")}</h1>
-          <p className="mt-2 text-muted-foreground">
-            {t("jobs.subtitle")}
-          </p>
+        <div className="mb-5 sm:mb-8">
+          <h1 className="atlas-page-title">{t("jobs.title")}</h1>
+          <p className="atlas-page-lead">{t("jobs.subtitle")}</p>
         </div>
       ) : null}
-      <div className="mb-6 grid gap-3 rounded-2xl border bg-card p-4 sm:grid-cols-2 lg:grid-cols-5">
+      <div className="mb-4 grid min-w-0 gap-2 overflow-x-clip rounded-2xl border bg-card p-3 sm:mb-6 sm:grid-cols-2 sm:gap-3 sm:p-4 lg:grid-cols-5">
         <Input
+          className="min-w-0"
           placeholder={t("jobs.search")}
           value={searchInput}
           onChange={(event) => setSearchInput(event.target.value)}
         />
         <Input
+          className="min-w-0"
           placeholder={t("jobs.where")}
           value={cityInput}
           onChange={(event) => setCityInput(event.target.value)}
@@ -141,7 +141,7 @@ export function JobsPage({ embedded = false }: { embedded?: boolean }) {
           value={categoryId || "all"}
           onValueChange={(value) => patchParams({ category_id: value === "all" ? null : value })}
         >
-          <SelectTrigger aria-label={t("job.category")}>
+          <SelectTrigger className="min-w-0" aria-label={t("job.category")}>
             <SelectValue placeholder={t("category.all")} />
           </SelectTrigger>
           <SelectContent>
@@ -157,7 +157,7 @@ export function JobsPage({ embedded = false }: { embedded?: boolean }) {
           value={paymentMethod || "all"}
           onValueChange={(value) => patchParams({ payment_method: value === "all" ? null : value })}
         >
-          <SelectTrigger aria-label={t("job.payment")}>
+          <SelectTrigger className="min-w-0" aria-label={t("job.payment")}>
             <SelectValue placeholder={t("jobs.allPayments")} />
           </SelectTrigger>
           <SelectContent>
@@ -170,6 +170,7 @@ export function JobsPage({ embedded = false }: { embedded?: boolean }) {
           </SelectContent>
         </Select>
         <Input
+          className="min-w-0"
           type="number"
           min={0}
           placeholder={t("jobs.minPay")}
@@ -200,13 +201,13 @@ export function JobsPage({ embedded = false }: { embedded?: boolean }) {
       ) : null}
       {!jobsQuery.isError && jobs.length > 0 ? (
         <>
-          <div className="grid gap-6 lg:grid-cols-[0.9fr_1.1fr]">
+          <div className="grid min-w-0 gap-4 lg:grid-cols-[0.9fr_1.1fr] lg:gap-6">
             <CityMap
               jobs={jobs}
               selectedJobId={selected?.id}
               onJobSelect={(job) => setActiveJobId(job.id)}
               jobHref={(job) => jobHref(job.id)}
-              className="min-h-[360px] lg:sticky lg:top-24"
+              className="min-h-[220px] sm:min-h-[280px] lg:sticky lg:top-24 lg:min-h-[360px]"
               showCards
             />
             <div className="grid gap-3">

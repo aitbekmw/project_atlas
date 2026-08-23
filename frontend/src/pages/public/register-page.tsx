@@ -86,7 +86,7 @@ export function RegisterPage() {
   });
 
   return (
-    <div className="mx-auto w-full max-w-lg overflow-x-hidden px-4 py-8 pb-[max(2rem,env(safe-area-inset-bottom))] sm:py-12">
+    <div className="mx-auto w-full max-w-lg overflow-x-hidden px-4 py-6 pb-[max(1.5rem,env(safe-area-inset-bottom))] sm:py-12">
       <Card className="w-full min-w-0">
         <CardHeader className="items-center text-center">
           <Logo />

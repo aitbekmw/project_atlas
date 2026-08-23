@@ -53,7 +53,7 @@ export function LanguageSwitcher({
           type="button"
           variant="ghost"
           size="sm"
-          className={cn("max-w-[9.5rem] duration-200", className)}
+          className={cn("min-w-0 max-w-[9.5rem] truncate duration-200", className)}
           aria-label={t("lang.label")}
         >
           {current}

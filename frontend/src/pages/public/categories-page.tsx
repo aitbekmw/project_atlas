@@ -32,13 +32,11 @@ export function CategoriesPage() {
   const jobs = jobsQuery.data ?? [];
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-12">
-      <div className="mb-8 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">{t("categories.title")}</h1>
-          <p className="mt-2 text-muted-foreground">
-            {t("categories.hint")}
-          </p>
+    <div className="atlas-page">
+      <div className="mb-5 flex flex-col gap-3 sm:mb-8 sm:flex-row sm:items-end sm:justify-between">
+        <div className="min-w-0">
+          <h1 className="atlas-page-title">{t("categories.title")}</h1>
+          <p className="atlas-page-lead">{t("categories.hint")}</p>
         </div>
         <Button asChild variant="outline">
           <Link to="/jobs">{t("nav.jobs")}</Link>
@@ -67,12 +65,12 @@ export function CategoriesPage() {
               <Link
                 key={category.id}
                 to={`/jobs?category_id=${category.id}`}
-                className="rounded-2xl border bg-card p-5 transition-colors duration-200 hover:border-primary/30 hover:bg-card-hover"
+                className="min-w-0 rounded-2xl border bg-card p-3.5 transition-colors duration-200 hover:border-primary/30 hover:bg-card-hover sm:p-5"
               >
                 <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary/10 text-primary">
                   <Icon className="h-5 w-5" />
                 </span>
-                <p className="mt-4 font-semibold">{localizedCategoryName(category, t)}</p>
+                <p className="mt-3 text-sm font-semibold leading-snug break-words sm:mt-4 sm:text-base">{localizedCategoryName(category, t)}</p>
                 {categoryDescription ? (
                   <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">
                     {categoryDescription}

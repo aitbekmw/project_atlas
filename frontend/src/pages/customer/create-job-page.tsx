@@ -47,7 +47,7 @@ export function CreateJobPage() {
     <div>
       <PageHeader title={t("job.createTitle")} description={t("job.createHint")} />
       <Card>
-        <CardContent className="p-6">
+        <CardContent className="p-4 sm:p-6">
           <JobForm
             categories={categoriesQuery.data ?? []}
             categoriesLoading={categoriesQuery.isLoading}

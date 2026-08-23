@@ -57,7 +57,7 @@ export function ErrorState({
   const resolvedDescription = description ?? (useDetail ? detail : fallback.description);
 
   return (
-    <div className="flex flex-col items-center justify-center rounded-xl border border-destructive/20 bg-card px-6 py-16 text-center">
+    <div className="flex flex-col items-center justify-center rounded-xl border border-destructive/20 bg-card px-4 py-10 text-center sm:px-6 sm:py-16">
       <AlertCircle className="mb-3 h-8 w-8 text-destructive" />
       <h3 className="text-lg font-semibold">{title ?? fallback.title}</h3>
       <p className="mt-1 max-w-md text-sm text-muted-foreground">{resolvedDescription}</p>

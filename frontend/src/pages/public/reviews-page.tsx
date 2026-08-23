@@ -37,23 +37,21 @@ export function ReviewsPage() {
   });
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-12">
-      <h1 className="text-3xl font-bold tracking-tight">{t("reviews.title")}</h1>
-      <p className="mt-2 max-w-2xl text-muted-foreground">
-        {t("reviews.hint")}
-      </p>
+    <div className="atlas-page">
+      <h1 className="atlas-page-title">{t("reviews.title")}</h1>
+      <p className="atlas-page-lead">{t("reviews.hint")}</p>
       {reviewsQuery.isLoading ? (
-        <div className="mt-8">
+        <div className="mt-5 sm:mt-8">
           <ReviewListSkeleton />
         </div>
       ) : null}
       {reviewsQuery.isError ? (
-        <div className="mt-8">
+        <div className="mt-5 sm:mt-8">
           <ErrorState error={reviewsQuery.error} onRetry={() => void reviewsQuery.refetch()} />
         </div>
       ) : null}
       {!reviewsQuery.isLoading && !reviewsQuery.isError && reviews.length === 0 ? (
-        <div className="mt-8">
+        <div className="mt-5 sm:mt-8">
           <EmptyState
             title={t("reviews.empty")}
             description={t("reviews.emptyHint")}
@@ -61,7 +59,7 @@ export function ReviewsPage() {
         </div>
       ) : null}
       {!reviewsQuery.isError && reviews.length > 0 ? (
-        <div className="mt-8 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <div className="mt-5 grid gap-3 sm:mt-8 sm:gap-4 md:grid-cols-2 lg:grid-cols-3">
           {reviews.map((review) => (
             <ReviewCard
               key={review.id}

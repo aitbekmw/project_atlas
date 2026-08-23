@@ -35,9 +35,9 @@ function DashboardJobs({
           <Link
             key={job.id}
             to={href(job)}
-            className="rounded-2xl border bg-card px-4 py-3 transition-colors duration-200 hover:border-primary/30 hover:bg-card-hover"
+            className="min-w-0 rounded-2xl border bg-card px-4 py-3 transition-colors duration-200 hover:border-primary/30 hover:bg-card-hover"
           >
-            <p className="font-semibold">{job.title}</p>
+            <p className="break-words font-semibold">{job.title}</p>
             <p className="mt-1 text-sm text-muted-foreground">
               {formatMoney(job.salary)} · {t(paymentMethodKey(job.payment_method))}
             </p>
@@ -53,7 +53,7 @@ function Stat({ label, value }: { label: string; value: number }) {
     <Card>
       <CardContent className="p-5">
         <p className="text-sm text-muted-foreground">{label}</p>
-        <p className="mt-2 text-3xl font-bold tracking-tight">{value}</p>
+        <p className="mt-2 text-2xl font-bold tracking-tight sm:text-3xl">{value}</p>
       </CardContent>
     </Card>
   );

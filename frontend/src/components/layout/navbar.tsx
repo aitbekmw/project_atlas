@@ -45,14 +45,14 @@ function NavLinks({
   const { t } = useI18n();
   const publicLinks = usePublicLinks();
   return (
-    <nav className={cn("flex items-center gap-7 text-sm font-medium", className)}>
+    <nav className={cn("flex items-center gap-5 text-sm font-medium lg:gap-7", className)}>
       {publicLinks.map((link) =>
         link.to.includes("#") ? (
           <a
             key={link.to}
             href={link.to}
             onClick={onClick}
-            className="text-muted-foreground transition-colors duration-200 hover:text-foreground"
+            className="whitespace-nowrap text-muted-foreground transition-colors duration-200 hover:text-foreground"
           >
             {t(link.labelKey)}
           </a>
@@ -63,7 +63,7 @@ function NavLinks({
             onClick={onClick}
             className={({ isActive }) =>
               cn(
-                "text-muted-foreground transition-colors duration-200 hover:text-foreground",
+                "whitespace-nowrap text-muted-foreground transition-colors duration-200 hover:text-foreground",
                 isActive && "text-foreground",
               )
             }
@@ -100,7 +100,7 @@ export function Navbar() {
 
   return (
     <header className="sticky top-0 z-50 w-full max-w-full border-b bg-background/90 pt-[env(safe-area-inset-top,0px)] backdrop-blur">
-      <div className="mx-auto flex h-[72px] w-full max-w-6xl min-w-0 items-center justify-between gap-2 overflow-x-clip px-4 sm:gap-3">
+      <div className="mx-auto flex h-14 w-full max-w-6xl min-w-0 items-center justify-between gap-2 overflow-x-clip px-4 sm:h-16 sm:gap-3 lg:h-[4.5rem]">
         <Logo />
 
         <NavLinks className="hidden lg:flex" />
@@ -112,15 +112,15 @@ export function Navbar() {
             <UserMenu />
           ) : (
             <div className="hidden items-center gap-2 sm:flex">
-              <Button asChild variant="ghost" size="sm" className="duration-200">
+              <Button asChild variant="ghost" size="sm" className="whitespace-nowrap duration-200">
                 <Link to="/login">{t("nav.login")}</Link>
               </Button>
-              <Button asChild variant="outline" size="sm" className="duration-200">
+              <Button asChild variant="outline" size="sm" className="whitespace-nowrap duration-200">
                 <Link to="/register">{t("nav.register")}</Link>
               </Button>
             </div>
           )}
-          <Button asChild size="sm" className="hidden duration-200 lg:inline-flex">
+          <Button asChild size="sm" className="hidden whitespace-nowrap duration-200 lg:inline-flex">
             <Link to={createOrderTo}>{t("nav.placeOrder")}</Link>
           </Button>
           <Button
@@ -146,7 +146,7 @@ export function Navbar() {
                 <a
                   key={link.to}
                   href={link.to}
-                  className="rounded-xl px-3 py-2.5 text-sm font-medium text-muted-foreground transition-colors duration-200 hover:bg-secondary hover:text-foreground"
+                  className="rounded-xl px-3 py-2.5 text-sm font-medium leading-snug text-muted-foreground transition-colors duration-200 hover:bg-secondary hover:text-foreground"
                   onClick={close}
                 >
                   {t(link.labelKey)}
@@ -155,7 +155,7 @@ export function Navbar() {
                 <Link
                   key={link.to}
                   to={link.to}
-                  className="rounded-xl px-3 py-2.5 text-sm font-medium text-muted-foreground transition-colors duration-200 hover:bg-secondary hover:text-foreground"
+                  className="rounded-xl px-3 py-2.5 text-sm font-medium leading-snug text-muted-foreground transition-colors duration-200 hover:bg-secondary hover:text-foreground"
                   onClick={close}
                 >
                   {t(link.labelKey)}

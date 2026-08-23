@@ -8,7 +8,7 @@ export function NotFoundPage() {
   return (
     <div className="flex min-h-[70svh] flex-col items-center justify-center px-4 text-center">
       <p className="text-sm font-semibold text-primary">404</p>
-      <h1 className="mt-2 text-4xl font-bold tracking-tight">{t("notFound.title")}</h1>
+      <h1 className="mt-2 text-[2rem] font-bold tracking-tight sm:text-4xl">{t("notFound.title")}</h1>
       <p className="mt-3 max-w-md text-muted-foreground">
         {t("notFound.hint")}
       </p>

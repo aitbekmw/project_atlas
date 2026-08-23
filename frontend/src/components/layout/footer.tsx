@@ -24,7 +24,7 @@ export function Footer() {
 
   return (
     <footer className="border-t bg-card">
-      <div className="mx-auto grid max-w-6xl gap-10 px-4 py-12 sm:grid-cols-2 lg:grid-cols-[1.4fr_1fr_1fr_1fr]">
+      <div className="mx-auto grid max-w-6xl gap-8 px-4 py-8 sm:grid-cols-2 sm:py-12 lg:grid-cols-[1.4fr_1fr_1fr_1fr] lg:gap-10">
         <div>
           <Logo />
           <p className="mt-4 max-w-sm text-sm leading-6 text-muted-foreground">{t("footer.tagline")}</p>

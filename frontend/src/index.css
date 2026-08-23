@@ -4,7 +4,7 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  --navbar-height: 4.5rem;
+  --navbar-height: 3.5rem;
   --safe-top: env(safe-area-inset-top, 0px);
   --safe-bottom: env(safe-area-inset-bottom, 0px);
   --radius: 1rem;
@@ -244,8 +244,36 @@ body {
   }
 }
 
-#root {
-  min-height: 100svh;
+@media (min-width: 640px) {
+  :root {
+    --navbar-height: 4rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  :root {
+    --navbar-height: 4.5rem;
+  }
+}
+
+.atlas-page {
+  @apply mx-auto w-full min-w-0 max-w-6xl px-4 py-5 sm:py-8 lg:py-10;
+}
+
+.atlas-page-title {
+  @apply text-[2rem] font-bold leading-tight tracking-tight break-words sm:text-3xl;
+}
+
+.atlas-page-lead {
+  @apply mt-1.5 max-w-2xl text-sm leading-relaxed text-muted-foreground sm:mt-2 sm:text-base;
+}
+
+.atlas-section {
+  @apply py-8 sm:py-12 lg:py-16;
+}
+
+.atlas-card-pad {
+  @apply p-3.5 sm:p-5;
 }
 
 .soft-shadow {

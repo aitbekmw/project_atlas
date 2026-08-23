@@ -31,11 +31,11 @@ export function ApplicationCard({
   const { t } = useI18n();
   return (
     <Card>
-      <CardContent className="flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between">
+      <CardContent className="flex flex-col gap-3 p-3.5 sm:flex-row sm:items-center sm:justify-between sm:gap-4 sm:p-5">
         <div>
           <Link
             to={`/jobs/${application.job_id}`}
-            className="font-semibold hover:text-primary"
+            className="break-words font-semibold hover:text-primary"
           >
             {job?.title ?? t("common.jobFallback", { id: application.job_id })}
           </Link>

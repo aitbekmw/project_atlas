@@ -29,7 +29,7 @@ import {
   upsertMessage,
 } from "@/lib/chat-socket";
 import { queryKeys } from "@/lib/query-keys";
-import { fullName, getErrorMessage } from "@/lib/utils";
+import { cn, fullName, getErrorMessage } from "@/lib/utils";
 import type { Message } from "@/types/api";
 
 type SocketStatus = "connecting" | "open" | "closed" | "denied";
@@ -259,10 +259,15 @@ export function ChatPage() {
       : "";
 
   return (
-    <div>
+    <div className="min-w-0">
       <PageHeader title={t("chat.title")} description={t("chat.hint")} />
-      <div className="grid min-h-[70vh] overflow-hidden rounded-2xl border bg-card lg:grid-cols-[20rem_1fr]">
-        <div className="border-b lg:border-b-0 lg:border-r">
+      <div className="grid min-h-[min(32rem,calc(100dvh-8rem))] overflow-hidden rounded-2xl border bg-card lg:min-h-[calc(100dvh-10rem)] lg:grid-cols-[18rem_minmax(0,1fr)]">
+        <div
+          className={cn(
+            "min-w-0 border-b lg:border-b-0 lg:border-r",
+            conversationIdValid && "hidden lg:block",
+          )}
+        >
           {conversationsQuery.isLoading ? <ChatListSkeleton /> : null}
           {conversationsQuery.isError ? (
             <div className="p-3">
@@ -280,7 +285,12 @@ export function ChatPage() {
             />
           ) : null}
         </div>
-        <div className="flex min-h-[28rem] flex-col">
+        <div
+          className={cn(
+            "flex min-h-0 min-w-0 flex-col",
+            conversationIdValid ? "min-h-[min(32rem,calc(100dvh-8rem))] lg:min-h-0" : "hidden lg:flex",
+          )}
+        >
           {!conversationIdValid ? (
             <div className="flex flex-1 items-center justify-center p-6">
               <EmptyState
@@ -301,8 +311,14 @@ export function ChatPage() {
             </div>
           ) : (
             <>
-              <div className="border-b px-4 py-3">
-                <p className="font-semibold">
+              <div className="border-b px-3 py-2.5 sm:px-4 sm:py-3">
+                <Link
+                  to="/app/chat"
+                  className="mb-1 inline-block text-xs font-medium text-muted-foreground hover:text-foreground lg:hidden"
+                >
+                  ← {t("common.back")}
+                </Link>
+                <p className="break-words font-semibold">
                   {jobQuery.data ? (
                     <Link to={`/jobs/${jobQuery.data.id}`} className="hover:text-primary">
                       {jobQuery.data.title}

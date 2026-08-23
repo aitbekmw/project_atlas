@@ -17,10 +17,10 @@ export function UserCard({ user, href }: UserCardProps) {
   const { t } = useI18n();
   const content = (
     <Card className="h-full transition-shadow hover:shadow-md">
-      <CardContent className="flex items-center gap-4 p-5">
+      <CardContent className="flex items-center gap-3 p-3.5 sm:gap-4 sm:p-5">
         <UserAvatar user={user} className="h-12 w-12" />
         <div className="min-w-0">
-          <p className="truncate font-semibold">
+          <p className="truncate font-semibold break-words">
             {user.first_name} {user.last_name}
             {user.is_verified ? (
               <BadgeCheck className="ml-1 inline h-4 w-4 text-primary" />

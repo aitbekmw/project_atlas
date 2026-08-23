@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { MapPin, MessageSquare, Star } from "lucide-react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
 
 import { createApplication, getMyApplications, acceptApplication, rejectApplication } from "@/api/applications";
@@ -39,6 +39,9 @@ const statusVariant: Record<JobStatus, "success" | "warning" | "secondary" | "da
 
 export function JobDetailsPage() {
   const { t } = useI18n();
+  const { pathname } = useLocation();
+  const inApp = pathname.startsWith("/app");
+  const shell = inApp ? "min-w-0" : "atlas-page";
   const { jobId } = useParams();
   const id = Number(jobId);
   const jobIdValid = Number.isFinite(id) && id > 0;
@@ -140,7 +143,7 @@ export function JobDetailsPage() {
 
   if (!jobIdValid) {
     return (
-      <div className="mx-auto max-w-6xl px-4 py-10">
+      <div className={shell}>
         <ErrorState title={t("error.jobNotFound")} description={t("error.notFoundHint")} />
       </div>
     );
@@ -152,7 +155,7 @@ export function JobDetailsPage() {
 
   if (jobQuery.isError || !jobQuery.data) {
     return (
-      <div className="mx-auto max-w-6xl px-4 py-10">
+      <div className={shell}>
         <ErrorState error={jobQuery.error} onRetry={() => void jobQuery.refetch()} />
       </div>
     );
@@ -170,11 +173,11 @@ export function JobDetailsPage() {
   const canManageStatus = job.status !== "COMPLETED" && job.status !== "CANCELLED";
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-10">
+    <div className={shell}>
       <Link to="/jobs" className="text-sm text-muted-foreground hover:text-foreground">
         ← {t("nav.jobs")}
       </Link>
-      <div className="mt-6 grid gap-6 lg:grid-cols-[1.15fr_0.85fr]">
+      <div className="mt-4 grid gap-4 lg:mt-6 lg:grid-cols-[1.15fr_0.85fr] lg:gap-6">
         <div>
           <div className="flex flex-wrap gap-2">
             <Badge variant="secondary">
@@ -185,7 +188,7 @@ export function JobDetailsPage() {
             <Badge variant={statusVariant[job.status]}>{t(jobStatusKey(job.status))}</Badge>
             <Badge variant="outline">{t(paymentMethodKey(job.payment_method))}</Badge>
           </div>
-          <h1 className="mt-3 text-3xl font-bold tracking-tight">{job.title}</h1>
+          <h1 className="mt-3 break-words text-[1.75rem] font-bold leading-tight tracking-tight sm:text-3xl">{job.title}</h1>
           <p className="mt-3 flex items-center gap-2 text-muted-foreground">
             <MapPin className="h-4 w-4" />
             {job.city}
@@ -318,7 +321,7 @@ export function JobDetailsPage() {
           <Card>
             <CardContent className="p-6">
               <p className="text-sm text-muted-foreground">{t("job.pay")}</p>
-              <p className="mt-1 text-3xl font-bold text-primary">{formatMoney(job.salary)}</p>
+              <p className="mt-1 text-2xl font-bold text-primary sm:text-3xl">{formatMoney(job.salary)}</p>
               <p className="mt-2 text-sm text-muted-foreground">
                 {t("job.payment")}: {t(paymentMethodKey(job.payment_method))}
               </p>

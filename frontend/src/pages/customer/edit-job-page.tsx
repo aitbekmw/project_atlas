@@ -61,7 +61,7 @@ export function EditJobPage() {
     <div>
       <PageHeader title={t("job.editTitle")} description={jobQuery.data.title} />
       <Card>
-        <CardContent className="p-6">
+        <CardContent className="p-4 sm:p-6">
           <JobForm
             categories={categoriesQuery.data ?? []}
             categoriesLoading={categoriesQuery.isLoading}

@@ -75,8 +75,8 @@ function ConversationRow({
   return (
     <NavLink
       to={`/app/chat/${conversation.id}`}
-      className={cn(
-        "border-b px-4 py-4 transition-colors duration-200 hover:bg-secondary/70",
+          className={cn(
+        "border-b px-4 py-3 transition-colors duration-200 hover:bg-secondary/70",
         activeId === conversation.id && "bg-secondary",
       )}
     >

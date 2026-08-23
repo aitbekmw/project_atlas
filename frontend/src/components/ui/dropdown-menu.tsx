@@ -16,8 +16,9 @@ function DropdownMenuContent({
     <DropdownMenuPrimitive.Portal>
       <DropdownMenuPrimitive.Content
         sideOffset={sideOffset}
+        collisionPadding={12}
         className={cn(
-          "z-[60] min-w-44 overflow-hidden rounded-xl border bg-popover p-1 text-popover-foreground shadow-md duration-200",
+          "z-[60] max-w-[min(20rem,calc(100vw-1.5rem))] min-w-44 overflow-hidden rounded-xl border bg-popover p-1 text-popover-foreground shadow-md duration-200",
           "data-[state=open]:animate-in data-[state=closed]:animate-out",
           "data-[state=open]:fade-in-0 data-[state=closed]:fade-out-0",
           "data-[state=open]:zoom-in-95 data-[state=closed]:zoom-out-95",

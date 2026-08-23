@@ -10,14 +10,12 @@ export function PageHeader({
   action?: ReactNode;
 }) {
   return (
-    <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">{title}</h1>
-        {description ? (
-          <p className="mt-1 text-sm text-muted-foreground">{description}</p>
-        ) : null}
+    <div className="mb-5 flex min-w-0 flex-col gap-3 sm:mb-8 sm:flex-row sm:items-end sm:justify-between">
+      <div className="min-w-0">
+        <h1 className="atlas-page-title">{title}</h1>
+        {description ? <p className="atlas-page-lead">{description}</p> : null}
       </div>
-      {action}
+      {action ? <div className="shrink-0 self-start sm:self-auto">{action}</div> : null}
     </div>
   );
 }

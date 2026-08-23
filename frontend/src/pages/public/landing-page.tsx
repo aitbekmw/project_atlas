@@ -149,13 +149,13 @@ export function LandingPage() {
     <div className="overflow-x-hidden">
       <section className="relative border-b bg-surface">
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,rgb(22_119_255_/_0.12),transparent_55%)] dark:bg-[radial-gradient(ellipse_at_top_left,rgb(22_119_255_/_0.18),transparent_50%)]" />
-        <div className="relative mx-auto grid max-w-6xl items-stretch gap-6 px-4 py-10 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)] lg:grid-rows-[auto_auto_1fr] lg:gap-x-10 lg:gap-y-6 lg:py-16">
+        <div className="relative mx-auto grid max-w-6xl items-stretch gap-5 px-4 py-6 sm:gap-6 sm:py-10 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)] lg:grid-rows-[auto_auto_1fr] lg:gap-x-10 lg:gap-y-6 lg:py-16">
           <div className="order-1 min-w-0 lg:col-start-1 lg:row-start-1">
             <p className="inline-flex items-center gap-1.5 rounded-full border bg-card px-3 py-1 text-xs font-medium text-muted-foreground">
               <MapPin className="h-3.5 w-3.5 text-primary" />
               {t("landing.location")}
             </p>
-            <h1 className="mt-5 max-w-xl text-3xl font-extrabold tracking-tight text-balance sm:text-4xl lg:text-5xl">
+            <h1 className="mt-4 max-w-xl text-[2rem] font-extrabold leading-tight tracking-tight text-balance sm:mt-5 sm:text-4xl lg:text-5xl">
               {t("landing.heroTitle")}
             </h1>
             <p className="mt-4 max-w-lg text-base leading-relaxed text-muted-foreground sm:text-lg">
@@ -257,10 +257,10 @@ export function LandingPage() {
         </div>
       </section>
 
-      <section id="categories" className="mx-auto max-w-6xl scroll-mt-24 px-4 py-14 sm:py-16">
+      <section id="categories" className="atlas-section mx-auto max-w-6xl scroll-mt-24 px-4">
         <div className="flex items-end justify-between gap-4">
           <div>
-            <h2 className="text-2xl font-bold tracking-tight">{t("landing.categories")}</h2>
+            <h2 className="text-xl font-bold tracking-tight sm:text-2xl">{t("landing.categories")}</h2>
             <p className="mt-1 text-sm text-muted-foreground">
               {t("landing.categoriesHint")}
             </p>
@@ -325,10 +325,10 @@ export function LandingPage() {
       </section>
 
       <section className="bg-surface">
-        <div className="mx-auto max-w-6xl px-4 py-16">
+        <div className="atlas-section mx-auto max-w-6xl px-4">
           <div className="flex items-end justify-between gap-4">
             <div>
-              <h2 className="text-2xl font-bold tracking-tight">{t("landing.nearbyTitle")}</h2>
+              <h2 className="text-xl font-bold tracking-tight sm:text-2xl">{t("landing.nearbyTitle")}</h2>
               <p className="mt-1 text-sm text-muted-foreground">
                 {t("landing.nearbyHint")}
               </p>
@@ -386,7 +386,7 @@ export function LandingPage() {
                 showOverlay
                 showFooter={false}
                 showCards
-                className="h-[260px] min-h-[240px] w-full max-w-full lg:h-auto lg:min-h-[420px]"
+                className="h-[200px] min-h-[200px] w-full max-w-full sm:h-[260px] lg:h-auto lg:min-h-[420px]"
               />
               <div className="grid gap-3">
                 {nearby.map((job) => (
@@ -407,9 +407,9 @@ export function LandingPage() {
         </div>
       </section>
 
-      <section className="mx-auto max-w-6xl px-4 py-16">
+      <section className="atlas-section mx-auto max-w-6xl px-4">
         <div className="flex items-end justify-between gap-4">
-          <h2 className="text-2xl font-bold tracking-tight">{t("landing.popularTitle")}</h2>
+          <h2 className="text-xl font-bold tracking-tight sm:text-2xl">{t("landing.popularTitle")}</h2>
           <Button asChild variant="link">
             <Link to="/jobs">{t("landing.viewAll")}</Link>
           </Button>
@@ -439,8 +439,8 @@ export function LandingPage() {
       </section>
 
       <section className="border-y bg-card">
-        <div className="mx-auto max-w-6xl px-4 py-16">
-          <h2 className="text-2xl font-bold tracking-tight">{t("landing.topWorkers")}</h2>
+        <div className="atlas-section mx-auto max-w-6xl px-4">
+          <h2 className="text-xl font-bold tracking-tight sm:text-2xl">{t("landing.topWorkers")}</h2>
           <p className="mt-1 text-sm text-muted-foreground">
             {t("landing.topWorkersHint")}
           </p>
@@ -475,9 +475,9 @@ export function LandingPage() {
         </div>
       </section>
 
-      <section id="how-it-works" className="mx-auto max-w-6xl scroll-mt-24 px-4 py-16">
+      <section id="how-it-works" className="atlas-section mx-auto max-w-6xl scroll-mt-24 px-4">
         <div className="max-w-2xl">
-          <h2 className="text-2xl font-bold tracking-tight">{t("landing.howTitle")}</h2>
+          <h2 className="text-xl font-bold tracking-tight sm:text-2xl">{t("landing.howTitle")}</h2>
           <p className="mt-2 text-sm text-muted-foreground">
             {t("landing.howHint")}
           </p>
@@ -508,7 +508,7 @@ export function LandingPage() {
                   text: t("landing.howC4Text"),
                 },
               ].map((item) => (
-                <div key={item.title} className="flex gap-4 rounded-2xl border bg-card p-5">
+                <div key={item.title} className="flex gap-3 rounded-2xl border bg-card p-4 sm:gap-4 sm:p-5">
                   <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
                     <item.icon className="h-5 w-5" />
                   </span>
@@ -545,7 +545,7 @@ export function LandingPage() {
                   text: t("landing.howW4Text"),
                 },
               ].map((item) => (
-                <div key={item.title} className="flex gap-4 rounded-2xl border bg-card p-5">
+                <div key={item.title} className="flex gap-3 rounded-2xl border bg-card p-4 sm:gap-4 sm:p-5">
                   <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
                     <item.icon className="h-5 w-5" />
                   </span>
@@ -561,10 +561,10 @@ export function LandingPage() {
       </section>
 
       <section id="reviews" className="bg-surface">
-        <div className="mx-auto max-w-6xl px-4 py-16">
+        <div className="atlas-section mx-auto max-w-6xl px-4">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
             <div>
-              <h2 className="text-2xl font-bold tracking-tight">{t("landing.trustTitle")}</h2>
+              <h2 className="text-xl font-bold tracking-tight sm:text-2xl">{t("landing.trustTitle")}</h2>
               <p className="mt-1 text-sm text-muted-foreground">
                 {t("landing.trustHint")}
               </p>
@@ -658,9 +658,9 @@ export function LandingPage() {
         </div>
       </section>
 
-      <section id="cta" className="px-4 py-16">
-        <div className="mx-auto max-w-6xl rounded-3xl bg-primary px-6 py-12 text-center text-primary-foreground sm:px-12">
-          <h2 className="text-3xl font-bold tracking-tight">{t("landing.ctaTitle")}</h2>
+      <section id="cta" className="px-4 py-8 sm:py-12 lg:py-16">
+        <div className="mx-auto max-w-6xl rounded-3xl bg-primary px-5 py-8 text-center text-primary-foreground sm:px-12 sm:py-12">
+          <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">{t("landing.ctaTitle")}</h2>
           <p className="mx-auto mt-3 max-w-xl text-sm text-primary-foreground/80">
             {t("landing.ctaText")}
           </p>
